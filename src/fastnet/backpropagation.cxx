@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include "TrigRingerTools/fastnet/backpropagation.h"
+#include "fastnet/backpropagation.h"
 
 namespace FastNet
 {

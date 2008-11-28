@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "TrigRingerTools/fastnet/neuralnetwork.h"
+#include "fastnet/neuralnetwork.h"
 
 using namespace std;
 

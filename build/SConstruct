@@ -1,5 +1,5 @@
 #This is a scons MakeFile.
-#It is supposed to be used when wanting to compile the TrigRingerTools outside (standalone) Athena.
+#Compiles and installs the FastNet package.
 
 #Author: Rodrigo Coura Torres (Rodrigo.Torres@cern.ch)
 
@@ -7,74 +7,47 @@ import os
 
 import sc_globals
 import sc_libs
-import sc_progs
 import sc_matlab
-import sc_python
 
 #Setting the list of directories where to look for header files.
 env = Environment(CPPPATH = sc_globals.incPath, ENV = os.environ)
-env['ENV']['LD_RUN_PATH'] = ".:%s%slib" % (os.getenv('GSLPATH'), os.path.sep)
+
+#Creating the Matlab environment builder.
 matBuilder = Builder(generator = sc_matlab.matlabBuild, suffix = sc_matlab.getMatlabSuffix())
 env.Append(BUILDERS = {'Matlab' : matBuilder})
-
-#For compiling the python bindings.
-boostEnv = Environment(CPPPATH = sc_globals.incPath + sc_globals.pythonIncPath, 
-                        CXXFLAGS = ["-ftemplate-depth-100", "-DBOOST_PYTHON_DYNAMIC_LIB", '-DNR_VERSION=\\"%s\\"' % sc_globals.NR_VERSION],
-                        LIBPATH = sc_globals.libPath + sc_globals.pythonLibPath,
-                        SHLIBPREFIX="", #gets rid of lib prefix,
-                        SHLIBSUFFIX=".so")
 
 ### Creating the dynamic libraries.
 libInstList = [];
 libMap = {}
 for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib, source = sc_globals.getSourceFiles('../src/%s' % lib),
-                              CCFLAGS=['-D__PACKAGE__=\\"%s\\"' % lib] + sc_globals.genCPPFlags,
-                              LIBS=opt['LIBS'], LIBPATH = sc_globals.libPath)
+                              CCFLAGS = sc_globals.genCPPFlags,
+                              LIBS = opt['LIBS'],
+                              LIBPATH = sc_globals.libPath)
   libInstList.append(libName)
   libMap[lib] = libName
 
-### Creating binaries
-cxxFlags = sc_globals.genCPPFlags + ['-D_GNU_SOURCE', '--ansi', '--pedantic', '-Wall', '-pthread', '-fPIC']
-
-binList = []
-for prog, opt in sc_progs.progs.iteritems():
-  binName = env.Program(target = prog, source = opt.get('source', '../src/progs/%s.cxx' % prog),
-                        CCFLAGS = cxxFlags + ['-D__PACKAGE__=\\"%s\\"' % prog],
-                        LIBS = opt['LIBS'], LIBPATH = sc_globals.libPath)
-  binList.append(binName)
 
 ### Creating Matlab bindings
 matBinList = []
 matHelpList = []
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
-                          CCFLAGS = ['-DNR_VERSION=\'\\"%s\\"\'' % sc_globals.NR_VERSION, \
-                          '-D__PACKAGE__=\'\\"%s\\"\'' % mat], LIBS = opt['LIBS'], 
+                          CCFLAGS = sc_globals.genCPPFlags, 
+                          LIBS = opt['LIBS'], 
                           LIBPATH = sc_globals.libPath)
   matBinList.append(matBinding);
   matHelpList.append('../src/matlab/%s.m' % mat)
 
-### Creating python bindings
-pythonList = ['../py_bindings/__init__.py']
-for pack, opt in sc_python.pyBindings.iteritems(): 
-  pyBind = boostEnv.SharedLibrary(target = pack,
-                                  source = sc_globals.getSourceFiles('../py_bindings/%s' % pack),
-                                  LIBS = [sc_globals.boostLibName, 'python2.5'] + opt['LIBS'])
-  pythonList.append(pyBind)
 
-###Installing everything
+###Specifying the installations directories.
 libInstDir = '../lib'
-binInstDir = '../bin'
 matInstDir = '../script/matlab'
-pyInstDir = '../lib/python/ringer'
 
+#Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
-env.Install(binInstDir, binList)
 env.Install(matInstDir, matBinList + matHelpList)
-env.Install(pyInstDir, pythonList)
 
+#Creating the installation aliases.
 instMat = env.Alias('install-matlab', [libInstDir, matInstDir])
-instBin = env.Alias('install-bin', [libInstDir, binInstDir])
-instPython = env.Alias('install-python', [libInstDir, pyInstDir])
-env.Alias('install', [instMat, instBin, instPython])
+env.Alias('install', [instMat])

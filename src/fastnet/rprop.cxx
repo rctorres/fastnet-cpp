@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include "TrigRingerTools/fastnet/rprop.h"
+#include "fastnet/rprop.h"
 
 using namespace std;
 

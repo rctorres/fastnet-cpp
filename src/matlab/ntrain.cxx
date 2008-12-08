@@ -15,13 +15,13 @@
 #include <iomanip>
 #include <mex.h>
 
-#include "TrigRingerTools/matlab/MatlabReporter.h"
-#include "TrigRingerTools/fastnet/backpropagation.h"
-#include "TrigRingerTools/fastnet/rprop.h"
-#include "TrigRingerTools/matlab/matevents.h"
-#include "TrigRingerTools/matlab/matnetdata.h"
-#include "TrigRingerTools/fastnet/defines.h"
-#include "TrigRingerTools/matlab/mxhandler.h"
+#include "fastnet/reporter/MatlabReporter.h"
+#include "fastnet/neuralnet/backpropagation.h"
+#include "fastnet/neuralnet/rprop.h"
+#include "fastnet/events/matevents.h"
+#include "fastnet/netdata/matnetdata.h"
+#include "fastnet/defines.h"
+#include "fastnet/events/mxhandler.h"
 
 using namespace std;
 using namespace FastNet;
@@ -282,7 +282,7 @@ REAL smallerThan(REAL a, REAL b) {return (a<b);}
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
-  sys::Reporter *reporter = new sys::MatlabReporter();
+  sys::MatlabReporter *reporter = new sys::MatlabReporter();
 	NeuralNetwork *net = NULL;
 	Events *inTrnData, *outTrnData, *inTstData, *outTstData;
 	vector<Events*> inTrnList, inTstList;

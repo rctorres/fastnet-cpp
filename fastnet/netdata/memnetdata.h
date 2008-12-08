@@ -13,8 +13,8 @@
 #include <vector>
 #include <cstring>
 
-#include "TrigRingerTools/fastnet/netdata.h"
-#include "TrigRingerTools/fastnet/defines.h"
+#include "fastnet/netdata/netdata.h"
+#include "fastnet/defines.h"
 
 using namespace std;
 

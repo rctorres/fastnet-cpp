@@ -33,7 +33,7 @@ matBinList = []
 matHelpList = []
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
-                          CCFLAGS = sc_globals.genCPPFlags, 
+                          CCFLAGS = [], 
                           LIBS = opt['LIBS'], 
                           LIBPATH = sc_globals.libPath)
   matBinList.append(matBinding);

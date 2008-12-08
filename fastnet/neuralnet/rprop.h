@@ -8,8 +8,8 @@
 
 #include <vector>
 
-#include "TrigRingerTools/fastnet/backpropagation.h"
-#include "TrigRingerTools/fastnet/defines.h"
+#include "fastnet/neuralnet/backpropagation.h"
+#include "fastnet/defines.h"
 
 using namespace std;
 

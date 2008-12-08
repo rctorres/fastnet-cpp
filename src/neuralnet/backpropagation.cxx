@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include "fastnet/backpropagation.h"
+#include "fastnet/neuralnet/backpropagation.h"
 
 namespace FastNet
 {

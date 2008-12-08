@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "TrigRingerTools/fastnet/defines.h"
+#include "fastnet/defines.h"
 
 using namespace std;
 

@@ -6,7 +6,7 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
-#include "TrigRingerTools/fastnet/defines.h"
+#include "fastnet/defines.h"
 
 namespace FastNet
 {

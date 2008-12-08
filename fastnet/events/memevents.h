@@ -9,7 +9,7 @@
 
 #include <list>
 
-#include "TrigRingerTools/fastnet/events.h"
+#include "fastnet/events.h"
 
 using namespace std;
 

@@ -10,8 +10,8 @@
 #include <vector>
 #include <cstring>
 
-#include "TrigRingerTools/fastnet/defines.h"
-#include "TrigRingerTools/fastnet/neuralnetwork.h"
+#include "fastnet/defines.h"
+#include "fastnet/neuralnet/neuralnetwork.h"
 
 using namespace std;
 

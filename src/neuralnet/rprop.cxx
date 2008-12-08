@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-#include "fastnet/rprop.h"
+#include "fastnet/neuralnet/rprop.h"
 
 using namespace std;
 

@@ -1,0 +1,14 @@
+# Arquivos a serem ignorados pelo git. Caso haja algum arquivo especifico em
+# algum subdiretorio, crie um .gitignore no proprio subdiretorio do arquivo.
+.*
+*.o
+*~
+*.so
+*.pyc
+*.dylib
+*.mexmaci
+build/*.pyc
+build/*.a
+build/*.so
+build/*.dylib
+!.gitignore

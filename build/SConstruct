@@ -12,6 +12,10 @@ import sc_matlab
 #Setting the list of directories where to look for header files.
 env = Environment(CPPPATH = sc_globals.incPath, ENV = os.environ)
 
+#The installation dir is defined in the following environment variable. Otherwise, it will
+#be installed in fastnel/install.
+install_dir = os.environ.get('FASTNET_INST_DIR', os.path.abspath('../install'));
+
 #Creating the Matlab environment builder.
 matBuilder = Builder(generator = sc_matlab.matlabBuild, suffix = sc_matlab.getMatlabSuffix())
 env.Append(BUILDERS = {'Matlab' : matBuilder})
@@ -41,8 +45,8 @@ for mat, opt in sc_matlab.matlab.iteritems():
 
 
 ###Specifying the installations directories.
-libInstDir = '../lib'
-matInstDir = '../script/matlab'
+libInstDir = install_dir + '/lib'
+matInstDir = install_dir + '/script'
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)

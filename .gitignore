@@ -11,4 +11,5 @@ build/*.pyc
 build/*.a
 build/*.so
 build/*.dylib
+install/*
 !.gitignore

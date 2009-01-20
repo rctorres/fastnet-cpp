@@ -82,9 +82,9 @@ const unsigned OUT_TST_ERROR_IDX = 3;
  memory, this vector must come ready to store all outut values, for all patterns.
  @return The maximum SP value obtained.
 */
-REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
+double sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
 {
-  const REAL RESOLUTION = 0.001;
+  const double RESOLUTION = 0.001;
   size_t TARG_SIGNAL, TARG_NOISE;
   
   //We consider that our signal has target output +1 and the noise, -1. So, the if below help us
@@ -100,25 +100,25 @@ REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
     TARG_SIGNAL = 1;
   }
   
-  REAL maxSP = -1.;
-  for (REAL pos = target[TARG_NOISE][0]; pos < target[TARG_SIGNAL][0]; pos += RESOLUTION)
+  double maxSP = -1.;
+  for (double pos = target[TARG_NOISE][0]; pos < target[TARG_SIGNAL][0]; pos += RESOLUTION)
   {
-    REAL sigEffic = 0.;
+    double sigEffic = 0.;
     for (vector<REAL*>::const_iterator itr = output[TARG_SIGNAL]->begin(); itr != output[TARG_SIGNAL]->end(); itr++)
     {
       if ((*itr)[0] >= pos) sigEffic++;
     }
-    sigEffic /= static_cast<REAL>(output[TARG_SIGNAL]->size());
+    sigEffic /= static_cast<double>(output[TARG_SIGNAL]->size());
 
-    REAL noiseEffic = 0.;
+    double noiseEffic = 0.;
     for (vector<REAL*>::const_iterator itr = output[TARG_NOISE]->begin(); itr != output[TARG_NOISE]->end(); itr++)
     {
       if ((*itr)[0] < pos) noiseEffic++;
     }
-    noiseEffic /= static_cast<REAL>(output[TARG_NOISE]->size());
+    noiseEffic /= static_cast<double>(output[TARG_NOISE]->size());
 
     //Using normalized SP calculation.
-    const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
+    const double sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
     if (sp > maxSP) maxSP = sp;
   }
   

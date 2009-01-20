@@ -4,6 +4,7 @@
 #Author: Rodrigo Coura Torres (Rodrigo.Torres@cern.ch)
 
 import os
+import fnmatch
 
 import sc_globals
 import sc_libs
@@ -34,15 +35,15 @@ for lib, opt in sc_libs.libs.iteritems():
 
 ### Creating Matlab bindings
 matBinList = []
-matHelpList = []
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
                           CCFLAGS = [], 
                           LIBS = opt['LIBS'], 
                           LIBPATH = sc_globals.libPath)
   matBinList.append(matBinding);
-  matHelpList.append('../src/matlab/%s.m' % mat)
 
+### Getting the matlab scripts.
+matScriptList = fnmatch.filter(os.listdir('../script/matlab'), '*.m')
 
 ###Specifying the installations directories.
 libInstDir = install_dir + '/lib'
@@ -50,7 +51,7 @@ matInstDir = install_dir + '/script'
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
-env.Install(matInstDir, matBinList + matHelpList)
+env.Install(matInstDir, matBinList + matScriptList)
 
 #Creating the installation aliases.
 instMat = env.Alias('install-matlab', [libInstDir, matInstDir])

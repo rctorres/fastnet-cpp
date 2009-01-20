@@ -85,48 +85,41 @@ const unsigned OUT_TST_ERROR_IDX = 3;
 REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
 {
   const REAL RESOLUTION = 0.001;
-  size_t TARG_A, TARG_B;
+  size_t TARG_SIGNAL, TARG_NOISE;
   
-  if (target[0][0] > target[1][0])
+  //We consider that our signal has target output +1 and the noise, -1. So, the if below help us
+  //figure out which class is the signal.
+  if (target[0][0] > target[1][0]) // target[0] is our signal.
   {
-    TARG_A = 1;
-    TARG_B = 0;
+    TARG_NOISE = 1;
+    TARG_SIGNAL = 0;
   }
-  else
+  else //target[1] is the signal.
   {
-    TARG_A = 0;
-    TARG_B = 1;
+    TARG_NOISE = 0;
+    TARG_SIGNAL = 1;
   }
   
-  REAL maxSP = 0.;
-  REAL maxEfficA = 0.;
-  REAL maxEfficB = 0.;
-  REAL threshold = 0.;
-  for (REAL pos = target[TARG_A][0]; pos < target[TARG_B][0]; pos += RESOLUTION)
+  REAL maxSP = -1.;
+  for (REAL pos = target[TARG_NOISE][0]; pos < target[TARG_SIGNAL][0]; pos += RESOLUTION)
   {
-    REAL efficA = 0.;
-    for (vector<REAL*>::const_iterator itr = output[TARG_A]->begin(); itr != output[TARG_A]->end(); itr++)
+    REAL sigEffic = 0.;
+    for (vector<REAL*>::const_iterator itr = output[TARG_SIGNAL]->begin(); itr != output[TARG_SIGNAL]->end(); itr++)
     {
-      if ((*itr)[0] < pos) efficA++;
+      if ((*itr)[0] >= pos) sigEffic++;
     }
-    efficA /= output[TARG_A]->size();
+    sigEffic /= static_cast<REAL>(output[TARG_SIGNAL]->size());
 
-    REAL efficB = 0.;
-    for (vector<REAL*>::const_iterator itr = output[TARG_B]->begin(); itr != output[TARG_B]->end(); itr++)
+    REAL noiseEffic = 0.;
+    for (vector<REAL*>::const_iterator itr = output[TARG_NOISE]->begin(); itr != output[TARG_NOISE]->end(); itr++)
     {
-      if ((*itr)[0] >= pos) efficB++;
+      if ((*itr)[0] < pos) noiseEffic++;
     }
-    efficB /= output[TARG_B]->size();
+    noiseEffic /= static_cast<REAL>(output[TARG_NOISE]->size());
 
     //Using normalized SP calculation.
-    const REAL sp = ((efficA + efficB) / 2) * sqrt(efficA * efficB);
-    if (sp > maxSP)
-    {
-      maxEfficA = efficA;
-      maxEfficB = efficB;
-      maxSP = sp;
-      threshold = pos;
-    }
+    const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
+    if (sp > maxSP) maxSP = sp;
   }
   
   return maxSP;
@@ -525,13 +518,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   	string tstText;
   	REAL (*comp)(REAL, REAL);
   	
-  	if (patRecNet && useSP)
+  	if (patRecNet && useSP) // If using the SP criterium, we must aim at maximizing it.
   	{
   	  minTstError = 0.;
   	  tstText = ", SP (test) = ";
       comp = greaterThan;
   	}
-  	else
+  	else // If it is MSE, we have to minimize it.
   	{
   	  minTstError = static_cast<REAL>(5E20);
   	  tstText = ", mse (test) = ";

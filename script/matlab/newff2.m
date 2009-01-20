@@ -5,7 +5,7 @@ function net = newff2(nodesDist, trfFunc, useSP, netTrain)
 %  nodesDist 		-> The number of nodes in each layer (including the input).
 %  trfFunc   		-> A cell vector containing the transfer function in each layer (excluding the input).
 %  useSP (opt)     -> If true, then SP will be used for net goal.
-%                       Otherwise, MSE. If ommited, SP goal will be used.
+%                       Otherwise, MSE. If ommited, MSE goal will be used.
 %  netTrain (opt)  -> The training algorithm to be used. If none is specified, 'trainrp' will be used.
 %
 %The only modification in the net structure created, when compared to the one crated by newff
@@ -16,7 +16,7 @@ function net = newff2(nodesDist, trfFunc, useSP, netTrain)
 
 if nargin == 2,
 	netTrain = 'trainrp';
-    useSP = true;
+    useSP = false;
 elseif nargin == 3,
     netTrain = 'trainrp';
 end

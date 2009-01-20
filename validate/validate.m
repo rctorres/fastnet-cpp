@@ -10,7 +10,7 @@ xlabel('X');
 ylabel('Y');
 
 %Creating the neural network.
-net = newff2([nClasses,2,1], {'tansig', 'tansig'}, true, 'trainrp');
+net = newff2([nClasses,2,1], {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 20;
 net.trainParam.show = 1;

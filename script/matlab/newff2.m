@@ -2,11 +2,11 @@ function net = newff2(nodesDist, trfFunc, useSP, netTrain)
 %function net = newff2(nodesDist, trfFunc, useSP, netTrain)
 %Creates a neural network structure just like the newff function (see help).
 %Parameters are:
-%	nodesDist 		-> The number of nodes in each layer (including the input).
-%	trfFunc   		-> A cell vector containing the transfer function in each layer (excluding the input).
-%   useSP (opt)     -> If true, then SP will be used for net goal.
+%  nodesDist 		-> The number of nodes in each layer (including the input).
+%  trfFunc   		-> A cell vector containing the transfer function in each layer (excluding the input).
+%  useSP (opt)     -> If true, then SP will be used for net goal.
 %                       Otherwise, MSE. If ommited, SP goal will be used.
-%	netTrain (opt)  -> The training algorithm to be used. If none is specified, 'trainrp' will be used.
+%  netTrain (opt)  -> The training algorithm to be used. If none is specified, 'trainrp' will be used.
 %
 %The only modification in the net structure created, when compared to the one crated by newff
 %is that this function adds new information to be used with the MatFastNet toolbox.

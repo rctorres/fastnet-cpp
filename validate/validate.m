@@ -28,14 +28,14 @@ outTst = [ones(1, size(inTst{1},2)) -ones(1, size(inTst{2},2))];
 val.P = contInVal;
 val.T = outVal;
 
-%Training the entworks to be compared.
+%Training the networks to be compared.
 matNet = train(net, contInTrn, outTrn, [], [], val);
 fastNetCont = ntrain(net, contInTrn, outTrn, val.P, val.T);
 fastNet = ntrain(net, inTrn, [], inVal, []);
 
 %Generating the testing outputs.
 matOut = {sim(matNet, inTst{1}) sim(matNet, inTst{2})};
-fastNetContOut = {sim(fastNetCont, inTst{1}) sim(fastNetCont, inTst{2})};
+fastNetContOut = {nsim(fastNetCont, inTst{1}) nsim(fastNetCont, inTst{2})};
 fastNetOut = {sim(fastNet, inTst{1}) sim(fastNet, inTst{2})};
 
 %First analysis: RoC.

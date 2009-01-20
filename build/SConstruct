@@ -43,7 +43,8 @@ for mat, opt in sc_matlab.matlab.iteritems():
   matBinList.append(matBinding);
 
 ### Getting the matlab scripts.
-matScriptList = fnmatch.filter(os.listdir('../script/matlab'), '*.m')
+matScriptDir = '../script/matlab';
+matScriptList = ['%s/%s' % (matScriptDir, f) for f in fnmatch.filter(os.listdir(matScriptDir), '*.m')]
 
 ###Specifying the installations directories.
 libInstDir = install_dir + '/lib'

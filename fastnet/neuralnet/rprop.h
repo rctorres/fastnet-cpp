@@ -184,7 +184,7 @@ namespace FastNet
        @param[in] trfFunction a vector containig the type of transfer function in each hidden and output layer.
        @throw bad_alloc in case of error during memory allocation.
       */
-      RProp(vector<unsigned> nodesDist, vector<string> trfFunction);
+      RProp(const vector<unsigned> &nodesDist, const vector<string> &trfFunction);
 
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 

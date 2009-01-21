@@ -12,7 +12,7 @@ using namespace std;
 
 namespace FastNet
 {
-  RProp::RProp(vector<unsigned> nodesDist, vector<string> trfFunction) : Backpropagation(nodesDist, trfFunction)
+  RProp::RProp(const vector<unsigned> &nodesDist, const vector<string> &trfFunction) : Backpropagation(nodesDist, trfFunction)
   {
     deltaMax = 50.0;
     deltaMin = 1E-6;

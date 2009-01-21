@@ -43,7 +43,7 @@ fastNet = ntrain(net, inTrn, [], inVal, []);
 
 %Generating the testing outputs.
 matOut = {sim(matNet, inTst{1}) sim(matNet, inTst{2})};
-fastNetContOut = {sim(fastNetCont, inTst{1}) sim(fastNetCont, inTst{2})};
+fastNetContOut = {nsim(fastNetCont, inTst{1}) nsim(fastNetCont, inTst{2})};
 fastNetOut = {sim(fastNet, inTst{1}) sim(fastNet, inTst{2})};
 
 %First analysis: RoC.

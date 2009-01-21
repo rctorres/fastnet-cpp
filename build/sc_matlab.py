@@ -27,3 +27,6 @@ matlab['ntrain']['LIBS'] = ['neuralnet']
 
 matlab['nsim'] = {}
 matlab['nsim']['LIBS'] = ['neuralnet']
+
+matlab['nsim_mt'] = {}
+matlab['nsim_mt']['LIBS'] = ['neuralnet']

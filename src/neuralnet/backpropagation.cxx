@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 #include "fastnet/neuralnet/backpropagation.h"
 
@@ -65,7 +66,28 @@ namespace FastNet
 
   Backpropagation::Backpropagation(const Backpropagation &net) : NeuralNetwork(net)
   {
+    trnEventCounter = net.trnEventCounter;
+    learningRate = net.learningRate;
+    decFactor = net.decFactor;
     
+    const unsigned size = nLayers - 1;
+    
+    db = new REAL* [size];
+    sigma = new REAL* [size];
+    dw = new REAL** [size];
+    for (unsigned i=0; i<size; i++)
+    {
+      db[i] = new REAL [nNodes[i+1]];
+      memcpy(db[i], net.db[i], nNodes[i+1]*sizeof(REAL));
+
+      sigma[i] = new REAL [nNodes[i+1]];
+      memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++) 
+      {
+        dw[i][j] = new REAL [nNodes[i]];
+        memcpy(dw[i][j], net.dw[i][j], nNodes[i]*sizeof(REAL));
+      }
+    }
   }
 
 

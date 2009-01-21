@@ -115,7 +115,54 @@ namespace FastNet
 
   NeuralNetwork::NeuralNetwork(const NeuralNetwork &net)
   {
+    try
+    {
+      nLayers = net.nLayers;
+      
+      nNodes = new unsigned [nLayers];
+      memcpy(nNodes, net.nNodes, nLayers*sizeof(unsigned));
+      
+      activeNodes = new NodesRange [nLayers];
+      memcpy(activeNodes, net.activeNodes, nLayers*sizeof(NodesRange));
+      
+      layerOutputs = new REAL* [nLayers];
+      layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
     
+      const unsigned size = nLayers-1;
+      
+      trfFunc = new TRF_FUNC_PTR [size];
+      memcpy(trfFunc, net.trfFunc, size*sizeof(TRF_FUNC_PTR));
+      
+      usingBias = new bool [size];
+      memcpy(usingBias, net.usingBias, size*sizeof(bool));
+      
+      bias = new REAL* [size];
+      frozenNode = new bool* [size];
+      weights = new REAL** [size];
+
+      for (unsigned i=0; i<size; i++)
+      {
+        bias[i] = new REAL [nNodes[i+1]];
+        memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
+        
+        frozenNode[i] = new bool [nNodes[i+1]];
+        memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
+        
+        layerOutputs[i+1] = new REAL [nNodes[i+1]];
+        memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
+
+        weights[i] = new REAL* [nNodes[i+1]];
+        for (unsigned j=0; j<nNodes[i+1]; j++)
+        {
+          weights[i][j] = new REAL [nNodes[i]];
+          memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+        }
+      }
+    }
+    catch (bad_alloc xa)
+    {
+      throw;
+    }    
   }
 
   NeuralNetwork::~NeuralNetwork()

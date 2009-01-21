@@ -75,6 +75,48 @@ namespace FastNet
   }
 
 
+  RProp::RProp(const RProp &net) : Backpropagation(net)
+  {
+    deltaMax = net.deltaMax;
+    deltaMin = net.deltaMin;
+    incEta = net.incEta;
+    decEta = net.decEta;
+    initEta = net.initEta;
+    
+    const unsigned size = nLayers - 1;
+    
+    try
+    {
+      prev_db = new REAL* [size];
+      delta_b = new REAL* [size];
+      prev_dw = new REAL** [size];
+      delta_w = new REAL** [size];
+      for (unsigned i=0; i<size; i++)
+      {
+        prev_db[i] = new REAL [nNodes[i+1]];
+        memcpy(prev_db[i], net.prev_db[i], nNodes[i+1]*sizeof(REAL));
+
+        delta_b[i] = new REAL [nNodes[i+1]];
+        memcpy(delta_b[i], net.delta_b[i], nNodes[i+1]*sizeof(REAL));
+
+        prev_dw[i] = new REAL* [nNodes[i+1]];
+        delta_w[i] = new REAL* [nNodes[i+1]];
+        for (unsigned j=0; j<nNodes[i+1]; j++) 
+        {
+          prev_dw[i][j] = new REAL [nNodes[i]];
+          memcpy(prev_dw[i][j], net.prev_dw[i][j], nNodes[i]*sizeof(REAL));
+
+          delta_w[i][j] = new REAL [nNodes[i]];
+          memcpy(delta_w[i][j], net.delta_w[i][j], nNodes[i]*sizeof(REAL));
+        }
+      }
+    }
+    catch (bad_alloc xa)
+    {
+      throw;
+    }    
+  }
+
   
   RProp::~RProp()
   {

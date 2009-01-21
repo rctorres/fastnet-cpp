@@ -14,6 +14,14 @@ net = newff2([nClasses,2,1], {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 20;
 net.trainParam.show = 1;
+net.trainParam.showWindow = 0;
+net.trainParam.showCommandLine = 1;
+net.trainParam.deltamax = 50.0;
+net.trainParam.min_grad = 1E-6;
+net.trainParam.delt_inc = 1.10;
+net.trainParam.delt_dec = 0.5;
+net.trainParam.delta0 = 0.1;
+
 
 %Creating the training, validating and testing data sets.
 inTrn = {c1(:,1:3:end) c2(:,1:3:end)};

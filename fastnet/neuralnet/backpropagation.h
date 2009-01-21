@@ -151,7 +151,14 @@ namespace FastNet
        @param[in] decFac the decreasing factor value (\f$0 < df \leq 1\f$).
        @throw bad_alloc in case of error during memory allocation.
       */
-      Backpropagation(vector<unsigned>nodesDist, vector<string> trfFunction, REAL lrnRate=0.05, REAL decFac=1);
+      Backpropagation(const vector<unsigned> &nodesDist, const vector<string> &trfFunction, const REAL lrnRate=0.05, const REAL decFac=1);
+      
+      ///Copy constructor
+      /**This constructor should be used to create a new network which is an exactly copy 
+        of another network.
+        @param[in] net The network that we will copy the parameters from.
+      */
+      Backpropagation(const Backpropagation &net);
       
 
       /// Class destructor.

@@ -186,6 +186,12 @@ namespace FastNet
       */
       RProp(vector<unsigned> nodesDist, vector<string> trfFunction);
 
+      ///Copy constructor
+      /**This constructor should be used to create a new network which is an exactly copy 
+        of another network.
+        @param[in] net The network that we will copy the parameters from.
+      */
+      RProp(const RProp &net);
       
       /// Class destructor.
       /**

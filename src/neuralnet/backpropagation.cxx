@@ -82,6 +82,7 @@ namespace FastNet
 
       sigma[i] = new REAL [nNodes[i+1]];
       memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
+      
       for (unsigned j=0; j<nNodes[i+1]; j++) 
       {
         dw[i][j] = new REAL [nNodes[i]];

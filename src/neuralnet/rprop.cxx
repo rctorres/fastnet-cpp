@@ -117,6 +117,10 @@ namespace FastNet
     }    
   }
 
+  RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
+  {
+  }
+
   
   RProp::~RProp()
   {

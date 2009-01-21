@@ -11,6 +11,8 @@
 #include <vector>
 #include <iostream>
 
+#include <mex.h>
+
 #include "fastnet/netdata/netdata.h"
 #include "fastnet/defines.h"
 
@@ -326,7 +328,14 @@ namespace FastNet
       @param[in] net The network that we will copy the parameters from.
       */
       NeuralNetwork(const NeuralNetwork &net);
-      
+
+      /// Constructor taking the parameters for a matlab net structure.
+      /**
+      This constructor should be called when the network parameters are stored in a matlab
+      network structure.
+      @param[in] netStr The Matlab network structure as returned by newff.
+      */
+      NeuralNetwork(const mxArray *netStr);
       
       /// Class destructor.
       /**

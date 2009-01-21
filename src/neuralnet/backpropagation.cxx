@@ -97,6 +97,11 @@ namespace FastNet
       throw;
     }
   }
+  
+
+  Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
+  {
+  }
 
 
   Backpropagation::~Backpropagation()

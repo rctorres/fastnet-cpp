@@ -165,6 +165,11 @@ namespace FastNet
     }    
   }
 
+  NeuralNetwork::NeuralNetwork(const mxArray *netStr)
+  {
+  }
+
+
   NeuralNetwork::~NeuralNetwork()
   {
     const unsigned size = nLayers - 1;

@@ -12,9 +12,17 @@ def getSourceFiles(sourcesDir):
 #This is the global compiling flags list.
 genCPPFlags = []
 
+#This is for finding the MATLAB include and library files withour the mex compiler.
+#You should change this directory accordly so that the BOOST and MATLAB header and lib
+#files can be found.
+matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
+matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
+
 #Am I using a MAC computer? Then I apply some optimizations for it
 if 'Darwin' in platform.system():
   genCPPFlags += ['-fast']
+  matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
+  matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
   
-incPath = ['../']
-libPath = ['./']
+incPath = ['../'] + matlabIncPath
+libPath = ['./'] + matlabLibPath

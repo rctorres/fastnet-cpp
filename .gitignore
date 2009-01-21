@@ -4,6 +4,7 @@
 *.o
 *~
 *.so
+*.os
 *.pyc
 *.dylib
 *.mexmaci

@@ -293,12 +293,12 @@ namespace FastNet
       for (unsigned j=activeNodes[i+1].init; j<activeNodes[i+1].end; j++)
       {
         //Initializing the bias (if the layer is not using bias, the value is set to zero).
-        bias[i][j] = (usingBias[i]) ? (2*initWeightRange*((static_cast<double>(rand() % 101)) / 100)) - initWeightRange : 0;
+        bias[i][j] = (usingBias[i]) ? (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange : 0;
 
         //Initializing the weights.
         for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
         {
-          weights[i][j][k] = (2*initWeightRange*((static_cast<double>(rand() % 101)) / 100)) - initWeightRange;
+          weights[i][j][k] = (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange;
         }
       }
     }

@@ -39,8 +39,8 @@ const unsigned NUM_THREADS = 2;
 
 struct ThreadParams
 {
-  double *inputStartAddr;  // Input starting address to start processing.
-  double *outputStartAddr;  // Output starting address to start processing.
+  REAL *inputStartAddr;  // Input starting address to start processing.
+  REAL *outputStartAddr;  // Output starting address to start processing.
   unsigned numEvents; // Total number of events to process.
   Backpropagation *net; // The neural network to use.
 };
@@ -52,7 +52,7 @@ void *threadRun(void *params)
   Backpropagation *net = par->net;
   const unsigned inputSize = (*net)[0];
   const unsigned outputSize = (*net)[par->net->getNumLayers()-1];
-  const unsigned numBytes2Copy = outputSize * sizeof(double);
+  const unsigned numBytes2Copy = outputSize * sizeof(REAL);
   for (unsigned i=0; i<par->numEvents; i++)
   {
     memcpy(par->outputStartAddr, par->net->propagateInput(par->inputStartAddr), numBytes2Copy);
@@ -143,9 +143,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned numEvents = mxGetN(args[IN_DATA_IDX]);
     const unsigned inputSize = mxGetM(args[IN_DATA_IDX]);
     const unsigned outputSize = nNodes[nNodes.size()-1];
-    double *inputEvents = mxGetPr(args[IN_DATA_IDX]);
-    mxArray *outData = mxCreateDoubleMatrix(outputSize, numEvents, mxREAL);
-    double *outputEvents = mxGetPr(outData);
+    REAL *inputEvents = static_cast<REAL*>(mxGetData(args[IN_DATA_IDX]));
+    mxArray *outData = mxCreateNumericMatrix(outputSize, numEvents, REAL_TYPE, mxREAL);
+    REAL *outputEvents = static_cast<REAL*>(mxGetData(outData));
 
     pthread_t threads[NUM_THREADS];
     pthread_attr_t attr;

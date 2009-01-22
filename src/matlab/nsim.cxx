@@ -115,9 +115,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
     //Creating the output matrix.
     const unsigned outputSize = nNodes[nNodes.size()-1];
-    const unsigned bytes2Copy = outputSize*sizeof(double);
+    const unsigned bytes2Copy = outputSize*sizeof(REAL);
     mxArray *outData = mxCreateDoubleMatrix(outputSize, inputData.getNumEvents(), mxREAL);
-    double *outPtr = mxGetPr(outData);
+    REAL *outPtr = static_cast<REAL*>(mxGetData(outData));
 
     while  (inputData.hasNext())
     {

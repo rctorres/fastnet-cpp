@@ -118,7 +118,7 @@ namespace FastNet
     try
     {
       nLayers = net.nLayers;
-      
+
       nNodes = new unsigned [nLayers];
       memcpy(nNodes, net.nNodes, nLayers*sizeof(unsigned));
       

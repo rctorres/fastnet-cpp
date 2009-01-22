@@ -65,7 +65,7 @@ namespace FastNet
 
 
   Backpropagation::Backpropagation(const Backpropagation &net) : NeuralNetwork(net)
-  {
+  { 
     trnEventCounter = net.trnEventCounter;
     learningRate = net.learningRate;
     decFactor = net.decFactor;
@@ -85,6 +85,7 @@ namespace FastNet
         sigma[i] = new REAL [nNodes[i+1]];
         memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
       
+        dw[i] = new REAL* [nNodes[i+1]];
         for (unsigned j=0; j<nNodes[i+1]; j++) 
         {
           dw[i][j] = new REAL [nNodes[i]];

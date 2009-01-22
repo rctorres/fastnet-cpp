@@ -15,7 +15,6 @@
 
 #include "fastnet/reporter/MatlabReporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
-#include "fastnet/neuralnet/rprop.h"
 #include "fastnet/events/matevents.h"
 #include "fastnet/netdata/matnetdata.h"
 #include "fastnet/defines.h"
@@ -36,6 +35,35 @@ const unsigned IN_DATA_IDX = 1;
 /// Index, in the return vector, of the network structure after training.
 const unsigned NET_OUT_IDX = 0;
 
+const unsigned NUM_THREADS = 2;
+
+struct ThreadParams
+{
+  REAL *inputStartAddr;  // Input starting address to start processing.
+  REAL *outputStartAddr;  // Output starting address to start processing.
+  unsigned numEvents; // Total number of events to process.
+  Backpropagation *net; // The neural network to use.
+};
+
+
+void *threadRun(void *params)
+{
+  ThreadParams *par = static_cast<ThreadParams*>(params);
+  Backpropagation *net = par->net;
+  const unsigned inputSize = (*net)[0];
+  const unsigned outputSize = (*net)[par->net->getNumLayers()-1];
+  const unsigned numBytes2Copy = outputSize * sizeof(REAL);
+  for (unsigned i=0; i<par->numEvents; i++)
+  {
+    memcpy(par->outputStartAddr, par->net->propagateInput(par->inputStartAddr), numBytes2Copy);
+    par->inputStartAddr += inputSize;
+    par->outputStartAddr += outputSize;
+  } 
+  pthread_exit(NULL);
+}
+
+
+
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
@@ -48,8 +76,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
 		//Reading the configuration structure
 		const mxArray *netStr = args[NET_STR_IDX];
-		
-    MatEvents inputData(args[IN_DATA_IDX]);
 		
 		vector<unsigned> nNodes;
 		//Getting the number of nodes in the input layer.
@@ -72,7 +98,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
     // Creating the neural network to use. It can be any type, since we will just propagate the
     // inputs.
-    RProp net(nNodes, trfFunc);
+    Backpropagation net(nNodes, trfFunc);
 		
 		//Creating the network data handler.
 		MatNetData netData(nNodes, netStr);
@@ -111,18 +137,43 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 			//Getting the using bias information.
 			const mxArray *usingBias = mxGetField(userData, 0, "usingBias");
 			if (usingBias) net.setUsingBias(i, static_cast<bool>(mxGetScalar(usingBias)));			
-		}		
+		}
 
-    //Creating the output matrix.
+    //Crating the input and output access matrices.
+    const unsigned numEvents = mxGetN(args[IN_DATA_IDX]);
+    const unsigned inputSize = mxGetM(args[IN_DATA_IDX]);
     const unsigned outputSize = nNodes[nNodes.size()-1];
-    const unsigned bytes2Copy = outputSize*sizeof(REAL);
-    mxArray *outData = mxCreateDoubleMatrix(outputSize, inputData.getNumEvents(), mxREAL);
-    REAL *outPtr = static_cast<REAL*>(mxGetData(outData));
+    REAL *inputEvents = static_cast<REAL*>(mxGetData(args[IN_DATA_IDX]));
+    mxArray *outData = mxCreateNumericMatrix(outputSize, numEvents, REAL_TYPE, mxREAL);
+    REAL *outputEvents = static_cast<REAL*>(mxGetData(outData));
 
-    while  (inputData.hasNext())
+    pthread_t threads[NUM_THREADS];
+    pthread_attr_t attr;
+    //Setando as threads p/ serem joinable.
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    ThreadParams *params = new ThreadParams[NUM_THREADS];
+    const unsigned evPerThread = numEvents / NUM_THREADS;
+    for (unsigned i=0; i<NUM_THREADS; i++)
     {
-      memcpy(outPtr, net.propagateInput(inputData.readEvent()), bytes2Copy);
-      outPtr += outputSize;
+      params[i].net = new Backpropagation(net);
+      //The first thread takes the remaining elements, in case of odd division.
+      params[i].numEvents = (i) ? evPerThread : (evPerThread + (numEvents % NUM_THREADS));
+      params[i].inputStartAddr = inputEvents;
+      params[i].outputStartAddr = outputEvents;
+      inputEvents += (params[i].numEvents * inputSize);
+      outputEvents += (params[i].numEvents * outputSize);
+      const int rc = pthread_create(&threads[i], &attr, threadRun, (void *)&params[i]);
+      if (rc) throw "Impossible to create thread! Aborting...";
+    }
+    
+    //Free attribute and wait for the other threads
+    pthread_attr_destroy(&attr);
+    for (unsigned i=0; i<NUM_THREADS; i++)
+    {
+      void *ret;
+      pthread_join(threads[i], &ret);
+      delete params[i].net;
     }
     
     ret[NET_OUT_IDX] = outData;

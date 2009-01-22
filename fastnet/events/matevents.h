@@ -12,6 +12,7 @@
 
 #include "fastnet/events/events.h"
 #include "fastnet/defines.h"
+#include "fastnet/events/mxhandler.h"
 
 using namespace std;
 
@@ -37,7 +38,14 @@ namespace FastNet
         Points to the current event to be accessed by the
         neural network.
       */
-      size_t evCounter;
+      unsigned evCounter;
+      
+      /// The set of events.
+      /**
+       Handles all the events, so, once a network requires a new
+       event, it is read from this source.
+'      */
+      MxArrayHandler<REAL> events;
       
       /// Contains a usable copy of the current event.
       /**
@@ -55,7 +63,7 @@ namespace FastNet
        running sequentially this vector, using its values as index for the
        events vector assures a fast way to access the events in a ramdom way.
       */
-      size_t *rndList;
+      unsigned *rndList;
 
       /// Contains the index of the next ramdom access event to be read.
       /**
@@ -63,43 +71,7 @@ namespace FastNet
        get its value from the rndList vector, it always contains a ramdomly choosed
        event index.
       */
-      size_t rndIndex;
-      
-      /// Typedef to deal with the funciont pointer.
-      typedef  void (MatEvents::*FILL_FUNC_PTR)(const size_t);
-      
-      /// Holds the input data type (single or double).
-      mxClassID dataType;
-      
-      /// Pointer to access the data in float format.
-      float *fptr;
-      
-      /// Pointer to access the data in double format.
-      double *dptr;
-      
-      /// Function pointer to address the correct reading format (single or double).
-      FILL_FUNC_PTR getData;
-    
-      /// This is the function to be used for reading events in float format. 
-      void readFloatValues(const size_t evNum)
-      {
-        size_t i,k;
-        for (i = evNum*numInputs, k = 0; k<numInputs; i++, k++)
-        {
-          currEvent[k] = static_cast<REAL>(fptr[i]);
-        }
-      }
-
-      /// This is the function to be used for reading events in float format.
-      void readDoubleValues(const size_t evNum)
-      {
-        size_t i,k;
-        for (i = evNum*numInputs, k = 0; k<numInputs; i++, k++)
-        {
-          currEvent[k] = static_cast<REAL>(dptr[i]);
-        }
-      }
-
+      unsigned rndIndex;
     
     public:
     
@@ -110,41 +82,29 @@ namespace FastNet
        @throw bad_alloc on memory allocation error.
        @throw DATA_INIT_ERROR on matrix limits error.
       */
-      MatEvents(const mxArray *matlabEvents)
+      MatEvents(const mxArray *MatlabEvents)
       {
         currEvent = NULL;
         rndList = NULL;
-        fptr = NULL;
-        dptr = NULL;
         rndIndex = 0;
         evCounter = 0;
-        numInputs = static_cast<size_t>(mxGetM(matlabEvents));
-        numEvents = static_cast<size_t>(mxGetN(matlabEvents));
-        
-        dataType = mxGetClassID(matlabEvents);
-        if (dataType ==  mxSINGLE_CLASS)
-        {
-          fptr = static_cast<float*>(mxGetData(matlabEvents));
-          getData = &MatEvents::readFloatValues;
-        }
-        else if (dataType ==  mxDOUBLE_CLASS)
-        {
-          dptr = static_cast<double*>(mxGetData(matlabEvents));
-          getData = &MatEvents::readDoubleValues;
-        }
-        else throw "Data must be either float (single) or double!";
-        
+        numInputs = mxGetM(MatlabEvents);
+        numEvents = mxGetN(MatlabEvents);
+          
         // Checking if the events matrix is valid.      
         if ( (!numInputs) || (!numEvents) ) throw "Error in matrix limits!";
 
+        // Pointing the events data to the events handler.
+        events = MatlabEvents;
+        
         try
         {
           currEvent = new REAL [numInputs];
-          rndList = new size_t [numEvents];
+          rndList = new unsigned [numEvents];
           
           //Initializing the random list with values
           // and scrambling them.
-          for (size_t i=0; i<numEvents; i++) rndList[i] = i;
+          for (unsigned i=0; i<numEvents; i++) rndList[i] = i;
           random_shuffle(rndList, (rndList+numEvents));
         }
         catch(bad_alloc xa)
@@ -176,7 +136,13 @@ namespace FastNet
       */
       const REAL* readEvent()
       {
-        ((this)->*(getData))(evCounter);
+        int k = 0;
+        
+        for (unsigned i=events.getColInit(evCounter); i<events.getColEnd(evCounter); i+=events.getColInc())
+        {
+          currEvent[k++] = (REAL) events(i);
+        }
+        
         evCounter++;
         return currEvent;
       }
@@ -187,9 +153,15 @@ namespace FastNet
        @param[in] evIndex The index of the event to be returned.
        @return A pointer to the requested event.
       */
-      const REAL* readEvent(const size_t evIndex)
+      const REAL* readEvent(size_t evIndex)
       {
-        ((this)->*(getData))(evIndex);
+        unsigned k = 0;
+        
+        for (unsigned i=events.getColInit(evIndex); i<events.getColEnd(evIndex); i+=events.getColInc())
+        {
+          currEvent[k++] = (REAL) events(i);
+        }
+
         return currEvent;
       }
       

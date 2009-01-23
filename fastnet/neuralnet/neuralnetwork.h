@@ -219,7 +219,7 @@ namespace FastNet
       dynamically allocated. Caution: you <b>MUST</b> set, prior to call this function, the
       nNodes vector.
       */
-      void allocateSpace();
+      virtual void allocateSpace();
 
     public:
       //Virtual methods.
@@ -308,18 +308,6 @@ namespace FastNet
 
       //Default methods.
 
-
-      ///Class constuctor.
-      /**
-       This constructor allocates the amount of memory needed
-       for all the pointers in this class. It also initializes the 
-       nNodes and activeNodes vectors, so all the nodes are active and unfrozen.
-       @param[in] nodesDist A vector containing the number of nodes in each layer (including the input layer).
-       @param[in] trfFunction A vector containing the string ID of the transfer function that will be used in each layer (where 0 corresponds to the first hidden layer).
-      */
-      NeuralNetwork(const vector<unsigned> &nodesDist, const vector<string> &trfFunction);
-      
-      
       ///Copy constructor.
       /**
       This constructor should be used to create a new network which is an exactly copy

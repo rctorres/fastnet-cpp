@@ -12,69 +12,6 @@ using namespace std;
 
 namespace FastNet
 {
-  RProp::RProp(const vector<unsigned> &nodesDist, const vector<string> &trfFunction) : Backpropagation(nodesDist, trfFunction)
-  {
-    deltaMax = 50.0;
-    deltaMin = 1E-6;
-    incEta = 1.10;
-    decEta = 0.5;
-    initEta = 0.1;
-    
-    const unsigned size = nNodes.size() - 1;
-    
-    try
-    {
-      //Allocating the biases matrix.
-      prev_db = new REAL* [size];
-      delta_b = new REAL* [size];
-      
-      //Initiallizing with NULL in case of an future error on allocating memory.
-      for (unsigned i=0; i<size; i++) prev_db[i] = delta_b[i] = NULL;
-
-      //Allocating the matrix's collumns.
-      for (unsigned i=0; i<size; i++)
-      {
-        prev_db[i] = new REAL [nNodes[i+1]];
-        delta_b[i] = new REAL [nNodes[i+1]];
-        
-        for (unsigned j=0; j<nNodes[i+1]; j++)
-        {
-          prev_db[i][j] = 0;
-          delta_b[i][j] = initEta;
-        }
-      }
-
-      //Allocating the weight matrices.
-      prev_dw = new REAL** [size];
-      delta_w = new REAL** [size];
-
-      for (unsigned i=0; i<size; i++) prev_dw[i] = delta_w[i] = NULL;
-      for (unsigned i=0; i<size; i++)
-      {
-        prev_dw[i] = new REAL* [nNodes[i+1]];
-        delta_w[i] = new REAL* [nNodes[i+1]];
-
-        for (unsigned j=0; j<nNodes[i+1]; j++) prev_dw[i][j] = delta_w[i][j] = NULL;
-        for (unsigned j=0; j<nNodes[i+1]; j++) 
-        {
-          prev_dw[i][j] = new REAL [nNodes[i]];
-          delta_w[i][j] = new REAL [nNodes[i]];
-
-          for (unsigned k=0; k<nNodes[i]; k++)
-          {
-            prev_dw[i][j][k] = 0;
-            delta_w[i][j][k] = initEta;
-          }
-        }
-      }
-    }
-    catch (bad_alloc xa)
-    {
-      throw;
-    }
-  }
-
-
   RProp::RProp(const RProp &net) : Backpropagation(net)
   {
     deltaMax = net.deltaMax;
@@ -82,43 +19,27 @@ namespace FastNet
     incEta = net.incEta;
     decEta = net.decEta;
     initEta = net.initEta;
-    
-    const unsigned size = nNodes.size() - 1;
-    
-    try
+
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
+
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
     {
-      prev_db = new REAL* [size];
-      delta_b = new REAL* [size];
-      prev_dw = new REAL** [size];
-      delta_w = new REAL** [size];
-      for (unsigned i=0; i<size; i++)
+      memcpy(prev_db[i], net.prev_db[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(delta_b[i], net.delta_b[i], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++) 
       {
-        prev_db[i] = new REAL [nNodes[i+1]];
-        memcpy(prev_db[i], net.prev_db[i], nNodes[i+1]*sizeof(REAL));
-
-        delta_b[i] = new REAL [nNodes[i+1]];
-        memcpy(delta_b[i], net.delta_b[i], nNodes[i+1]*sizeof(REAL));
-
-        prev_dw[i] = new REAL* [nNodes[i+1]];
-        delta_w[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) 
-        {
-          prev_dw[i][j] = new REAL [nNodes[i]];
-          memcpy(prev_dw[i][j], net.prev_dw[i][j], nNodes[i]*sizeof(REAL));
-
-          delta_w[i][j] = new REAL [nNodes[i]];
-          memcpy(delta_w[i][j], net.delta_w[i][j], nNodes[i]*sizeof(REAL));
-        }
+        memcpy(prev_dw[i][j], net.prev_dw[i][j], nNodes[i]*sizeof(REAL));
+        memcpy(delta_w[i][j], net.delta_w[i][j], nNodes[i]*sizeof(REAL));
       }
     }
-    catch (bad_alloc xa)
-    {
-      throw;
-    }    
   }
 
   RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
   {
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
+
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
     else this->deltaMax = 50.0;
@@ -130,6 +51,36 @@ namespace FastNet
     else this->decEta = 0.5;
     if (mxGetField(trnParam, 0, "delta0")) this->initEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delta0")));
     else this->initEta = 0.1;
+  }
+
+
+  void RProp::allocateSpace()
+  {
+    const unsigned size = nNodes.size() - 1;
+    
+    try
+    {
+      prev_db = new REAL* [size];
+      delta_b = new REAL* [size];
+      prev_dw = new REAL** [size];
+      delta_w = new REAL** [size];
+      for (unsigned i=0; i<size; i++)
+      {
+        prev_db[i] = new REAL [nNodes[i+1]];
+        delta_b[i] = new REAL [nNodes[i+1]];
+        prev_dw[i] = new REAL* [nNodes[i+1]];
+        delta_w[i] = new REAL* [nNodes[i+1]];
+        for (unsigned j=0; j<nNodes[i+1]; j++) 
+        {
+          prev_dw[i][j] = new REAL [nNodes[i]];
+          delta_w[i][j] = new REAL [nNodes[i]];
+        }
+      }
+    }
+    catch (bad_alloc xa)
+    {
+      throw;
+    }    
   }
 
 

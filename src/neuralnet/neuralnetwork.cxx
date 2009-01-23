@@ -15,108 +15,25 @@ using namespace std;
 
 namespace FastNet
 {
-  NeuralNetwork::NeuralNetwork(const vector<unsigned> &nodesDist, const vector<string> &trfFunction)
-  {
-    nNodes.assign(nodesDist.begin(), nodesDist.end());
-
-    //Initializing the values, in case of error.
-    weights = NULL;
-    bias = NULL;
-    layerOutputs = NULL;
-    frozenNode = NULL;
-  
-    const unsigned size = nNodes.size() - 1;
-
-    try
-    {
-      //Initializing the nNodes an range vectors.
-      for (unsigned i=0; i<nNodes.size(); i++)
-      {
-        NodesRange aux;
-        aux.init = 0;
-        aux.end = nNodes[i];
-        activeNodes.push_back(aux);
-      }
-
-      //Reading and setting the transfer function in each layer.
-      for (unsigned i=0; i<size; i++)
-      {
-        if (trfFunction[i] == TGH_ID) trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
-        else if (trfFunction[i] == LIN_ID) trfFunc.push_back(&NeuralNetwork::linear);
-        else throw "Transfer function not specified!";
-      }
-
-      //Allocating the bias matrix.
-      bias = new REAL* [size];
-      //Initiallizing with NULL in case of an future error on allocating memory.
-      for (unsigned i=0; i<size; i++) bias[i] = NULL;
-      //Allocating the matrix's collumns.
-      for (unsigned i=0; i<size; i++) bias[i] = new REAL [nNodes[i+1]];
-
-      //Allocating the weight matrix.
-      weights = new REAL** [size];
-      for (unsigned i=0; i<size; i++) weights[i] = NULL;
-      for (unsigned i=0; i<size; i++)
-      {
-        weights[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) weights[i][j] = NULL;
-        for (unsigned j=0; j<nNodes[i+1]; j++) weights[i][j] = new REAL [nNodes[i]];
-      }
-
-      //Allocating space for the hidden outputs (just if we have at least one
-      //hidden layer). The first position in hidOutput will not
-      //be allocated, since it will point directly to the event's input.
-      layerOutputs = new REAL* [nNodes.size()];
-      for (unsigned i=0; i<nNodes.size(); i++) layerOutputs[i] = NULL;
-      for (unsigned i=1; i<nNodes.size(); i++) layerOutputs[i] = new REAL [nNodes[i]];
-
-      //Allocating the frozenNode matrix and initializing with false.
-      frozenNode = new bool* [size];
-      //Initiallizing with NULL in case of an future error on allocating memory.
-      for (unsigned i=0; i<size; i++) frozenNode[i] = NULL;
-      //Allocating the matrix's collumns.
-      for (unsigned i=0; i<size; i++)
-      {
-        frozenNode[i] = new bool [nNodes[i+1]];
-        //Bellow, it's not (i+1) since the freezeNode matrix
-        //has 'size' collums, and not 'nNodes.size()' collums.
-        setFrozen(i, false);
-      }
-
-      //Allocating the using bias vector and initializing with true.
-      usingBias.assign(size, true);
-    }
-    catch (bad_alloc xa)
-    {
-      throw;
-    }
-  }
-
   NeuralNetwork::NeuralNetwork(const NeuralNetwork &net)
   {
-    try
-    {
-      nNodes.assign(net.nNodes.begin(), net.nNodes.end());
-      activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
-      usingBias.assign(net.usingBias.begin(), net.usingBias.end());
-      trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
+    nNodes.assign(net.nNodes.begin(), net.nNodes.end());
+    activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
+    usingBias.assign(net.usingBias.begin(), net.usingBias.end());
+    trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
       
-      //Allocating the memory for the other values.
-      allocateSpace();
+    //Allocating the memory for the other values.
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
 
-      layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
-      for (unsigned i=0; i<(nNodes.size()-1); i++)
-      {
-        memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
-        memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
-        memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
-        for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
-      }
-    }
-    catch (bad_alloc xa)
+    layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
-      throw;
-    }    
+      memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
+      memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+    }   
   }
 
 
@@ -138,7 +55,8 @@ namespace FastNet
     }
     
     //Allocating the memory for the other values.
-    allocateSpace();
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
     
      // This will be a pointer to the input event.
     layerOutputs[0] = NULL;

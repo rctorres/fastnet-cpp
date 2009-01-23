@@ -184,10 +184,9 @@ REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, size_t ep
     const REAL *target = outData->readEvent(evIndex);
     gbError += net->applySupervisedInput(input, target, output);
 
-    //Calculating the weight and bias update values.
+    //Calculating the weight and bias update values
     net->calculateNewWeights(output, target);
   }
-
   return (gbError / static_cast<REAL>(epochSize));
 }
 
@@ -357,7 +356,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp (netStr);
+      net = new RProp(netStr);
       RINGER_REPORT(reporter,"Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
@@ -460,8 +459,11 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     {
       if (!patRecNet)
       {
+        RINGER_REPORT(reporter, "ANTES DO TREINO");
         trnError = trainNetwork(net, inTrnData, outTrnData, trnEpochSize);
+        RINGER_REPORT(reporter, "Apos O TREINO e antes do teste");
         tstError = testNetwork(net, inTstData, outTstData);
+        RINGER_REPORT(reporter, "ANTES O TESTE");
       }
       else
       {

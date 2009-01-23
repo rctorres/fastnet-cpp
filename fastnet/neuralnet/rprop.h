@@ -162,6 +162,13 @@ namespace FastNet
       */
       void updateW(REAL &delta, REAL &d, REAL &prev_d, REAL &w);
 
+      //Dynamically allocates all the memory we need.
+      /**
+      This function will take the nNodes vector ans will allocate all the memory that must be
+      dynamically allocated.
+      */
+      virtual void allocateSpace();
+
     public:
       //Base class virtual methods overrided.
 
@@ -176,17 +183,6 @@ namespace FastNet
       
 
       //Standart methods.
-
-      /// Class constructor.
-      /**
-       This constructor allocates all the memory needed by the class. It
-       also initializes the weights and biases learning rate values with
-       the initial value and also the delta weights and biases values with zero.
-       @param[in] nodesDist a vector containig the number of nodes in each layer (including the input layer).
-       @param[in] trfFunction a vector containig the type of transfer function in each hidden and output layer.
-       @throw bad_alloc in case of error during memory allocation.
-      */
-      RProp(const vector<unsigned> &nodesDist, const vector<string> &trfFunction);
 
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 

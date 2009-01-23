@@ -96,6 +96,13 @@ namespace FastNet
       */
       virtual void retropropagateError(const REAL *output, const REAL *target);
 
+      //Dynamically allocates all the memory we need.
+      /**
+      This function will take the nNodes vector ans will allocate all the memory that must be
+      dynamically allocated.
+      */
+      virtual void allocateSpace();
+
     public:
       //Base class pure virtual methods.
       
@@ -141,20 +148,6 @@ namespace FastNet
       */
       virtual void updateWeights();
 
-      //Standart inline methods.
-
-      /// Class constructor.
-      /**
-       Initializes the network and also dinamically allocates and initializes to zero the 
-       updating bias and weight matrices.
-       @param[in] nodesDist a vector containig the number of nodes in each layer (including the input layer).
-       @param[in] trfFunction a vector containig the type of transfer function in each hidden and output layer.
-       @param[in] lrnRate The learning rate vaue.
-       @param[in] decFac the decreasing factor value (\f$0 < df \leq 1\f$).
-       @throw bad_alloc in case of error during memory allocation.
-      */
-      Backpropagation(const vector<unsigned> &nodesDist, const vector<string> &trfFunction, const REAL lrnRate=0.05, const REAL decFac=1);
-      
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 
         of another network.

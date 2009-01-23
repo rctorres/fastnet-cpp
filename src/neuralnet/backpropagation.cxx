@@ -11,103 +11,57 @@
 
 namespace FastNet
 {
-  Backpropagation::Backpropagation(const vector<unsigned> &nodesDist, const vector<string> &trfFunction, const REAL lrnRate, const REAL decFac) : NeuralNetwork(nodesDist, trfFunction)
-  {
-    const unsigned size = nNodes.size() - 1;
-
-    //Initializing the pointers.
-    sigma = NULL;
-    dw = NULL;
-    db = NULL;
-
-    //Initializing class attributes.
-    learningRate = lrnRate;
-    decFactor = decFac;
-    trnEventCounter = 0;
-    
-    try
-    {
-      //Allocating the delta bias matrix.
-      db = new REAL* [size];
-      //Initiallizing with NULL in case of an future error on allocating memory.
-      for (unsigned i=0; i<size; i++) db[i] = NULL;
-      //Allocating the matrix's collumns.
-      for (unsigned i=0; i<size; i++)
-      {
-        db[i] = new REAL [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) db[i][j] = 0;
-      }
-
-      //Allocating the delta weight matrix.
-      dw = new REAL** [size];
-      for (unsigned i=0; i<size; i++) dw[i] = NULL;
-      for (unsigned i=0; i<size; i++)
-      {
-        dw[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) dw[i][j] = NULL;
-        for (unsigned j=0; j<nNodes[i+1]; j++) 
-        {
-          dw[i][j] = new REAL [nNodes[i]];
-          for (unsigned k=0; k<nNodes[i]; k++) dw[i][j][k] = 0;
-        }
-      }
-
-      //Allocating space for the sigma matrix.
-      sigma = new REAL* [size];
-      for (unsigned i=0; i<size; i++) sigma[i] = NULL;
-      for (unsigned i=0; i<size; i++) sigma[i] = new REAL [nNodes[i+1]];
-    }
-    catch (bad_alloc xa)
-    {
-      throw;
-    }
-  }
-
-
   Backpropagation::Backpropagation(const Backpropagation &net) : NeuralNetwork(net)
   { 
     trnEventCounter = net.trnEventCounter;
     learningRate = net.learningRate;
     decFactor = net.decFactor;
-    
-    const unsigned size = nNodes.size() - 1;
  
-    try
-    {
-      db = new REAL* [size];
-      sigma = new REAL* [size];
-      dw = new REAL** [size];
-      for (unsigned i=0; i<size; i++)
-      {
-        db[i] = new REAL [nNodes[i+1]];
-        memcpy(db[i], net.db[i], nNodes[i+1]*sizeof(REAL));
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
 
-        sigma[i] = new REAL [nNodes[i+1]];
-        memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
-      
-        dw[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) 
-        {
-          dw[i][j] = new REAL [nNodes[i]];
-          memcpy(dw[i][j], net.dw[i][j], nNodes[i]*sizeof(REAL));
-        }
-      }
-    }
-    catch (bad_alloc xa)
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
     {
-      throw;
+      memcpy(db[i], net.db[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(dw[i][j], net.dw[i][j], nNodes[i]*sizeof(REAL));
     }
   }
   
 
   Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
   {
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
+
     //We first test whether the values exists, otherwise, we use default ones.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "lr")) this->learningRate = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
     else this->learningRate = 0.05;
     if (mxGetField(trnParam, 0, "decFactor")) this->decFactor = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "decFactor"))));
     else this->decFactor = 1;
+  }
+
+  void Backpropagation::allocateSpace()
+  {
+    const unsigned size = nNodes.size() - 1;
+    try
+    {
+      db = new REAL* [size];
+      sigma = new REAL* [size];
+      dw = new REAL** [size];
+      for (unsigned i=0; i<size; i++)
+      {
+        db[i] = new REAL [nNodes[i+1]];
+        sigma[i] = new REAL [nNodes[i+1]];
+        dw[i] = new REAL* [nNodes[i+1]];
+        for (unsigned j=0; j<nNodes[i+1]; j++) dw[i][j] = new REAL [nNodes[i]];
+      }
+    }
+    catch (bad_alloc xa)
+    {
+      throw;
+    }
   }
 
   Backpropagation::~Backpropagation()

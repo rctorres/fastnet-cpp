@@ -3,7 +3,7 @@
 @brief NeuralNetwork class implementation file.
 */
 
-#include <ctime>
+#include <iostream>
 #include <new>
 #include <cstdlib>
 #include <vector>
@@ -46,7 +46,7 @@ namespace FastNet
     const mxArray *layers = mxGetField(netStr, 0, "layers");
     for (size_t i=0; i<mxGetM(layers); i++)
     {
-      mxArray *layer = mxGetCell(layers, i);
+      const mxArray *layer = mxGetCell(layers, i);
       this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
       const string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
       if (transFunction == TGH_ID) this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
@@ -68,8 +68,8 @@ namespace FastNet
     const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
     NodesRange aux;
     aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
-    aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode"))) - 1;
-    if ( (aux.init <= aux.end) && (aux.end < nNodes[0]) ) this->activeNodes.push_back(aux);
+    aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
+    if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[0]) ) this->activeNodes.push_back(aux);
     else throw "Invalid nodes init or end values!";
     
     //Verifying if there are frozen nodes and seting them, if so.
@@ -81,8 +81,8 @@ namespace FastNet
       const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
       NodesRange aux;
       aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
-      aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode"))) - 1;
-      if ( (aux.init <= aux.end) && (aux.end < nNodes[(i+1)]) ) this->activeNodes.push_back(aux);
+      aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
+      if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[(i+1)]) ) this->activeNodes.push_back(aux);
       else throw "Invalid nodes init or end values!";
       
       //Getting the using bias information.

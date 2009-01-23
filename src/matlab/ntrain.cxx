@@ -431,6 +431,10 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       }
     }
     
+    ostringstream str;
+    net->showInfo(str);
+    RINGER_REPORT(reporter, "info" << str.str() << "OK");
+    
     RINGER_REPORT(reporter, "Network Training Status:");
     
     // Performing the training.

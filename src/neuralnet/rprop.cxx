@@ -20,7 +20,7 @@ namespace FastNet
     decEta = 0.5;
     initEta = 0.1;
     
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
     
     try
     {
@@ -83,7 +83,7 @@ namespace FastNet
     decEta = net.decEta;
     initEta = net.initEta;
     
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
     
     try
     {
@@ -137,7 +137,7 @@ namespace FastNet
 
   void RProp::updateWeights()
   {
-    for (unsigned i=0; i<(nLayers-1); i++)
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
       {

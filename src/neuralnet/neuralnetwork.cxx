@@ -17,32 +17,27 @@ namespace FastNet
 {
   NeuralNetwork::NeuralNetwork(const vector<unsigned> &nodesDist, const vector<string> &trfFunction)
   {
-    nLayers = nodesDist.size();
+    nNodes.assign(nodesDist.begin(), nodesDist.end());
 
     //Initializing the values, in case of error.
     weights = NULL;
     bias = NULL;
     layerOutputs = NULL;
-    nNodes = NULL;
     trfFunc = NULL;
     activeNodes = NULL;
     frozenNode = NULL;
     usingBias = NULL;
   
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
 
     try
     {
-      //Allocating the nNodes vector.
-      nNodes = new unsigned [nLayers];
-
       //Allocating the nodes range vector.
-      activeNodes = new NodesRange [nLayers];
+      activeNodes = new NodesRange [nNodes.size()];
 
       //Initializing the nNodes an range vectors.
-      for (unsigned i=0; i<nLayers; i++)
+      for (unsigned i=0; i<nNodes.size(); i++)
       {
-        nNodes[i] = nodesDist[i];
         activeNodes[i].init = 0;
         activeNodes[i].end = nNodes[i];
       }
@@ -86,9 +81,9 @@ namespace FastNet
       //Allocating space for the hidden outputs (just if we have at least one
       //hidden layer). The first position in hidOutput will not
       //be allocated, since it will point directly to the event's input.
-      layerOutputs = new REAL* [nLayers];
-      for (unsigned i=0; i<nLayers; i++) layerOutputs[i] = NULL;
-      for (unsigned i=1; i<nLayers; i++) layerOutputs[i] = new REAL [nNodes[i]];
+      layerOutputs = new REAL* [nNodes.size()];
+      for (unsigned i=0; i<nNodes.size(); i++) layerOutputs[i] = NULL;
+      for (unsigned i=1; i<nNodes.size(); i++) layerOutputs[i] = new REAL [nNodes[i]];
 
       //Allocating the frozenNode matrix and initializing with false.
       frozenNode = new bool* [size];
@@ -99,7 +94,7 @@ namespace FastNet
       {
         frozenNode[i] = new bool [nNodes[i+1]];
         //Bellow, it's not (i+1) since the freezeNode matrix
-        //has 'size' collums, and not 'nLayers' collums.
+        //has 'size' collums, and not 'nNodes.size()' collums.
         setFrozen(i, false);
       }
 
@@ -117,18 +112,15 @@ namespace FastNet
   {
     try
     {
-      nLayers = net.nLayers;
-
-      nNodes = new unsigned [nLayers];
-      memcpy(nNodes, net.nNodes, nLayers*sizeof(unsigned));
+      nNodes.assign(net.nNodes.begin(), net.nNodes.end());
       
-      activeNodes = new NodesRange [nLayers];
-      memcpy(activeNodes, net.activeNodes, nLayers*sizeof(NodesRange));
+      activeNodes = new NodesRange [nNodes.size()];
+      memcpy(activeNodes, net.activeNodes, nNodes.size()*sizeof(NodesRange));
       
-      layerOutputs = new REAL* [nLayers];
+      layerOutputs = new REAL* [nNodes.size()];
       layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
     
-      const unsigned size = nLayers-1;
+      const unsigned size = nNodes.size()-1;
       
       trfFunc = new TRF_FUNC_PTR [size];
       memcpy(trfFunc, net.trfFunc, size*sizeof(TRF_FUNC_PTR));
@@ -172,7 +164,7 @@ namespace FastNet
 
   NeuralNetwork::~NeuralNetwork()
   {
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
 
     // Deallocating the transfer function vector.
     if (trfFunc) delete [] trfFunc;
@@ -191,9 +183,6 @@ namespace FastNet
 
       delete [] layerOutputs;
     }
-
-    // Deallocating the nNodes vector.
-    if (nNodes) delete [] nNodes;
 
     // Deallocating the activeNodes vector.
     if (activeNodes) delete [] activeNodes;
@@ -217,9 +206,9 @@ namespace FastNet
   void NeuralNetwork::showInfo(ostream &str) const
   {
     str << "NEURAL NETWORK CONFIGURATION INFO" << endl << endl;
-    str << "Number of Layers (including the input): " << nLayers << endl << endl;
+    str << "Number of Layers (including the input): " << nNodes.size() << endl << endl;
     
-    for (unsigned i=0; i<nLayers; i++)
+    for (unsigned i=0; i<nNodes.size(); i++)
     {
       str << "Layer " << i << " Configuration:" << endl;
       str << "Number of Nodes   : " << nNodes[i] << endl;
@@ -257,7 +246,7 @@ namespace FastNet
 
   inline const REAL* NeuralNetwork::propagateInput(const REAL *input)
   {
-    const unsigned size = (nLayers - 1);
+    const unsigned size = (nNodes.size() - 1);
 
     //Placing the input. though we are removing the const' ness no changes are perfomed.
     layerOutputs[0] = const_cast<REAL*>(input);
@@ -288,7 +277,7 @@ namespace FastNet
     // Choosing a seed based on system time.
     srand(time(NULL) % 10000000);
 
-    for (unsigned i=0; i<(nLayers - 1); i++)
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
     {
       for (unsigned j=activeNodes[i+1].init; j<activeNodes[i+1].end; j++)
       {
@@ -318,7 +307,7 @@ namespace FastNet
 
   inline REAL NeuralNetwork::applySupervisedInput(const REAL *input, const REAL *target, const REAL* &output)
   {
-    int size = (nLayers-1);
+    int size = (nNodes.size()-1);
     REAL error = 0;
 
     //Propagating the input.
@@ -336,7 +325,7 @@ namespace FastNet
   {
     if (b)
     {
-      for (int i=0; i<(nLayers-1); i++)
+      for (int i=0; i<(nNodes.size()-1); i++)
       {
         if (b[i]) delete [] b[i];
       }
@@ -350,7 +339,7 @@ namespace FastNet
   {
     if (w)
     {
-      for (int i=0; i<(nLayers-1); i++)
+      for (int i=0; i<(nNodes.size()-1); i++)
       {
         if (w[i])
         {

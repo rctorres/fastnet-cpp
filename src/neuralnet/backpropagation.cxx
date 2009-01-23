@@ -13,7 +13,7 @@ namespace FastNet
 {
   Backpropagation::Backpropagation(const vector<unsigned> &nodesDist, const vector<string> &trfFunction, const REAL lrnRate, const REAL decFac) : NeuralNetwork(nodesDist, trfFunction)
   {
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
 
     //Initializing the pointers.
     sigma = NULL;
@@ -70,7 +70,7 @@ namespace FastNet
     learningRate = net.learningRate;
     decFactor = net.decFactor;
     
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
  
     try
     {
@@ -114,7 +114,7 @@ namespace FastNet
 
   void Backpropagation::retropropagateError(const REAL *output, const REAL *target)
   {
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
 
     for (unsigned i=activeNodes[size].init; i<activeNodes[size].end; i++) sigma[size-1][i] = (target[i] - output[i]) * CALL_TRF_FUNC(trfFunc[size-1])(output[i], true);
 
@@ -138,7 +138,7 @@ namespace FastNet
 
   void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target)
   {
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
 
     retropropagateError(output, target);
 
@@ -162,7 +162,7 @@ namespace FastNet
 
   void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, unsigned nEv, unsigned nPat)
   {
-    const unsigned size = nLayers - 1;
+    const unsigned size = nNodes.size() - 1;
     const REAL val = 1.0 / static_cast<REAL>(nEv * nPat);
 
     retropropagateError(output, target);
@@ -193,7 +193,7 @@ namespace FastNet
     // Using the inverse, in order to improve speed.
     const REAL invNTrnEv = 1 / static_cast<REAL>(trnEventCounter);
 
-    for (unsigned i=0; i<(nLayers-1); i++)
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       for (unsigned j=activeNodes[i+1].init; j<activeNodes[(i+1)].end; j++)
       {

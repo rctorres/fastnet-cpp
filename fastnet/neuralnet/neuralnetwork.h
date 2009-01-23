@@ -104,16 +104,6 @@ namespace FastNet
       REAL **layerOutputs;
       
 
-      /// Number of layers (including the input layer).
-      /**
-       This attribute holds the number of layer that the network that will use this class
-       has. This value must considerate the input layer, so, if a network is of type
-       20-15-4, this attribute must be 3. It must be exactly the same as the neural network
-       being used.
-      */
-      unsigned nLayers;
-
-      
       /// Store the number of nodes in each layer (including the input layer).
       /**
       This vector must contains the number of nodes in each layer, including the input layer. So,
@@ -121,7 +111,7 @@ namespace FastNet
       It must be exactly the same as the neural network
       being used.
       */
-      unsigned *nNodes;
+      vector<unsigned> nNodes;
 
 
       /// Stores the nodes activation range in each layer.
@@ -254,7 +244,7 @@ namespace FastNet
        the range of active nodes to init=0 and end = nNodes[i] (where i is the current layer)
        for all layers.
       */
-      void resetActiveNodes(){for (unsigned i=0; i<nLayers; i++) setActiveNodes(i, 0, (nNodes[i]-1));};
+      void resetActiveNodes(){for (unsigned i=0; i<nNodes.size(); i++) setActiveNodes(i, 0, (nNodes[i]-1));};
       
       
       /// Propagates the input through the network.
@@ -262,7 +252,7 @@ namespace FastNet
        This method propagates the input data through the network.
        The output of each layer is stored in matrix "layerOutputs".
        @param input  The network's input vector.
-       @return A pointer to the network's output (layerOutputs[nLayers-1]).
+       @return A pointer to the network's output (layerOutputs[nNodes.size()-1]).
       */
       virtual const REAL* propagateInput(const REAL *input);
 
@@ -379,7 +369,7 @@ namespace FastNet
       /**
        @return The number of layers in the network.
       */
-      unsigned getNumLayers() const {return nLayers;};
+      unsigned getNumLayers() const {return nNodes.size();};
 
 
       /// Gets the number of nodes in a specific layer.
@@ -457,7 +447,7 @@ namespace FastNet
       /**
        This method goes through the network and unfrost every node in each.
       */
-      void defrostAll(){for (unsigned i=0; i<(nLayers-1); i++) setFrozen(i, false);};
+      void defrostAll(){for (unsigned i=0; i<(nNodes.size()-1); i++) setFrozen(i, false);};
 
 
       /// Sets if an specific layer will use or not bias.
@@ -476,7 +466,7 @@ namespace FastNet
        This method specifies if the network will, or will not, use bias.
        @param[in] val If true, all layers in the network will use bias, false otherwise.
       */
-      void setUsingBias(bool val) {for (unsigned i=0; i<(nLayers-1); i++) setUsingBias(i, val);};
+      void setUsingBias(bool val) {for (unsigned i=0; i<(nNodes.size()-1); i++) setUsingBias(i, val);};
       
       
       /// Gets if an specific layer is using bias.

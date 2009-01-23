@@ -377,7 +377,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
     const unsigned maxFail = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
 
-    //Checking if the input and output data sizes match the network's input layer.
+    //Checking if the training and testing input data sizes match the network's input layer.
     if (!patRecNet)
     {
       if ( (mxGetM(args[IN_TRN_IDX]) != (*net)[0]) || (mxGetM(args[IN_TST_IDX]) != (*net)[0]) )
@@ -392,7 +392,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       }
     }
     
-    //Checking if the input and output data sizes match the network's output layer.
+    //Checking if the training and testing output data sizes match the network's output layer.
     if (!patRecNet)
     {
       if ( (mxGetM(args[OUT_TRN_IDX]) != (*net)[net->getNumLayers()-1]) || (mxGetM(args[OUT_TST_IDX]) != (*net)[net->getNumLayers()-1]) )
@@ -430,10 +430,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         RINGER_REPORT(reporter, "Total number of testing events      : " << inTstList[i]->getNumEvents());
       }
     }
-    
-    ostringstream str;
-    net->showInfo(str);
-    RINGER_REPORT(reporter, "info" << str.str() << "OK");
     
     RINGER_REPORT(reporter, "Network Training Status:");
     

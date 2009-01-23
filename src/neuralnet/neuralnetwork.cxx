@@ -24,7 +24,6 @@ namespace FastNet
     bias = NULL;
     layerOutputs = NULL;
     trfFunc = NULL;
-    activeNodes = NULL;
     frozenNode = NULL;
     usingBias = NULL;
   
@@ -32,14 +31,13 @@ namespace FastNet
 
     try
     {
-      //Allocating the nodes range vector.
-      activeNodes = new NodesRange [nNodes.size()];
-
       //Initializing the nNodes an range vectors.
       for (unsigned i=0; i<nNodes.size(); i++)
       {
-        activeNodes[i].init = 0;
-        activeNodes[i].end = nNodes[i];
+        NodesRange aux;
+        aux.init = 0;
+        aux.end = nNodes[i];
+        activeNodes.push_back(aux);
       }
 
       //Reading and setting the transfer function in each layer.
@@ -113,9 +111,7 @@ namespace FastNet
     try
     {
       nNodes.assign(net.nNodes.begin(), net.nNodes.end());
-      
-      activeNodes = new NodesRange [nNodes.size()];
-      memcpy(activeNodes, net.activeNodes, nNodes.size()*sizeof(NodesRange));
+      activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
       
       layerOutputs = new REAL* [nNodes.size()];
       layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
@@ -183,9 +179,6 @@ namespace FastNet
 
       delete [] layerOutputs;
     }
-
-    // Deallocating the activeNodes vector.
-    if (activeNodes) delete [] activeNodes;
 
     // Deallocating the frozenNode matrix.
     if (frozenNode)

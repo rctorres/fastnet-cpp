@@ -127,7 +127,7 @@ namespace FastNet
        the specific methods for that end.
        @see FastNet::NeuralNetwork#setActiveNodes
       */
-      NodesRange *activeNodes;
+      vector<NodesRange> activeNodes;
 
 
       /// Specifies if a layer is using bias.

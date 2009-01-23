@@ -139,7 +139,7 @@ REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
  @param[in] outData the output (target) testing events.
  @return The mean testing error obtained after the entire training set is presented to the network.
 */
-REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
+REAL testNetwork(NeuralNetwork *net, MatEvents *inData, MatEvents *outData)
 {
   REAL gbError = 0.;
   const REAL *out;
@@ -171,7 +171,7 @@ REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
  @param[in] epochSize The number of events to apply to the network.
  @return The mean training error obtained after the entire training set is presented to the network.
 */
-REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, const unsigned epochSize)
+REAL trainNetwork(NeuralNetwork *net, MatEvents *inData, MatEvents *outData, const unsigned epochSize)
 {
   unsigned evIndex;
   REAL gbError = 0.;
@@ -205,7 +205,7 @@ REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, const uns
  memory, this vector must come ready to store all outut values, for all patterns.
  @return The mean testing error obtained after the entire training set is presented to the network.
 */
-REAL testPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vector<REAL*> &target, vector< vector<REAL*>* > &output)
+REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<REAL*> &target, vector< vector<REAL*>* > &output)
 {
   const REAL *out;
   REAL gbError = 0;
@@ -244,7 +244,7 @@ REAL testPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vect
  @param[in] epochSize The number of events in each pattern to apply to the network.
  @return The mean training error obtained after the entire training of each pattern set is presented to the network.
 */
-REAL trainPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vector<REAL*> &target, const vector<unsigned> &epochSize)
+REAL trainNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<REAL*> &target, const vector<unsigned> &epochSize)
 {
   unsigned evIndex;
   const REAL *output;
@@ -275,8 +275,8 @@ REAL smallerThan(REAL a, REAL b) {return (a<b);}
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   sys::MatlabReporter *reporter = new sys::MatlabReporter();
-  Events *inTrnData, *outTrnData, *inTstData, *outTstData;
-  vector<Events*> inTrnList, inTstList;
+  MatEvents *inTrnData, *outTrnData, *inTstData, *outTstData;
+  vector<MatEvents*> inTrnList, inTstList;
   vector<REAL*> outList;
   vector< vector<REAL*>* > epochTstOutputs;
   NeuralNetwork *net = NULL;
@@ -464,8 +464,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       }
       else
       {
-        trnError = trainPatRecNet(net, inTrnList, outList, trnEpochList);
-        tstError = testPatRecNet(net, inTstList, outList, epochTstOutputs);
+        trnError = trainNetwork(net, inTrnList, outList, trnEpochList);
+        tstError = testNetwork(net, inTstList, outList, epochTstOutputs);
         if (useSP) tstError = sp(outList, epochTstOutputs);
       }
 

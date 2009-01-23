@@ -62,8 +62,6 @@ void *threadRun(void *params)
   pthread_exit(NULL);
 }
 
-
-
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {

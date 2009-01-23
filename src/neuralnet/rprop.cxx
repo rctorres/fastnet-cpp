@@ -166,5 +166,10 @@ namespace FastNet
     NeuralNetwork::showInfo(str);
     str << "TRAINING ALGORITHM INFORMATION" << endl;
     str << "Training algorithm: Resilient Backpropagation" << endl;
+    str << "Maximum allowed learning rate value (deltaMax) = " << deltaMax << endl;
+    str << "Minimum allowed learning rate value (deltaMin) = " << deltaMin << endl;
+    str << "Learning rate increasing factor (incEta) = " << incEta << endl;
+    str << "Learning rate decreasing factor (decEta) = " << decEta << endl;
+    str << "Initial learning rate value (initEta) = " << initEta << endl;
   }
 }

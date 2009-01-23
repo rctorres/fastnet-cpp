@@ -204,54 +204,6 @@ namespace FastNet
       }
 
 
-      /// Reads the initial weights and biases from the matlab structure.
-      /**
-       This method reads the weights and biases values from the matlab environment
-       passed to this class by its constructor.
-       @param[out] w A pointer to where the weight values will be saved.
-       @param[out] b A pointer to where the bias values will be saved.
-       @see FastNet::NetData#readWeights for information on how the weight 
-       and bias matrixes must be organized.
-      */
-      void readWeights(REAL ***w, REAL **b) const
-      {
-        // It must be of double tye, since the matlab net tructure holds its info with
-        //double precision.
-        MxArrayHandler<double> iw, ib;
-        mxArray *lw;
-        mxArray *lb;
-        
-        //Getting the bias cells vector.
-        lb = mxGetField(mNet, 0, "b");
-        
-        //Processing first the input layer.
-        iw = mxGetCell(mxGetField(mNet, 0, "IW"), 0);
-        ib = mxGetCell(lb, 0);
-        
-        for (unsigned i=0; i<nNodes[1]; i++)
-        {
-          for (unsigned j=0; j<nNodes[0]; j++) w[0][i][j] = static_cast<REAL>(iw(i,j));
-          b[0][i] = static_cast<REAL>(ib(i));
-        }
-        
-        //Processing the other layers.
-        //Getting the weights cell matrix.
-        lw = mxGetField(mNet, 0, "LW");
-        
-        for (unsigned i=1; i<(nLayers-1); i++)
-        {
-          iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
-          ib = mxGetCell(lb, i);
-        
-          for (unsigned j=0; j<nNodes[(i+1)]; j++)
-          {
-            for (unsigned k=0; k<nNodes[i]; k++) w[i][j][k] = static_cast<REAL>(iw(j,k));
-            b[i][j] = static_cast<REAL>(ib(j));
-          }
-        }
-      }
-
-
       /// Writes the training information of a network in a linked list.
       /**
        This method writes in a linked list in memory the information generated

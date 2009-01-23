@@ -41,18 +41,9 @@ namespace FastNet
       //Reading and setting the transfer function in each layer.
       for (unsigned i=0; i<size; i++)
       {
-        if (trfFunction[i] == TGH_ID)
-        {
-          trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
-        }
-        else if (trfFunction[i] == LIN_ID)
-        {
-          trfFunc.push_back(&NeuralNetwork::linear);
-        }
-        else
-        {
-          throw "Transfer function not specified!";
-        }
+        if (trfFunction[i] == TGH_ID) trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
+        else if (trfFunction[i] == LIN_ID) trfFunc.push_back(&NeuralNetwork::linear);
+        else throw "Transfer function not specified!";
       }
 
       //Allocating the bias matrix.
@@ -110,8 +101,133 @@ namespace FastNet
       usingBias.assign(net.usingBias.begin(), net.usingBias.end());
       trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
       
-      layerOutputs = new REAL* [nNodes.size()];
+      //Allocating the memory for the other values.
+      allocateSpace();
+
       layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
+      for (unsigned i=0; i<(nNodes.size()-1); i++)
+      {
+        memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
+        memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
+        memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
+        for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+      }
+    }
+    catch (bad_alloc xa)
+    {
+      throw;
+    }    
+  }
+
+
+  NeuralNetwork::NeuralNetwork(const mxArray *netStr)
+  {
+    //Getting the number of nodes in the input layer.
+    this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
+    
+    //Getting the number of nodes and transfer function in each layer:
+    const mxArray *layers = mxGetField(netStr, 0, "layers");
+    for (size_t i=0; i<mxGetM(layers); i++)
+    {
+      mxArray *layer = mxGetCell(layers, i);
+      this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
+      const string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
+      if (transFunction == TGH_ID) this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
+      else if (transFunction == LIN_ID) this->trfFunc.push_back(&NeuralNetwork::linear);
+      else throw "Transfer function not specified!";
+    }
+    
+    //Allocating the memory for the other values.
+    allocateSpace();
+    
+     // This will be a pointer to the input event.
+    layerOutputs[0] = NULL;
+    
+    //Taking the weights and values info.
+    readWeights(netStr);
+
+    //Getting the active nodes of the input layer.
+    const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
+    NodesRange aux;
+    aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
+    aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode"))) - 1;
+    if ( (aux.init <= aux.end) && (aux.end < nNodes[0]) ) this->activeNodes.push_back(aux);
+    else throw "Invalid nodes init or end values!";
+    
+    //Verifying if there are frozen nodes and seting them, if so.
+    // This loop also set if a given layer is not using bias and the start and end
+    //nodes of each layer.
+    for (unsigned i=0; i<mxGetM(layers); i++)
+    {
+      //Getting the nodes range information.
+      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
+      NodesRange aux;
+      aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
+      aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode"))) - 1;
+      if ( (aux.init <= aux.end) && (aux.end < nNodes[(i+1)]) ) this->activeNodes.push_back(aux);
+      else throw "Invalid nodes init or end values!";
+      
+      //Getting the using bias information.
+      this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
+      
+      //Getting the frozen nodes information.
+      const mxArray *matFNodes = mxGetField(userData, 0, "frozenNodes");
+      const double *fNodes = mxGetPr(matFNodes);
+      for (unsigned j=0; j<mxGetN(matFNodes); j++)
+      {
+        const unsigned node = static_cast<unsigned>(fNodes[j]) - 1;
+        if (node < nNodes[(i+1)]) setFrozen(i, node, true);
+        else throw "Node to be frozen is invalid!";
+      }
+    }
+  }
+
+
+  void NeuralNetwork::readWeights(const mxArray *mNet)
+  {
+    // It must be of double tye, since the matlab net tructure holds its info with
+    //double precision.
+    MxArrayHandler<double> iw, ib;
+    mxArray *lw;
+    mxArray *lb;
+
+    //Getting the bias cells vector.
+    lb = mxGetField(mNet, 0, "b");
+
+    //Processing first the input layer.
+    iw = mxGetCell(mxGetField(mNet, 0, "IW"), 0);
+    ib = mxGetCell(lb, 0);
+
+    for (unsigned i=0; i<nNodes[1]; i++)
+    {
+      for (unsigned j=0; j<nNodes[0]; j++) weights[0][i][j] = static_cast<REAL>(iw(i,j));
+      bias[0][i] = static_cast<REAL>(ib(i));
+    }
+    
+    //Processing the other layers.
+    //Getting the weights cell matrix.
+    lw = mxGetField(mNet, 0, "LW");
+    
+    for (unsigned i=1; i<(nNodes.size()-1); i++)
+    {
+      iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
+      ib = mxGetCell(lb, i);
+    
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
+      {
+        for (unsigned k=0; k<nNodes[i]; k++) weights[i][j][k] = static_cast<REAL>(iw(j,k));
+        bias[i][j] = static_cast<REAL>(ib(j));
+      }
+    }
+  }
+
+
+  void NeuralNetwork::allocateSpace()
+  {
+    try
+    {
+      layerOutputs = new REAL* [nNodes.size()];
+      layerOutputs[0] = NULL; // This will be a pointer to the input event.
     
       const unsigned size = nNodes.size()-1;
       
@@ -122,20 +238,10 @@ namespace FastNet
       for (unsigned i=0; i<size; i++)
       {
         bias[i] = new REAL [nNodes[i+1]];
-        memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
-        
         frozenNode[i] = new bool [nNodes[i+1]];
-        memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
-        
         layerOutputs[i+1] = new REAL [nNodes[i+1]];
-        memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
-
         weights[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++)
-        {
-          weights[i][j] = new REAL [nNodes[i]];
-          memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
-        }
+        for (unsigned j=0; j<nNodes[i+1]; j++) weights[i][j] = new REAL [nNodes[i]];
       }
     }
     catch (bad_alloc xa)
@@ -143,11 +249,7 @@ namespace FastNet
       throw;
     }    
   }
-
-  NeuralNetwork::NeuralNetwork(const mxArray *netStr)
-  {
-  }
-
+  
 
   NeuralNetwork::~NeuralNetwork()
   {

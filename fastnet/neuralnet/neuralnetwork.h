@@ -15,6 +15,7 @@
 
 #include "fastnet/netdata/netdata.h"
 #include "fastnet/defines.h"
+#include "fastnet/events/mxhandler.h"
 
 using namespace std;
 
@@ -212,6 +213,14 @@ namespace FastNet
       void releaseMatrix(REAL ***w);
 
 
+      //Dynamically allocates all the memory we need.
+      /**
+      This function will take the nNodes vector ans will allocate all the memory that must be
+      dynamically allocated. Caution: you <b>MUST</b> set, prior to call this function, the
+      nNodes vector.
+      */
+      void allocateSpace();
+
     public:
       //Virtual methods.
 
@@ -392,17 +401,13 @@ namespace FastNet
       void writeWeights(NetData *data) {data->writeWeights(weights, bias);};
       
       
-      
-      /// Reads the weights and biases values.
+      /// Reads the initial weights and biases from the matlab structure.
       /**
-       This method takes the passed handler and reads the weights and bias values from that
-       handler, so the data are accessed through the handler. The method is implementad 
-       that way, so the weights and biases are protected from not authorized access, 
-       since it can be accessed only by classes that inherits from NetData.
-       @param[in] data The data handler from where the weights ans biases values will be read.
+      This method reads the weights and biases values from the matlab environment passed.
+      @param[in] mNet The Matlab network structure from where to read the weights and biases.
       */
-      void readWeights(const NetData *data) {data->readWeights(weights, bias);};
-      
+      void readWeights(const mxArray *mNet);
+
       
       /// Sets the freeze/unfreeze status of an specific node.
       /**

@@ -14,7 +14,7 @@
 #include <mex.h>
 
 #include "fastnet/reporter/MatlabReporter.h"
-#include "fastnet/neuralnet/backpropagation.h"
+#include "fastnet/neuralnet/feedforward.h"
 #include "fastnet/events/matevents.h"
 #include "fastnet/netdata/matnetdata.h"
 #include "fastnet/defines.h"
@@ -42,14 +42,14 @@ struct ThreadParams
   REAL *inputStartAddr;  // Input starting address to start processing.
   REAL *outputStartAddr;  // Output starting address to start processing.
   unsigned numEvents; // Total number of events to process.
-  Backpropagation *net; // The neural network to use.
+  FeedForward *net; // The neural network to use.
 };
 
 
 void *threadRun(void *params)
 {
   ThreadParams *par = static_cast<ThreadParams*>(params);
-  Backpropagation *net = par->net;
+  FeedForward *net = par->net;
   const unsigned inputSize = (*net)[0];
   const unsigned outputSize = (*net)[par->net->getNumLayers()-1];
   const unsigned numBytes2Copy = outputSize * sizeof(REAL);
@@ -69,80 +69,30 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   sys::MatlabReporter *reporter = new sys::MatlabReporter();
 
-	try
-	{	
-		//Verifying if the number of input parameters is ok.
-		if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
+  try
+  {  
+    //Verifying if the number of input parameters is ok.
+    if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
 
-		//Reading the configuration structure
-		const mxArray *netStr = args[NET_STR_IDX];
-		
-		vector<unsigned> nNodes;
-		//Getting the number of nodes in the input layer.
-		nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
-		
-		//Getting the number of nodes and transfer function in each hidden layer:
-		const mxArray *layers = mxGetField(netStr, 0, "layers");
-		vector<string> trfFunc;
-		for (size_t i=0; i<mxGetM(layers); i++)
-		{
-			mxArray *layer = mxGetCell(layers, i);
-			nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
-			string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
-			trfFunc.push_back(transFunction);
-		}
+    //Reading the configuration structure
+    const mxArray *netStr = args[NET_STR_IDX];
+    
+    // Creating the neural network to use.
+    FeedForward net(netStr);
 
-		//Checking if the input and output data sizes match the network's input layer.
-		if (mxGetM(args[IN_DATA_IDX]) != nNodes[0])
-		  throw "Input training or testing data do not match the network input layer size!";
+    //Checking if the input and output data sizes match the network's input layer.
+    if (mxGetM(args[IN_DATA_IDX]) != net[0])
+      throw "Input training or testing data do not match the network input layer size!";
 
-    // Creating the neural network to use. It can be any type, since we will just propagate the
-    // inputs.
-    Backpropagation net(nNodes, trfFunc);
-		
-		//Creating the network data handler.
-		MatNetData netData(nNodes, netStr);
-		
-		//Initializing the weights and biases.
-		net.readWeights(&netData);
-		
-		//Getting the active nodes of the input layer.
-		const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
-		const mxArray *initNode = mxGetField(userData, 0, "initNode");
-		const mxArray *endNode = mxGetField(userData, 0, "endNode");
-		if ( (initNode) && (endNode) )
-		{
-			const unsigned init = static_cast<unsigned>(mxGetScalar(initNode)) - 1;
-			const unsigned end = static_cast<unsigned>(mxGetScalar(endNode)) - 1;
-			if ( (init <= end) && (end < nNodes[0]) ) net.setActiveNodes(0, init, end);
-			else throw "Invalid nodes init or end values!";
-		}
-		
-		// This loop also set if a given layer is not using bias and the start and end
-		//nodes of each layer.
-		for (unsigned i=0; i<mxGetM(layers); i++)
-		{
-			//Getting the nodes range information.
-			userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-			initNode = mxGetField(userData, 0, "initNode");
-			endNode = mxGetField(userData, 0, "endNode");
-			if ( (initNode) && (endNode) )
-			{
-				const unsigned init = static_cast<unsigned>(mxGetScalar(initNode)) - 1;
-				const unsigned end = static_cast<unsigned>(mxGetScalar(endNode)) - 1;
-				if ( (init <= end) && (end < nNodes[(i+1)]) ) net.setActiveNodes((i+1), init, end);
-				else throw "Invalid nodes init or end values!";
-			}
-			
-			//Getting the using bias information.
-			const mxArray *usingBias = mxGetField(userData, 0, "usingBias");
-			if (usingBias) net.setUsingBias(i, static_cast<bool>(mxGetScalar(usingBias)));			
-		}
-
-    //Crating the input and output access matrices.
+    //Creating the network data handler.
+    vector<unsigned> hack;
+    for (unsigned i=0; i<net.getNumLayers(); i++) hack.push_back(net[i]);
+    MatNetData netData(hack, netStr);
+    
+    //Creating the input and output access matrices.
     const unsigned numEvents = mxGetN(args[IN_DATA_IDX]);
     const unsigned inputSize = mxGetM(args[IN_DATA_IDX]);
-    const unsigned outputSize = nNodes[nNodes.size()-1];
+    const unsigned outputSize = net[net.getNumLayers()-1];
     REAL *inputEvents = static_cast<REAL*>(mxGetData(args[IN_DATA_IDX]));
     mxArray *outData = mxCreateNumericMatrix(outputSize, numEvents, REAL_TYPE, mxREAL);
     REAL *outputEvents = static_cast<REAL*>(mxGetData(outData));
@@ -156,7 +106,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned evPerThread = numEvents / NUM_THREADS;
     for (unsigned i=0; i<NUM_THREADS; i++)
     {
-      params[i].net = new Backpropagation(net);
+      params[i].net = new FeedForward(net);
       //The first thread takes the remaining elements, in case of odd division.
       params[i].numEvents = (i) ? evPerThread : (evPerThread + (numEvents % NUM_THREADS));
       params[i].inputStartAddr = inputEvents;
@@ -177,8 +127,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     
     ret[NET_OUT_IDX] = outData;
-	}
-	catch (const char *msg) RINGER_FATAL(reporter, msg);
-	
-	delete reporter;
+  }
+  catch (const char *msg) RINGER_FATAL(reporter, msg);
+  
+  delete reporter;
 }

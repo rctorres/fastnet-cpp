@@ -119,9 +119,20 @@ namespace FastNet
 
   RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
   {
+    const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
+    if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
+    else this->deltaMax = 50.0;
+    if (mxGetField(trnParam, 0, "min_grad")) this->deltaMin = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "min_grad")));
+    else this->deltaMin = 1E-6;
+    if (mxGetField(trnParam, 0, "delt_inc")) this->incEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_inc")));
+    else this->incEta = 1.10;
+    if (mxGetField(trnParam, 0, "delt_dec")) this->decEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_dec")));
+    else this->decEta = 0.5;
+    if (mxGetField(trnParam, 0, "delta0")) this->initEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delta0")));
+    else this->initEta = 0.1;
   }
 
-  
+
   RProp::~RProp()
   {
     // Deallocating the delta bias matrix.

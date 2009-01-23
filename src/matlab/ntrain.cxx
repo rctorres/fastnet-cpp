@@ -276,12 +276,11 @@ REAL smallerThan(REAL a, REAL b) {return (a<b);}
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   sys::MatlabReporter *reporter = new sys::MatlabReporter();
-  NeuralNetwork *net = NULL;
   Events *inTrnData, *outTrnData, *inTstData, *outTstData;
   vector<Events*> inTrnList, inTstList;
   vector<REAL*> outList;
   vector< vector<REAL*>* > epochTstOutputs;
-  bool useSP;
+  NeuralNetwork *net = NULL;
 
   try
   {  
@@ -333,7 +332,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     // Determining if we will use all the events in each epoch or not.
     vector<size_t> trnEpochList;
-    vector<unsigned> nNodes;
     const unsigned trnEpochSize = (nargin == NUM_ARGS_FULL_EPOCH) ? mxGetN(args[IN_TRN_IDX]) : static_cast<unsigned>(mxGetScalar(args[TRN_EPOCH_SIZE_IDX]));
     if (patRecNet)
     {
@@ -354,23 +352,27 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         for (size_t i=0; i<numPat; i++) trnEpochList.push_back(static_cast<size_t>(numTrnEvEp[i]));
       }
     }
-    
-    //Getting the number of nodes in the input layer.
-    nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
-    
-    //Getting the number of nodes and transfer function in each layer:
-    const mxArray *layers = mxGetField(netStr, 0, "layers");
-    vector<string> trfFunc;
-    for (size_t i=0; i<mxGetM(layers); i++)
-    {
-      mxArray *layer = mxGetCell(layers, i);
-      nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
-      string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
-      trfFunc.push_back(transFunction);
-    }
 
-    // Getting the training agorithm. and the number of epochs.    
+    //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
+    if (trnType == TRAINRP_ID)
+    {
+      net = new RProp (netStr);
+      RINGER_REPORT(reporter,"Starting Resilient Backpropagation training...");
+    }
+    else if (trnType == TRAINGD_ID)
+    {
+      net = new Backpropagation(netStr);
+      RINGER_REPORT(reporter,"Starting Gradient Descendent training...");
+    }
+    else throw "Invalid training algorithm option!";
+
+    //Creating the network data handler.
+    vector<unsigned> hack;
+    for (unsigned i=0; i<net->getNumLayers(); i++) hack.push_back((*net)[i]);
+    MatNetData netData(hack, netStr);
+    
+    //Reading the showing period, epochs and max_fail.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
@@ -379,112 +381,35 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Checking if the input and output data sizes match the network's input layer.
     if (!patRecNet)
     {
-      if ( (mxGetM(args[IN_TRN_IDX]) != nNodes[0]) || (mxGetM(args[IN_TST_IDX]) != nNodes[0]) )
-      {
+      if ( (mxGetM(args[IN_TRN_IDX]) != (*net)[0]) || (mxGetM(args[IN_TST_IDX]) != (*net)[0]) )
         throw "Input training or testing data do not match the network input layer size!";
-      }
     }
     else
     {
       for (unsigned i=0; i<numPat; i++)
       {
-        if ( (mxGetM(mxGetCell(args[IN_TRN_IDX],i)) != nNodes[0]) || (mxGetM(mxGetCell(args[IN_TST_IDX],i)) != nNodes[0]) )
-        {
+        if ( (mxGetM(mxGetCell(args[IN_TRN_IDX],i)) != (*net)[0]) || (mxGetM(mxGetCell(args[IN_TST_IDX],i)) != (*net)[0]) )
           throw "Input training or testing data do not match the network input layer size!";
-        }
       }
     }
     
     //Checking if the input and output data sizes match the network's output layer.
     if (!patRecNet)
     {
-      if ( (mxGetM(args[OUT_TRN_IDX]) != nNodes[nNodes.size()-1]) || (mxGetM(args[OUT_TST_IDX]) != nNodes[nNodes.size()-1]) )
+      if ( (mxGetM(args[OUT_TRN_IDX]) != (*net)[net->getNumLayers()-1]) || (mxGetM(args[OUT_TST_IDX]) != (*net)[net->getNumLayers()-1]) )
         throw "Output training or testing data do not match the network output layer size!";
     }
     else
     {
-      if ( (numPat != nNodes[nNodes.size()-1]) && ( (numPat != 2) || (nNodes[nNodes.size()-1] != 1) ) )
+      if ( (numPat != (*net)[net->getNumLayers()-1]) && ( (numPat != 2) || ((*net)[net->getNumLayers()-1] != 1) ) )
         throw "Number of patterns does not match the number of nodes in the output layer!";
     }
 
-    //Selecting the training type.
-    REAL lr, decFactor;
-    if (trnType == TRAINRP_ID)
-    {
-      net = new RProp (nNodes, trfFunc);
-      RINGER_REPORT(reporter,"Starting Resilient Backpropagation training...");
-    }
-    else if (trnType == TRAINGD_ID)
-    {
-      lr = fabs(static_cast<float>(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
-      decFactor = fabs(static_cast<float>(mxGetScalar(mxGetField(trnParam, 0, "decFactor"))));
-      net = new Backpropagation (nNodes, trfFunc, lr, decFactor);
-      RINGER_REPORT(reporter,"Starting Gradient Descendent training...");
-    }
-    else
-    {
-      throw "Invalid training algorithm option!";
-    }
+    //Getting whether we will use SP stoping criteria.
+    const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
+    const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
 
-    //Creating the network data handler.
-    MatNetData netData(nNodes, netStr);
-    
-    //Initializing the weights and biases.
-    net->readWeights(&netData);
-    
-    //Getting the active nodes of the input layer.
-    const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
-    const mxArray *initNode = mxGetField(userData, 0, "initNode");
-    const mxArray *endNode = mxGetField(userData, 0, "endNode");
-    unsigned init, end;
-    if ( (initNode) && (endNode) )
-    {
-      init = static_cast<unsigned>(mxGetScalar(initNode)) - 1;
-      end = static_cast<unsigned>(mxGetScalar(endNode)) - 1;
-      if ( (init <= end) && (end < nNodes[0]) ) net->setActiveNodes(0, init, end);
-      else throw "Invalid nodes init or end values!";
-    }
-    
-    //Verifying if there are frozen nodes and seting them, if so.
-    // This loop also set if a given layer is not using bias and the start and end
-    //nodes of each layer.
-    for (unsigned i=0; i<mxGetM(layers); i++)
-    {
-      //Getting the nodes range information.
-      userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-      initNode = mxGetField(userData, 0, "initNode");
-      endNode = mxGetField(userData, 0, "endNode");
-      if ( (initNode) && (endNode) )
-      {
-        init = static_cast<unsigned>(mxGetScalar(initNode)) - 1;
-        end = static_cast<unsigned>(mxGetScalar(endNode)) - 1;
-        if ( (init <= end) && (end < nNodes[(i+1)]) ) net->setActiveNodes((i+1), init, end);
-        else throw "Invalid nodes init or end values!";
-      }
-      
-      //Getting whether we will use SP stoping criteria.
-      mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
-      useSP = false;
-      if (usingSP) useSP = static_cast<bool>(mxGetScalar(usingSP));
-      
-      //Getting the using bias information.
-      mxArray *usingBias = mxGetField(userData, 0, "usingBias");
-      if (usingBias) net->setUsingBias(i, static_cast<bool>(mxGetScalar(usingBias)));
-      
-      //Getting the frozen nodes information.
-      mxArray *frozenNodes = mxGetField(userData, 0, "frozenNodes");
-      if (frozenNodes)
-      {
-        double *fNodes = mxGetPr(frozenNodes);
-        for (unsigned j=0; j<mxGetN(frozenNodes); j++)
-        {
-          const unsigned node = static_cast<unsigned>(fNodes[j]) - 1;
-          if (node < nNodes[(i+1)]) net->setFrozen(i, node, true);
-          else throw "Node to be frozen is invalid!";
-        }
-      }  
-    }    
-  
+    //Displaying the training info before starting.
     if (!patRecNet)
     {
       RINGER_REPORT(reporter, "TRAINING DATA INFORMATION (Regular Network)");

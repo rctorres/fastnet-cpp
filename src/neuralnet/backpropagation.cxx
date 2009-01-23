@@ -31,6 +31,8 @@ namespace FastNet
 
   Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
   {
+    this->trnEventCounter = 0;
+    
     //We first test whether the values exists, otherwise, we use default ones.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "lr")) this->learningRate = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
@@ -46,8 +48,9 @@ namespace FastNet
     {
       for (unsigned j=0; j<nNodes[i+1]; j++) 
       {
-        db[i][j] = 0;
-        for (unsigned k=0; k<nNodes[i]; k++) dw[i][j][k] = 0.;
+        this->db[i][j] = 0.;
+        this->sigma[i][j] = 0.;
+        for (unsigned k=0; k<nNodes[i]; k++) this->dw[i][j][k] = 0.;
       }
     }
   }

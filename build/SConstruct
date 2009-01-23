@@ -26,7 +26,7 @@ libInstList = [];
 libMap = {}
 for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib, source = sc_globals.getSourceFiles('../src/%s' % lib),
-                              CCFLAGS = sc_globals.genCPPFlags,
+                              CCFLAGS = sc_globals.genCPPFlags + sc_globals.debugFlag,
                               LIBS = opt['LIBS'] + ['pthread'] + ['mx', 'mex', 'mat', 'm'],
                               LIBPATH = sc_globals.libPath)
   libInstList.append(libName)
@@ -37,7 +37,7 @@ for lib, opt in sc_libs.libs.iteritems():
 matBinList = []
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
-                          CCFLAGS = [], 
+                          CCFLAGS = [] + sc_globals.debugFlag, 
                           LIBS = opt['LIBS'], 
                           LIBPATH = sc_globals.libPath)
   matBinList.append(matBinding);

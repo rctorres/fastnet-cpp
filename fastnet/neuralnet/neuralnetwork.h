@@ -138,7 +138,7 @@ namespace FastNet
        the corresponding function for that.
        @see FastNet::NeuralNetwork#setUsingBias
       */
-      bool *usingBias;
+      vector<bool> usingBias;
 
 
       /// Tells which nodes are frozen.
@@ -458,7 +458,7 @@ namespace FastNet
        @param[in] layer The layer we want to set the use or not of bias (where 0 is the first hidden layer).
        @param[in] val If true, the layer will use bias, false otherwise.
       */
-      void setUsingBias(unsigned layer, bool val);
+      void setUsingBias(const unsigned layer, const bool val);
       
       
       /// Sets if the network will use or not bias.
@@ -466,7 +466,7 @@ namespace FastNet
        This method specifies if the network will, or will not, use bias.
        @param[in] val If true, all layers in the network will use bias, false otherwise.
       */
-      void setUsingBias(bool val) {for (unsigned i=0; i<(nNodes.size()-1); i++) setUsingBias(i, val);};
+      void setUsingBias(const bool val) {for (unsigned i=0; i<(nNodes.size()-1); i++) setUsingBias(i, val);};
       
       
       /// Gets if an specific layer is using bias.
@@ -474,7 +474,7 @@ namespace FastNet
        @param[in] layer The layer we want to know if it is using bias.
        @return True if bias is being used, false otherwise.
       */
-      bool isUsingBias(unsigned layer) const {return usingBias[layer];};
+      bool isUsingBias(const unsigned layer) const {return usingBias[layer];};
 
 
       /// Propagates and input event and calculates the MSE error obtained by comparing to a target output.

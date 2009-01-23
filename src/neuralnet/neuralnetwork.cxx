@@ -25,7 +25,6 @@ namespace FastNet
     layerOutputs = NULL;
     trfFunc = NULL;
     frozenNode = NULL;
-    usingBias = NULL;
   
     const unsigned size = nNodes.size() - 1;
 
@@ -97,8 +96,7 @@ namespace FastNet
       }
 
       //Allocating the using bias vector and initializing with true.
-      usingBias = new bool [size];
-      setUsingBias(true);
+      usingBias.assign(size, true);
     }
     catch (bad_alloc xa)
     {
@@ -112,6 +110,7 @@ namespace FastNet
     {
       nNodes.assign(net.nNodes.begin(), net.nNodes.end());
       activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
+      usingBias.assign(net.usingBias.begin(), net.usingBias.end());
       
       layerOutputs = new REAL* [nNodes.size()];
       layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
@@ -120,9 +119,6 @@ namespace FastNet
       
       trfFunc = new TRF_FUNC_PTR [size];
       memcpy(trfFunc, net.trfFunc, size*sizeof(TRF_FUNC_PTR));
-      
-      usingBias = new bool [size];
-      memcpy(usingBias, net.usingBias, size*sizeof(bool));
       
       bias = new REAL* [size];
       frozenNode = new bool* [size];
@@ -190,9 +186,6 @@ namespace FastNet
 
       delete [] frozenNode;
     }
-
-    //Deallocating the usingBias vector.
-    if (usingBias) delete [] usingBias;
   }
   
   
@@ -349,7 +342,7 @@ namespace FastNet
   }
 
 
-  void NeuralNetwork::setUsingBias(unsigned layer, bool val)
+  void NeuralNetwork::setUsingBias(const unsigned layer, const bool val)
   {
     usingBias[layer] = val;
     
@@ -357,7 +350,7 @@ namespace FastNet
     //in the layer to 0.
     if(!usingBias[layer])
     {
-      for (int i=activeNodes[(layer+1)].init; i<activeNodes[(layer+1)].end; i++)
+      for (unsigned i=activeNodes[(layer+1)].init; i<activeNodes[(layer+1)].end; i++)
       {
         bias[layer][i] = 0;
       }

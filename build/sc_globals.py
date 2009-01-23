@@ -12,6 +12,10 @@ def getSourceFiles(sourcesDir):
 #This is the global compiling flags list.
 genCPPFlags = []
 
+#Uncomment the -g line for optimized code.
+#debugFlag = ['-g']
+debugFlag = []
+
 #This is for finding the MATLAB include and library files withour the mex compiler.
 #You should change this directory accordly so that the BOOST and MATLAB header and lib
 #files can be found.

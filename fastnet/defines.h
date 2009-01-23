@@ -9,12 +9,13 @@
 #define DEFINES_H
 
 #include <mex.h>
+#include <string>
 
 /// Specifies the version of the FastNet package.
 /**
  This define must be used every time the FastNet package version must be presented.
 */
-#define FASTNET_VERSION		"1.00"
+const std::string FASTNET_VERSION = "1.00";
 
 
 ///Implements a very simple exception class for file opening errors.
@@ -34,7 +35,7 @@ typedef const char* DATA_INIT_ERROR;
 /**
 This message should be presented when a open file error exception occurs.
 */
-#define OPEN_FILE_ERROR_MSG "Impossible to open one or more files!"
+const std::string OPEN_FILE_ERROR_MSG = "Impossible to open one or more files!";
 
 
 ///Default size for vectors containing strings.
@@ -83,7 +84,7 @@ This is the only ID for the hyperbolic tangent function for files, so, every tim
 that a file wants to make a reference that it will use this
 function, this reference is done by this value.
 */
-#define TGH_ID "tansig"
+const std::string TGH_ID = "tansig";
 
 
 /// String ID for the linear transfer function.
@@ -92,7 +93,7 @@ This is the only ID for the linear transfer function for files, so, every time
 that a file wants to make a reference that it will use this
 function, this reference is done by this value.
 */
-#define LIN_ID "purelin"
+const std::string LIN_ID = "purelin";
 
 
 /// String ID for the Gradient Descendent Backpropagation neural training.
@@ -101,7 +102,7 @@ This is the only ID for the Gradient Descendent Backpropagation neural training 
 that a file wants to make a reference that it will use this
 training, this reference is done by this value.
 */
-#define TRAINGD_ID "traingd"
+const std::string TRAINGD_ID = "traingd";
 
 
 /// String ID for the Resilient Backpropagation neural training.
@@ -110,11 +111,11 @@ This is the only ID for the Resilient Backpropagation neural training for files,
 that a file wants to make a reference that it will use this
 training, this reference is done by this value.
 */
-#define TRAINRP_ID "trainrp"
+const std::string TRAINRP_ID = "trainrp";
 
 
 /// String ID used to inform that no value has been supplied.
-#define NONE_ID "NONE"
+const std::string NONE_ID = "NONE";
 
 
 /// Macro to calculate the square of a number.

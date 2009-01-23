@@ -41,11 +41,11 @@ namespace FastNet
       //Reading and setting the transfer function in each layer.
       for (unsigned i=0; i<size; i++)
       {
-        if (!strcmp(trfFunction[i].c_str(), TGH_ID))
+        if (trfFunction[i] == TGH_ID)
         {
           trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
         }
-        else if (!strcmp(trfFunction[i].c_str(), LIN_ID))
+        else if (trfFunction[i] == LIN_ID)
         {
           trfFunc.push_back(&NeuralNetwork::linear);
         }

@@ -67,7 +67,7 @@ namespace FastNet
 			@param[in] evIndex The index of the event to be read.
 			@return A pointer to the event to be used.
 			*/
-			virtual const REAL* readEvent(size_t evIndex) = 0;
+			virtual const REAL* readEvent(const unsigned evIndex) = 0;
 			
 			
 			/// Reads a randomic stored event.
@@ -79,7 +79,7 @@ namespace FastNet
 			@param[out] evIndex The randomly choosen index of the event returned.
 			@return A pointer to the randomic event to be used.
 			*/
-			virtual const REAL* readRandomEvent(size_t &evIndex) = 0;
+			virtual const REAL* readRandomEvent(unsigned &evIndex) = 0;
 			
 			
 			/// Points to the begining of the events list.

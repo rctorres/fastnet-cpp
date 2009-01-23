@@ -153,7 +153,7 @@ namespace FastNet
        @param[in] evIndex The index of the event to be returned.
        @return A pointer to the requested event.
       */
-      const REAL* readEvent(size_t evIndex)
+      const REAL* readEvent(const unsigned evIndex)
       {
         unsigned k = 0;
         
@@ -172,7 +172,7 @@ namespace FastNet
        @param[out] evIndex The index of the event returned.
        @return A pointer to the event ramdomly choosen.
       */
-      const REAL* readRandomEvent(size_t &evIndex)
+      const REAL* readRandomEvent(unsigned &evIndex)
       {
         //If we reach the end of the list, we scramble the values again.
         if (rndIndex == numEvents)

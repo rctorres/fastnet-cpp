@@ -85,7 +85,7 @@ const unsigned OUT_TST_ERROR_IDX = 3;
 REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
 {
   const REAL RESOLUTION = 0.001;
-  size_t TARG_SIGNAL, TARG_NOISE;
+  unsigned TARG_SIGNAL, TARG_NOISE;
   
   //We consider that our signal has target output +1 and the noise, -1. So, the if below help us
   //figure out which class is the signal.
@@ -144,7 +144,7 @@ REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
   REAL gbError = 0.;
   const REAL *out;
   
-  for (size_t i=0; i<inData->getNumEvents(); i++)
+  for (unsigned i=0; i<inData->getNumEvents(); i++)
   {
     // Getting the next input and target pair.
     const REAL *input = inData->readEvent(i);
@@ -171,13 +171,13 @@ REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
  @param[in] epochSize The number of events to apply to the network.
  @return The mean training error obtained after the entire training set is presented to the network.
 */
-REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, size_t epochSize)
+REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, const unsigned epochSize)
 {
-  size_t evIndex;
+  unsigned evIndex;
   REAL gbError = 0.;
   const REAL *output;
 
-  for (size_t i=0; i<epochSize; i++)
+  for (unsigned i=0; i<epochSize; i++)
   {
     // Getting the next input and target pair.
     const REAL *input = inData->readRandomEvent(evIndex);
@@ -209,12 +209,12 @@ REAL testPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vect
 {
   const REAL *out;
   REAL gbError = 0;
-  size_t totEvents = 0;
+  unsigned totEvents = 0;
   const unsigned outSize = (*net)[net->getNumLayers()-1];
   
-  for (size_t pat=0; pat<inList.size(); pat++)
+  for (unsigned pat=0; pat<inList.size(); pat++)
   {
-    for (size_t i=0; i<inList[pat]->getNumEvents(); i++)
+    for (unsigned i=0; i<inList[pat]->getNumEvents(); i++)
     {
       // Getting the next input and target pair.
       const REAL *input = inList[pat]->readEvent(i);
@@ -244,16 +244,16 @@ REAL testPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vect
  @param[in] epochSize The number of events in each pattern to apply to the network.
  @return The mean training error obtained after the entire training of each pattern set is presented to the network.
 */
-REAL trainPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vector<REAL*> &target, vector<size_t> epochSize)
+REAL trainPatRecNet(NeuralNetwork *net, const vector<Events*> &inList, const vector<REAL*> &target, const vector<unsigned> &epochSize)
 {
-  size_t evIndex;
+  unsigned evIndex;
   const REAL *output;
   REAL gbError = 0;
   unsigned totEvents = 0;
   
-  for(size_t pat=0; pat<inList.size(); pat++)
+  for(unsigned pat=0; pat<inList.size(); pat++)
   {
-    for (size_t i=0; i<epochSize[pat]; i++)
+    for (unsigned i=0; i<epochSize[pat]; i++)
     {
       // Getting the next input and target pair.
       const REAL *input = inList[pat]->readRandomEvent(evIndex);
@@ -309,7 +309,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       if (mxGetN(args[IN_TRN_IDX]) != mxGetN(args[IN_TST_IDX])) throw "Number of training and testing patterns are not equal";
       patRecNet = true;
       numPat = mxGetN(args[IN_TRN_IDX]);
-      for (size_t i=0; i<numPat; i++)
+      for (unsigned i=0; i<numPat; i++)
       {
         //Getting the training data for each pattern.
         inTrnList.push_back(new MatEvents (mxGetCell(args[IN_TRN_IDX], i)));
@@ -317,30 +317,30 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         inTstList.push_back(new MatEvents (mxGetCell(args[IN_TST_IDX], i)));
         //Generating the desired output for each pattern for maximum sparsed outputs.
         REAL *output = new REAL [numPat];
-        for (size_t j=0; j<numPat; j++) output[j] = -1;
+        for (unsigned j=0; j<numPat; j++) output[j] = -1;
         output[i] = 1;
         //Saving the target in the list.
         outList.push_back(output);
         
         //Allocating space for the generated outputs...
         vector<REAL*> *aux = new vector<REAL*>;
-        for (size_t j=0; j<inTstList[i]->getNumEvents(); j++) aux->push_back(new REAL [numPat]);
+        for (unsigned j=0; j<inTstList[i]->getNumEvents(); j++) aux->push_back(new REAL [numPat]);
         epochTstOutputs.push_back(aux);
       }
     }
     
     // Determining if we will use all the events in each epoch or not.
-    vector<size_t> trnEpochList;
+    vector<unsigned> trnEpochList;
     const unsigned trnEpochSize = (nargin == NUM_ARGS_FULL_EPOCH) ? mxGetN(args[IN_TRN_IDX]) : static_cast<unsigned>(mxGetScalar(args[TRN_EPOCH_SIZE_IDX]));
     if (patRecNet)
     {
       if (nargin == NUM_ARGS_FULL_EPOCH)
       {
-        for (size_t i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(args[IN_TRN_IDX], i)));
+        for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(args[IN_TRN_IDX], i)));
         // If the number of patterns per epochs was not specified, the number of epochs for each
         // class will be the size of the pattern with the largest amount of events.
-        const size_t maxEpochSize = *max_element(trnEpochList.begin(), trnEpochList.end());
-        for (size_t i=0; i<numPat; i++) trnEpochList[i] = maxEpochSize;
+        const unsigned maxEpochSize = *max_element(trnEpochList.begin(), trnEpochList.end());
+        for (unsigned i=0; i<numPat; i++) trnEpochList[i] = maxEpochSize;
       }
       else
       {
@@ -348,7 +348,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
              throw "Number of patterns in the training events per epoch vector are not the same as the total number of patterns!";
 
         const double *numTrnEvEp = mxGetPr(args[TRN_EPOCH_SIZE_IDX]);
-        for (size_t i=0; i<numPat; i++) trnEpochList.push_back(static_cast<size_t>(numTrnEvEp[i]));
+        for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(static_cast<unsigned>(numTrnEvEp[i]));
       }
     }
 
@@ -524,7 +524,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         delete inTrnList[i];
         delete inTstList[i];
         delete [] outList[i];
-        for (size_t j=0; j<epochTstOutputs[i]->size(); j++) delete [] epochTstOutputs[i]->at(j);
+        for (unsigned j=0; j<epochTstOutputs[i]->size(); j++) delete [] epochTstOutputs[i]->at(j);
         delete epochTstOutputs[i];
       }
     }

@@ -37,9 +37,6 @@ namespace FastNet
 
   RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
   {
-    try {allocateSpace();}
-    catch (bad_alloc xa) {throw;}
-
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
     else this->deltaMax = 50.0;
@@ -51,6 +48,25 @@ namespace FastNet
     else this->decEta = 0.5;
     if (mxGetField(trnParam, 0, "delta0")) this->initEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delta0")));
     else this->initEta = 0.1;
+
+    try {allocateSpace();}
+    catch (bad_alloc xa) {throw;}
+
+    //Initializing the dynamically allocated values.
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
+    {
+      for (unsigned j=0; j<nNodes[i+1]; j++) 
+      {
+        prev_db[i][j] = 0.;
+        delta_b[i][j] = this->initEta;
+        
+        for (unsigned k=0; k<nNodes[i]; k++)
+        {
+          prev_dw[i][j][k] = 0.;
+          delta_w[i][j][k] = this->initEta;
+        }
+      }
+    }
   }
 
 

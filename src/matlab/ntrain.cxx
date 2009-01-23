@@ -459,11 +459,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     {
       if (!patRecNet)
       {
-        RINGER_REPORT(reporter, "ANTES DO TREINO");
         trnError = trainNetwork(net, inTrnData, outTrnData, trnEpochSize);
-        RINGER_REPORT(reporter, "Apos O TREINO e antes do teste");
         tstError = testNetwork(net, inTstData, outTstData);
-        RINGER_REPORT(reporter, "ANTES O TESTE");
       }
       else
       {

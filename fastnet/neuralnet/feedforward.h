@@ -39,17 +39,6 @@ namespace FastNet
       void calculateNewWeights(const REAL *output, const REAL *target, unsigned nEv, unsigned nPat){};
       virtual void updateWeights(){};
 
-      /// Class constructor.
-      /**
-       Initializes the network and also dinamically allocates and initializes to zero the 
-       updating bias and weight matrices.
-       @param[in] nodesDist a vector containig the number of nodes in each layer (including the input layer).
-       @param[in] trfFunction a vector containig the type of transfer function in each hidden and output layer.
-       @throw bad_alloc in case of error during memory allocation.
-      */
-      FeedForward(const vector<unsigned> &nodesDist, const vector<string> &trfFunction) 
-        : NeuralNetwork(nodesDist, trfFunction){};
-
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 
         of another network.

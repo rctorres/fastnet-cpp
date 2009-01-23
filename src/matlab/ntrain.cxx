@@ -141,7 +141,7 @@ REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
 */
 REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
 {
-  REAL gbError = 0;
+  REAL gbError = 0.;
   const REAL *out;
   
   for (size_t i=0; i<inData->getNumEvents(); i++)
@@ -174,7 +174,7 @@ REAL testNetwork(NeuralNetwork *net, Events *inData, Events *outData)
 REAL trainNetwork(NeuralNetwork *net, Events *inData, Events *outData, size_t epochSize)
 {
   size_t evIndex;
-  REAL gbError = 0;
+  REAL gbError = 0.;
   const REAL *output;
 
   for (size_t i=0; i<epochSize; i++)

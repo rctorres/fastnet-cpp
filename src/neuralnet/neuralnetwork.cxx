@@ -23,7 +23,6 @@ namespace FastNet
     weights = NULL;
     bias = NULL;
     layerOutputs = NULL;
-    trfFunc = NULL;
     frozenNode = NULL;
   
     const unsigned size = nNodes.size() - 1;
@@ -40,17 +39,15 @@ namespace FastNet
       }
 
       //Reading and setting the transfer function in each layer.
-      trfFunc = new TRF_FUNC_PTR [size];
-      
       for (unsigned i=0; i<size; i++)
       {
         if (!strcmp(trfFunction[i].c_str(), TGH_ID))
         {
-          trfFunc[i] = &NeuralNetwork::hyperbolicTangent;
+          trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
         }
         else if (!strcmp(trfFunction[i].c_str(), LIN_ID))
         {
-          trfFunc[i] = &NeuralNetwork::linear;
+          trfFunc.push_back(&NeuralNetwork::linear);
         }
         else
         {
@@ -111,14 +108,12 @@ namespace FastNet
       nNodes.assign(net.nNodes.begin(), net.nNodes.end());
       activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
       usingBias.assign(net.usingBias.begin(), net.usingBias.end());
+      trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
       
       layerOutputs = new REAL* [nNodes.size()];
       layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
     
       const unsigned size = nNodes.size()-1;
-      
-      trfFunc = new TRF_FUNC_PTR [size];
-      memcpy(trfFunc, net.trfFunc, size*sizeof(TRF_FUNC_PTR));
       
       bias = new REAL* [size];
       frozenNode = new bool* [size];
@@ -157,9 +152,6 @@ namespace FastNet
   NeuralNetwork::~NeuralNetwork()
   {
     const unsigned size = nNodes.size() - 1;
-
-    // Deallocating the transfer function vector.
-    if (trfFunc) delete [] trfFunc;
 
     // Deallocating the bias and weight matrices.
     releaseMatrix(bias);

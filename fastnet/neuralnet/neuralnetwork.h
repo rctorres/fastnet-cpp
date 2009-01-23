@@ -164,7 +164,7 @@ namespace FastNet
        Doing so, there is no overhead during network execution, because
        the pointers are already set up before the execution.
       */
-      TRF_FUNC_PTR *trfFunc;
+      vector<TRF_FUNC_PTR> trfFunc;
 
       //Inline standart methods.
 

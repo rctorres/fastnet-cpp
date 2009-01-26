@@ -396,4 +396,42 @@ namespace FastNet
       }
     }
   }
+
+  void NeuralNetwork::flushBestTrainWeights(mxArray *outNet) const
+  {
+    // It must be of double type, since the matlab net tructure holds its info with
+    //double precision.      
+    MxArrayHandler<double> iw, ib;
+    mxArray *lw;
+    mxArray *lb;
+    
+    //Getting the bias cells vector.
+    lb = mxGetField(outNet, 0, "b");
+    
+    //Processing first the input layer.
+    iw = mxGetCell(mxGetField(outNet, 0, "IW"), 0);
+    ib = mxGetCell(lb, 0);
+    
+    for (unsigned i=0; i<nNodes[1]; i++)
+    {
+      for (unsigned j=0; j<nNodes[0]; j++) iw(i,j) = static_cast<double>(weights[0][i][j]);
+      ib(i) = static_cast<double>(bias[0][i]);
+    }
+    
+    //Processing the other layers.
+    //Getting the weights cell matrix.
+    lw = mxGetField(outNet, 0, "LW");
+    
+    for (unsigned i=1; i<(nNodes.size()-1); i++)
+    {
+      iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
+      ib = mxGetCell(lb, i);
+          
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
+      {
+        for (unsigned k=0; k<nNodes[i]; k++) iw(j,k) = static_cast<double>(weights[i][j][k]);
+        ib(j) = static_cast<double>(bias[i][j]);
+      }
+    }
+  }
 }

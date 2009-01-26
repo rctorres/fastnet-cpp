@@ -512,7 +512,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     ret[OUT_NET_IDX] = mxDuplicateArray(netStr);
   
     //Saving the training results.
-    netData.flushWeights(ret[OUT_NET_IDX]);    
+    net->flushBestTrainWeights(ret[OUT_NET_IDX]);    
     netData.flushErrors(ret[OUT_EPOCH_IDX], ret[OUT_TRN_ERROR_IDX], ret[OUT_TST_ERROR_IDX]);
     
     //Deleting the allocated memory.

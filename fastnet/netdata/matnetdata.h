@@ -256,54 +256,6 @@ namespace FastNet
       }
 
 
-      /// Flush weights from memory to an Matlab variable.
-      /**
-       Since this class, in order to optimize speed, saves the
-       weights and bias values into memory, at the end, if the user wants
-       to save the final values, this method must be called. It will
-       save the weights and biases values stored in the memory buffer in a matlab variable.
-       So, this method can only be used after the writeWeights has been called at least once.
-       @param[out] outNet The matlab network structure to where the weights and biases will be saved to.
-      */
-      void flushWeights(mxArray *outNet)
-      {
-        // It must be of double tye, since the matlab net tructure holds its info with
-        //double precision.      
-        MxArrayHandler<double> iw, ib;
-        mxArray *lw;
-        mxArray *lb;
-        
-        //Getting the bias cells vector.
-        lb = mxGetField(outNet, 0, "b");
-        
-        //Processing first the input layer.
-        iw = mxGetCell(mxGetField(outNet, 0, "IW"), 0);
-        ib = mxGetCell(lb, 0);
-        
-        for (unsigned i=0; i<nNodes[1]; i++)
-        {
-          for (unsigned j=0; j<nNodes[0]; j++) iw(i,j) = static_cast<double>(weight[0][i][j]);
-          ib(i) = static_cast<double>(bias[0][i]);
-        }
-        
-        //Processing the other layers.
-        //Getting the weights cell matrix.
-        lw = mxGetField(outNet, 0, "LW");
-        
-        for (unsigned i=1; i<(nLayers-1); i++)
-        {
-          iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
-          ib = mxGetCell(lb, i);
-              
-          for (unsigned j=0; j<nNodes[(i+1)]; j++)
-          {
-            for (unsigned k=0; k<nNodes[i]; k++) iw(j,k) = static_cast<double>(weight[i][j][k]);
-            ib(j) = static_cast<double>(bias[i][j]);
-          }
-        }
-      }
-
-
       /// Flush errors from memory to an Matlab structure
       /**
        Since this class, in order to optimize speed, saves the

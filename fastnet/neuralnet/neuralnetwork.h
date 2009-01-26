@@ -497,6 +497,18 @@ namespace FastNet
        @return The MSE error calculated.
       */
       virtual REAL applySupervisedInput(const REAL *input, const REAL *target, const REAL* &output);
+
+
+      /// Flush weights from memory to a Matlab variable.
+      /**
+       Since this class, in order to optimize speed, saves the
+       weights and bias values into memory, at the end, if the user wants
+       to save the final values, this method must be called. It will
+       save the weights and biases values stored in the memory buffer in a matlab variable.
+       So, this method can only be used after the writeWeights has been called at least once.
+       @param[out] outNet The matlab network structure to where the weights and biases will be saved to.
+      */
+      void flushBestTrainWeights(mxArray *outNet) const;
   };
 }
 

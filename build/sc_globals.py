@@ -13,8 +13,8 @@ def getSourceFiles(sourcesDir):
 genCPPFlags = []
 
 #Uncomment the -g line for optimized code.
-#debugFlag = ['-g']
-debugFlag = []
+debugFlag = ['-g' '-DDEBUG']
+#debugFlag = []
 
 #This is for finding the MATLAB include and library files withour the mex compiler.
 #You should change this directory accordly so that the BOOST and MATLAB header and lib

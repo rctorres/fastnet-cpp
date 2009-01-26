@@ -30,25 +30,42 @@ namespace sys
      * Report something to the user.
      * @param info What to report.
      */
-    virtual bool report (const std::string& info)=0;
+    virtual void report (const std::string& info)
+    {
+      mexPrintf((info + "\n").c_str());
+      mexEvalString("drawnow;");
+    }
+
 
     /**
      * Warn the user about a problem.
      * @param info What to warn about.
      */
-    virtual bool warn (const std::string& info)=0;
+    virtual void warn (const std::string& info)
+    {
+      mexWarnMsgTxt((info + "\n").c_str());
+      mexEvalString("drawnow;");
+    }
+
 
     /**
      * Warn the user about a problem and std::exit() afterwards.
      * @param info What to report about the problem.
      */
-    virtual bool fatal (const std::string& info)=0;
+    virtual void fatal (const std::string& info)
+    {
+      mexErrMsgTxt((info + "\n").c_str());
+    }
 
     /**
      * Warn the user about an exception.
      * @param info What to report about the problem.
      */
-    virtual bool except (const std::string& info)=0;    
+    virtual void except (const std::string& info)
+    {
+      mexWarnMsgTxt((info + "\n").c_str());
+      mexEvalString("drawnow;");
+    }
   };
 }
 

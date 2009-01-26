@@ -318,7 +318,7 @@ namespace FastNet
        @param[in] nEv Number of events for the pattern whoose output was generated.
        @param[in] nPat Number of patterns being applied to the neural network.
       */
-      virtual void calculateNewWeights(const REAL *output, const REAL *target, unsigned nEv, unsigned nPat) = 0;
+      virtual void calculateNewWeights(const REAL *output, const REAL *target, const unsigned nEv, const unsigned nPat) = 0;
       
       /// Updates the neural network's weights and biases.
       /**

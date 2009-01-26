@@ -136,7 +136,7 @@ namespace FastNet
     trnEventCounter++;
   }
 
-  void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, unsigned nEv, unsigned nPat)
+  void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, const unsigned nEv, const unsigned nPat)
   {
     const unsigned size = nNodes.size() - 1;
     const REAL val = 1.0 / static_cast<REAL>(nEv * nPat);
@@ -167,7 +167,7 @@ namespace FastNet
     if (!trnEventCounter) return;
 
     // Using the inverse, in order to improve speed.
-    const REAL invNTrnEv = 1 / static_cast<REAL>(trnEventCounter);
+    const REAL invNTrnEv = (!trnEventCounter) ? 1. : 1. / static_cast<REAL>(trnEventCounter);
 
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {

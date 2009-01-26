@@ -59,6 +59,12 @@
 #define DEBUG2(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #endif
 
+#else //debug
+
+#define DEBUG0(m)
+#define DEBUG1(m)
+#define DEBUG2(m)
+
 #endif //DEBUG
 
 #endif /* REPORTER_H */ 

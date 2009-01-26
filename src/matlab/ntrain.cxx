@@ -424,14 +424,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else throw "Invalid training algorithm option!";
     
-    #ifdef DEBUG
-    {
-      ostringstream auxStr;
-      net->showInfo(auxStr);
-      DEBUG0(auxStr.str());
-    }
-    #endif
-    
     //Reading the showing period, epochs and max_fail.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));

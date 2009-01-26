@@ -16,7 +16,6 @@
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/neuralnet/feedforward.h"
 #include "fastnet/events/matevents.h"
-#include "fastnet/netdata/matnetdata.h"
 #include "fastnet/defines.h"
 #include "fastnet/events/mxhandler.h"
 
@@ -80,11 +79,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (mxGetM(args[IN_DATA_IDX]) != net[0])
       throw "Input training or testing data do not match the network input layer size!";
 
-    //Creating the network data handler.
-    vector<unsigned> hack;
-    for (unsigned i=0; i<net.getNumLayers(); i++) hack.push_back(net[i]);
-    MatNetData netData(hack, netStr);
-    
     //Creating the input and output access matrices.
     const unsigned numEvents = mxGetN(args[IN_DATA_IDX]);
     const unsigned inputSize = mxGetM(args[IN_DATA_IDX]);

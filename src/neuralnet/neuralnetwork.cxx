@@ -30,9 +30,14 @@ namespace FastNet
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(savedB[i], net.savedB[i], nNodes[i+1]*sizeof(REAL));
       memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
       memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
-      for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++)
+      {
+        memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+        memcpy(savedW[i][j], net.savedW[i][j], nNodes[i]*sizeof(REAL));
+      }
     }   
   }
 
@@ -75,6 +80,9 @@ namespace FastNet
     
     //Taking the weights and values info.
     readWeights(netStr);
+    
+    //The savedW and savedB matrices are initialized with the read weights and biases values.
+    saveBestTrain();
 
     //Getting the active nodes of the input layer.
     const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
@@ -178,16 +186,24 @@ namespace FastNet
       const unsigned size = nNodes.size()-1;
       
       bias = new REAL* [size];
+      savedB = new REAL* [size];
       frozenNode = new bool* [size];
       weights = new REAL** [size];
+      savedW = new REAL** [size];
 
       for (unsigned i=0; i<size; i++)
       {
         bias[i] = new REAL [nNodes[i+1]];
+        savedB[i] = new REAL [nNodes[i+1]];
         frozenNode[i] = new bool [nNodes[i+1]];
         layerOutputs[i+1] = new REAL [nNodes[i+1]];
         weights[i] = new REAL* [nNodes[i+1]];
-        for (unsigned j=0; j<nNodes[i+1]; j++) weights[i][j] = new REAL [nNodes[i]];
+        savedW[i] = new REAL* [nNodes[i+1]];
+        for (unsigned j=0; j<nNodes[i+1]; j++)
+        {
+          weights[i][j] = new REAL [nNodes[i]];
+          savedW[i][j] = new REAL [nNodes[i]];
+        }
       }
     }
     catch (bad_alloc xa)
@@ -203,7 +219,9 @@ namespace FastNet
 
     // Deallocating the bias and weight matrices.
     releaseMatrix(bias);
+    releaseMatrix(savedB);
     releaseMatrix(weights);
+    releaseMatrix(savedW);
     
     // Deallocating the hidden outputs matrix.
     if (layerOutputs)
@@ -414,8 +432,8 @@ namespace FastNet
     
     for (unsigned i=0; i<nNodes[1]; i++)
     {
-      for (unsigned j=0; j<nNodes[0]; j++) iw(i,j) = static_cast<double>(weights[0][i][j]);
-      ib(i) = static_cast<double>(bias[0][i]);
+      for (unsigned j=0; j<nNodes[0]; j++) iw(i,j) = static_cast<double>(savedW[0][i][j]);
+      ib(i) = static_cast<double>(savedB[0][i]);
     }
     
     //Processing the other layers.
@@ -429,8 +447,8 @@ namespace FastNet
           
       for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=0; k<nNodes[i]; k++) iw(j,k) = static_cast<double>(weights[i][j][k]);
-        ib(j) = static_cast<double>(bias[i][j]);
+        for (unsigned k=0; k<nNodes[i]; k++) iw(j,k) = static_cast<double>(savedW[i][j][k]);
+        ib(j) = static_cast<double>(savedB[i][j]);
       }
     }
   }

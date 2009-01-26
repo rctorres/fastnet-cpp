@@ -479,7 +479,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       // Saving the best weight result.
       if ((*comp)(tstError,minTstError))
       {
-        net->writeWeights(&netData);
+        net->saveBestTrain();
         minTstError = tstError;
         //Reseting the numFails counter.
         numFails = 0;

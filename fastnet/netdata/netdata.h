@@ -87,21 +87,7 @@ namespace FastNet
 
 			//Pure virtual members.
 			
-			/// Writes weight and biases.
-			/**
-			 This virtual method should be called when the calling function
-			 wants to save the weights of a neural network in a medium (disk file, memory, remote server, etc)
-			 that will be defined by the inherited class that implements this method.
-			 @param[in] w The weights matrix, where the dimensions (w[x][y][z])are:
-				- x: the layer index (where 0 is the first hidden layer).
-				- y: the index of the node in layer x.
-				- z: the index of the node in layer x-1.
-			 @param[in] b The biases matrix, where the dimensions (b[x][y]) are:
-				- x: the layer index (where 0 is the first hidden layer).
-				- y: the index of the node in layer x.
-			*/
-			virtual void writeWeights(REAL ***w, REAL **b) = 0;
-			
+
 			/// Writes network's training information.
 			/**
 			 This virtual method writes results obtained during the middle of the training

@@ -176,32 +176,6 @@ namespace FastNet
       }
       
       
-      /// Writes the weights in a memory buffer.
-      /**
-       To improve speed during training, where the weights values change a lot,
-       this function stores these values in a memory buffer, without loss
-       of performance. But this function DOES NOT stores those values in a non-volatile
-       environment, so these values are lost after the training is finished. In order to
-       actually save the weights and biases for posterior use in matlab, you must call, after the training is
-       done, the flushWeights method.
-       @param[in] w the weight matrix to be saved.
-       @param[in] b the biases matrix to be saved.
-       @see FastNet::NetData#writeWeights for information on how the weight and bias matrixes must be organized.
-       @see FastNet::MatNetData#flushWeights for information on how the save 
-       the weights and biases for posterior use in matlab.
-      */
-      void writeWeights(REAL ***w, REAL **b)
-      {
-        for (unsigned i=0; i<(nLayers-1); i++)
-        {
-          memcpy(bias[i], b[i], nNodes[(i+1)]*sizeof(REAL));
-          
-          for (unsigned j=0; j<nNodes[(i+1)]; j++)
-          {
-            memcpy(weight[i][j], w[i][j], nNodes[i]*sizeof(REAL));
-          }
-        }
-      }
 
 
       /// Writes the training information of a network in a linked list.

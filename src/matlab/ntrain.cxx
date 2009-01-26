@@ -10,6 +10,7 @@
 */
 
 #include <vector>
+#include <list>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -19,7 +20,6 @@
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/events/matevents.h"
-#include "fastnet/netdata/matnetdata.h"
 #include "fastnet/defines.h"
 #include "fastnet/events/mxhandler.h"
 
@@ -70,6 +70,65 @@ const unsigned OUT_TRN_ERROR_IDX = 2;
 
 //Index, in the return vector, of the vector containing the testing error obtained in each epoch.
 const unsigned OUT_TST_ERROR_IDX = 3;
+
+//This struct will hold the traiing info to be ruterned to the user.
+struct TrainData
+{
+  REAL epoch;;
+  REAL trnError;
+  REAL tstError;
+};
+
+ /// Writes the training information of a network in a linked list.
+ /**
+  This method writes in a linked list in memory the information generated
+  by the network during training, for improved speed. To actually stores this
+  values for posterior use in matlab, you must call, at the end of the training process,
+  the flushErrors method. 
+  @param[in] epoch The epoch number.
+  @param[in] trnError The training error obtained in that epoch.
+  @param[in] tstError The testing error obtained in that epoch.
+  @param[out] trnList The list where to save the info.
+ */
+ void saveTrainInfo(unsigned epoch, REAL trnError, REAL tstError, list<TrainData> &trnList)
+ {
+   TrainData trainData;
+   trainData.epoch = (REAL) epoch;
+   trainData.trnError = trnError;
+   trainData.tstError = tstError;
+   trnList.push_back(trainData);
+ }
+
+
+/// Flush trining evolution info to Matlab vectors.
+/**
+ Since this class, in order to optimize speed, saves the
+ training information (epochs and errors) values into memory, at the end, if the user wants
+ to save the final values, this method must be called. It will
+ save these values stored in the linked list in Matlab vectors.
+ @param[in] trnList The list where the training evolution info is stored.
+ @param[out] epoch A vector containing the epochs values.
+ @param[out] trnError A vector containing the training error obtained in each epoch.
+ @param[out] tstErrorA vector containing the testing error obtained in each epoch.
+*/
+void flushTrainInfo(const list<TrainData> &trnList, mxArray *&epoch, mxArray *&trnError, mxArray *&tstError)
+{
+  const unsigned size = trnList.size();  
+  epoch = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+  trnError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+  tstError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+
+  REAL *ep = static_cast<REAL*>(mxGetData(epoch));
+  REAL *trn = static_cast<REAL*>(mxGetData(trnError));
+  REAL *tst = static_cast<REAL*>(mxGetData(tstError));
+  
+  for (list<TrainData>::const_iterator itr = trnList.begin(); itr != trnList.end(); itr++)
+  {
+    *ep++ = itr->epoch;
+    *trn++ = itr->trnError;
+    *tst++ = itr->tstError;
+  }
+}
 
 
 /// Calculates the SP product.
@@ -373,11 +432,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     #endif
     
-    //Creating the network data handler.
-    vector<unsigned> hack;
-    for (unsigned i=0; i<net->getNumLayers(); i++) hack.push_back((*net)[i]);
-    MatNetData netData(hack, netStr);
-    
     //Reading the showing period, epochs and max_fail.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
@@ -447,6 +501,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     REAL maxSP = 0.;
     unsigned dispCounter = 0;
     string tstText;
+    list<TrainData> trnEvolutionData;
     REAL (*comp)(REAL, REAL);
     
     if (patRecNet && useSP) // If using the SP criterium, we must aim at maximizing it.
@@ -495,8 +550,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         }
         dispCounter = (dispCounter + 1) % show;
       }
-            
-      netData.writeErrors(epoch, trnError, tstError);
+
+      //Saving the training evolution info.
+      saveTrainInfo(epoch, trnError, tstError, trnEvolutionData);
 
       //Updating the weight and bias matrices.
       net->updateWeights();
@@ -512,8 +568,10 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     ret[OUT_NET_IDX] = mxDuplicateArray(netStr);
   
     //Saving the training results.
-    net->flushBestTrainWeights(ret[OUT_NET_IDX]);    
-    netData.flushErrors(ret[OUT_EPOCH_IDX], ret[OUT_TRN_ERROR_IDX], ret[OUT_TST_ERROR_IDX]);
+    net->flushBestTrainWeights(ret[OUT_NET_IDX]);
+    
+    //Returning the training evolution info.
+    flushTrainInfo(trnEvolutionData, ret[OUT_EPOCH_IDX], ret[OUT_TRN_ERROR_IDX], ret[OUT_TST_ERROR_IDX]);
     
     //Deleting the allocated memory.
     delete net;

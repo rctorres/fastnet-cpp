@@ -15,7 +15,6 @@
 
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/neuralnet/feedforward.h"
-#include "fastnet/events/matevents.h"
 #include "fastnet/defines.h"
 #include "fastnet/events/mxhandler.h"
 

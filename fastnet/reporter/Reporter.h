@@ -58,36 +58,36 @@ namespace sys
  * messages are printed. If above or equal 2, report messages are
  * also printed. Fatal and exceptions messages are always printed.
  */
-#ifndef RINGER_VERBOSE
-#define RINGER_VERBOSE 2
+#ifndef VERBOSE
+#define VERBOSE 2
 #endif
 
 /**
  * Defines a simpler way to report messages
  */
-#if (RINGER_VERBOSE>=2) 
-#define RINGER_REPORT(r,m) {std::ostringstream s; s << m; r->report(s.str());}
+#if (VERBOSE>=2) 
+#define REPORT(r,m) {std::ostringstream s; s << m; r->report(s.str());}
 #else
-#define RINGER_REPORT(r,m)
+#define REPORT(r,m)
 #endif
 
 /**
  * Defines a simpler way to report messages
  */
-#define RINGER_FATAL(r,m) {std::ostringstream s; s << m; r->fatal(s.str());}
+#define FATAL(r,m) {std::ostringstream s; s << m; r->fatal(s.str());}
 
 /**
  * Defines a simpler way to report messages
  */
-#define RINGER_EXCEPT(r,m) {std::ostringstream s; s << m; r->except(s.str());}
+#define EXCEPT(r,m) {std::ostringstream s; s << m; r->except(s.str());}
 
 /**
  * Defines a simpler way to report messages
  */
-#if (RINGER_VERBOSE>=1)
-#define RINGER_WARN(r,m) {std::ostringstream s; s << m; r->warn(s.str());}
+#if (VERBOSE>=1)
+#define WARN(r,m) {std::ostringstream s; s << m; r->warn(s.str());}
 #else
-#define RINGER_WARN(r,m)
+#define WARN(r,m)
 #endif
 
 #endif /* REPORTER_H */ 

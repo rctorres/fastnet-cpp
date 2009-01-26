@@ -126,7 +126,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     ret[NET_OUT_IDX] = outData;
   }
-  catch (const char *msg) RINGER_FATAL(reporter, msg);
+  catch (const char *msg) FATAL(reporter, msg);
   
   delete reporter;
 }

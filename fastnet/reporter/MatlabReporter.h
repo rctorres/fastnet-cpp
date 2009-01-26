@@ -7,8 +7,8 @@
  * sys::MatlabReporter. 
  */
 
-#ifndef RINGER_SYS_MATLABREPORTER_H
-#define RINGER_SYS_MATLABREPORTER_H
+#ifndef SYS_MATLABREPORTER_H
+#define SYS_MATLABREPORTER_H
 
 #include <iostream>
 #include <string>
@@ -67,4 +67,4 @@ namespace sys {
 
 }
 
-#endif /* RINGER_SYS_MATLABREPORTER_H */
+#endif /* SYS_MATLABREPORTER_H */

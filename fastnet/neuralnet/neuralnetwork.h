@@ -16,6 +16,7 @@
 #include "fastnet/netdata/netdata.h"
 #include "fastnet/defines.h"
 #include "fastnet/events/mxhandler.h"
+#include "fastnet/reporter/Reporter.h"
 
 using namespace std;
 
@@ -405,7 +406,11 @@ namespace FastNet
        @param[in] node The index of the node.
        @param[in] freezed If true, the node is set as freezed, otherwise it is set as unfreezed.
       */
-      void setFrozen(unsigned layer, unsigned node, bool frozen) {frozenNode[layer][node] = frozen;};
+      void setFrozen(unsigned layer, unsigned node, bool frozen)
+      {
+        frozenNode[layer][node] = frozen;
+        DEBUG1("frozenNode["<< layer << "]["<< node << "] = "<< frozen);
+      };
 
       
       /// Sets the frozen/unfrozen status of an entire layer.

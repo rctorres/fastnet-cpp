@@ -39,8 +39,11 @@ namespace FastNet
 
   NeuralNetwork::NeuralNetwork(const mxArray *netStr)
   {
+    DEBUG0("Initializing the NeuralNetwork class from a Matlab Network structure.");
+
     //Getting the number of nodes in the input layer.
     this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
+    DEBUG1("Number of nodes in layer 0: " << nNodes[0]);
     
     //Getting the number of nodes and transfer function in each layer:
     const mxArray *layers = mxGetField(netStr, 0, "layers");
@@ -48,9 +51,18 @@ namespace FastNet
     {
       const mxArray *layer = mxGetCell(layers, i);
       this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
+      DEBUG1("Number of nodes in layer " << (i+1) << ": " << nNodes[(i+1)]);
       const string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
-      if (transFunction == TGH_ID) this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
-      else if (transFunction == LIN_ID) this->trfFunc.push_back(&NeuralNetwork::linear);
+      if (transFunction == TGH_ID)
+      {
+        this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
+        DEBUG1("Transfer function in layer " << (i+1) << ": tanh");
+      }
+      else if (transFunction == LIN_ID)
+      {
+        this->trfFunc.push_back(&NeuralNetwork::linear);
+        DEBUG1("Transfer function in layer " << (i+1) << ": purelin");
+      }
       else throw "Transfer function not specified!";
     }
     
@@ -71,6 +83,7 @@ namespace FastNet
     aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
     if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[0]) ) this->activeNodes.push_back(aux);
     else throw "Invalid nodes init or end values!";
+    DEBUG1("Active nodes in layer 0 goes from " << this->activeNodes[0].init << " to " << this->activeNodes[0].end);
     
     //Verifying if there are frozen nodes and seting them, if so.
     // This loop also set if a given layer is not using bias and the start and end
@@ -84,11 +97,16 @@ namespace FastNet
       aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
       if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[(i+1)]) ) this->activeNodes.push_back(aux);
       else throw "Invalid nodes init or end values!";
+      DEBUG1("Active nodes in layer " << (i+1) << " goes from " << this->activeNodes[(i+1)].init << " to " << this->activeNodes[(i+1)].end);
       
       //Getting the using bias information.
       this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
+      DEBUG1("Layer " << (i+1) << " is using bias? " << this->usingBias[i]);
       
-      //Getting the frozen nodes information.
+      // For the frozen nodes, we first initialize them all as unfrozen.
+      setFrozen(i, false);
+      
+      //Getting from Matlab any possible frozen nodes.
       const mxArray *matFNodes = mxGetField(userData, 0, "frozenNodes");
       const double *fNodes = mxGetPr(matFNodes);
       for (unsigned j=0; j<mxGetN(matFNodes); j++)
@@ -118,8 +136,13 @@ namespace FastNet
 
     for (unsigned i=0; i<nNodes[1]; i++)
     {
-      for (unsigned j=0; j<nNodes[0]; j++) weights[0][i][j] = static_cast<REAL>(iw(i,j));
+      for (unsigned j=0; j<nNodes[0]; j++)
+      {
+        weights[0][i][j] = static_cast<REAL>(iw(i,j));
+        DEBUG1("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
+      }
       bias[0][i] = static_cast<REAL>(ib(i));
+      DEBUG1("Bias[0][" << i << "] = " << bias[0][i]);
     }
     
     //Processing the other layers.
@@ -133,8 +156,13 @@ namespace FastNet
     
       for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=0; k<nNodes[i]; k++) weights[i][j][k] = static_cast<REAL>(iw(j,k));
+        for (unsigned k=0; k<nNodes[i]; k++)
+        {
+          weights[i][j][k] = static_cast<REAL>(iw(j,k));
+          DEBUG1("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+        }
         bias[i][j] = static_cast<REAL>(ib(j));
+        DEBUG1("Bias[" << i << "][" << j << "] = " << bias[i][j]);
       }
     }
   }

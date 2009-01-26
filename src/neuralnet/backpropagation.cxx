@@ -8,6 +8,7 @@
 #include <cstdlib>
 
 #include "fastnet/neuralnet/backpropagation.h"
+#include "fastnet/reporter/Reporter.h"
 
 namespace FastNet
 {
@@ -31,6 +32,8 @@ namespace FastNet
 
   Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
   {
+    DEBUG0("Initializing the Backpropagation class from a Matlab Network structure.");
+
     this->trnEventCounter = 0;
     
     //We first test whether the values exists, otherwise, we use default ones.

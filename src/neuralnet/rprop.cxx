@@ -7,6 +7,8 @@
 #include <string>
 
 #include "fastnet/neuralnet/rprop.h"
+#include "fastnet/reporter/Reporter.h"
+
 
 using namespace std;
 
@@ -37,6 +39,7 @@ namespace FastNet
 
   RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
   {
+    DEBUG0("Initializing the RProp class from a Matlab Network structure.");
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
     else this->deltaMax = 50.0;

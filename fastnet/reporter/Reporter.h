@@ -45,11 +45,11 @@
 
 #ifdef DEBUG
 
-#if (DEBUG>=0)
+#if (DEBUG==0)
 #define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #define DEBUG1(m)
 #define DEBUG2(m)
-#elif (DEBUG>=1)
+#elif (DEBUG==1)
 #define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #define DEBUG2(m)

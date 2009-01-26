@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <mex.h>
 
-#include "fastnet/reporter/MatlabReporter.h"
+#include "fastnet/reporter/Reporter.h"
 #include "fastnet/neuralnet/feedforward.h"
 #include "fastnet/events/matevents.h"
 #include "fastnet/netdata/matnetdata.h"
@@ -65,8 +65,6 @@ void *threadRun(void *params)
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
-  sys::MatlabReporter *reporter = new sys::MatlabReporter();
-
   try
   {  
     //Verifying if the number of input parameters is ok.
@@ -126,7 +124,5 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     ret[NET_OUT_IDX] = outData;
   }
-  catch (const char *msg) FATAL(reporter, msg);
-  
-  delete reporter;
+  catch (const char *msg) FATAL(msg);
 }

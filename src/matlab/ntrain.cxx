@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <mex.h>
 
-#include "fastnet/reporter/MatlabReporter.h"
+#include "fastnet/reporter/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/events/matevents.h"
@@ -274,7 +274,6 @@ REAL smallerThan(REAL a, REAL b) {return (a<b);}
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
-  sys::MatlabReporter *reporter = new sys::MatlabReporter();
   MatEvents *inTrnData, *outTrnData, *inTstData, *outTstData;
   vector<MatEvents*> inTrnList, inTstList;
   vector<REAL*> outList;
@@ -357,12 +356,12 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (trnType == TRAINRP_ID)
     {
       net = new RProp(netStr);
-      REPORT(reporter,"Starting Resilient Backpropagation training...");
+      REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
       net = new Backpropagation(netStr);
-      REPORT(reporter,"Starting Gradient Descendent training...");
+      REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";
 
@@ -411,27 +410,27 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Displaying the training info before starting.
     if (!patRecNet)
     {
-      REPORT(reporter, "TRAINING DATA INFORMATION (Regular Network)");
-      REPORT(reporter, "Number of Epochs                    : " << nEpochs);
-      REPORT(reporter, "Number of training events per epoch : " << trnEpochSize);
-      REPORT(reporter, "Total number of training events     : " << inTrnData->getNumEvents());
-      REPORT(reporter, "Total number of testing events      : " << inTstData->getNumEvents());
+      REPORT("TRAINING DATA INFORMATION (Regular Network)");
+      REPORT("Number of Epochs                    : " << nEpochs);
+      REPORT("Number of training events per epoch : " << trnEpochSize);
+      REPORT("Total number of training events     : " << inTrnData->getNumEvents());
+      REPORT("Total number of testing events      : " << inTstData->getNumEvents());
     }
     else
     {
-      REPORT(reporter, "TRAINING DATA INFORMATION (Pattern Recognition Specific Network)");
-      REPORT(reporter, "Number of Epochs                    : " << nEpochs);
-      REPORT(reporter, "Using SP Stopping Criteria          : " << useSP);
+      REPORT("TRAINING DATA INFORMATION (Pattern Recognition Specific Network)");
+      REPORT("Number of Epochs                    : " << nEpochs);
+      REPORT("Using SP Stopping Criteria          : " << useSP);
       for (unsigned i=0; i<numPat; i++)
       {
-        REPORT(reporter, "Information for pattern " << (i+1) << ":");
-        REPORT(reporter, "Number of training events per epoch : " << trnEpochList[i]);
-        REPORT(reporter, "Total number of training events     : " << inTrnList[i]->getNumEvents());
-        REPORT(reporter, "Total number of testing events      : " << inTstList[i]->getNumEvents());
+        REPORT("Information for pattern " << (i+1) << ":");
+        REPORT("Number of training events per epoch : " << trnEpochList[i]);
+        REPORT("Total number of training events     : " << inTrnList[i]->getNumEvents());
+        REPORT("Total number of testing events      : " << inTstList[i]->getNumEvents());
       }
     }
     
-    REPORT(reporter, "Network Training Status:");
+    REPORT("Network Training Status:");
     
     // Performing the training.
     unsigned numFails = 0;
@@ -484,7 +483,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       {
         if (!dispCounter)
         {
-          REPORT(reporter,"Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << tstText << tstError);
+          REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << tstText << tstError);
         }
         dispCounter = (dispCounter + 1) % show;
       }
@@ -496,7 +495,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       
       if (numFails == maxFail)
       {
-        REPORT(reporter, "Maximum number of failures reached. Finishing training...");
+        REPORT("Maximum number of failures reached. Finishing training...");
         break;
       }
     }
@@ -528,11 +527,11 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         delete epochTstOutputs[i];
       }
     }
-    REPORT(reporter, "Training process finished!");
+    REPORT("Training process finished!");
   }
   catch(bad_alloc xa)
   {
-    FATAL(reporter, "Error on allocating memory!");
+    FATAL("Error on allocating memory!");
     if (net) delete net;
     if (inTrnData) delete inTrnData;
     if (outTrnData) delete outTrnData;
@@ -544,7 +543,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   }
   catch (const char *msg)
   {
-    FATAL(reporter, msg);
+    FATAL(msg);
     if (net) delete net;
     if (inTrnData) delete inTrnData;
     if (outTrnData) delete outTrnData;
@@ -554,6 +553,4 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     for (unsigned i=0; i<inTstList.size(); i++)  delete inTstList[i];
     for (unsigned i=0; i<outList.size(); i++)  delete outList[i];
   }
-  
-  delete reporter;
 }

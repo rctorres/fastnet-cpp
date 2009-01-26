@@ -43,4 +43,22 @@
 #define WARN(m)
 #endif
 
+#ifdef DEBUG
+
+#if (DEBUG>=0)
+#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG1(m)
+#define DEBUG2(m)
+#elif (DEBUG>=1)
+#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG2(m)
+#elif (DEBUG>=2)
+#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG2(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#endif
+
+#endif //DEBUG
+
 #endif /* REPORTER_H */ 

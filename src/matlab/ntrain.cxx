@@ -364,7 +364,15 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";
-
+    
+    #ifdef DEBUG
+    {
+      ostringstream auxStr;
+      net->showInfo(auxStr);
+      DEBUG0(auxStr.str());
+    }
+    #endif
+    
     //Creating the network data handler.
     vector<unsigned> hack;
     for (unsigned i=0; i<net->getNumLayers(); i++) hack.push_back((*net)[i]);

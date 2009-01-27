@@ -204,7 +204,20 @@ namespace FastNet
 
     trnEventCounter = 0;
   }
-  
+
+  void Backpropagation::createWeighteningValues(const unsigned nPat)
+  {
+    wFactor.clear();
+    wFactor.push_back( 1. / static_cast<REAL>(nPat) );
+  }
+
+  void Backpropagation::createWeighteningValues(const vector<unsigned> &nPat)
+  {
+    wFactor.clear();
+    for (vector<unsigned>::const_iterator itr = nPat.begin(); itr != nPat.end(); itr++)
+      wFactor.push_back(1. / (static_cast<REAL>( nPat.size() * (*itr) )));
+  }
+
   void Backpropagation::showInfo(ostream &str) const
   {
     NeuralNetwork::showInfo(str);

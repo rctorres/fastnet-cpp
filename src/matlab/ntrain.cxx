@@ -417,11 +417,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       net = new RProp(netStr);
       REPORT("Starting Resilient Backpropagation training...");
     }
+/*  //Until we make Backpropagation training multithreaded, we canno use it.
     else if (trnType == TRAINGD_ID)
     {
       net = new Backpropagation(netStr);
       REPORT("Starting Gradient Descendent training...");
     }
+*/
     else throw "Invalid training algorithm option!";
     
     //Reading the showing period, epochs and max_fail.

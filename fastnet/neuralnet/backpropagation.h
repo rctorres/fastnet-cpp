@@ -85,6 +85,15 @@ namespace FastNet
       */
       REAL **db;
       
+      /// Hold the weightening values for each class.
+      /*
+      This vector contains the weightening values to be used when calculating the gradients. The
+      weightening factors allow that, in case of a pattern rcognition network, that each class
+      has the same relevance, no matter how many events it has.
+      @see Backpropagation::createWeighteningValues
+      */
+      vector<REAL> wFactor;
+      
       /// Retropropagates the error through the neural network.
       /**
        This method generatesthe error at the output of the network, comparing
@@ -102,6 +111,32 @@ namespace FastNet
       dynamically allocated.
       */
       virtual void allocateSpace();
+      
+      ///Create the weighting values for dw and db for the pattern recognition optimized training.
+      /**
+      When calculating the new gradients, they must be weightened by the number of events in each
+      epochs, so that each patterm will have the same relevance when calculating the
+      new gradients, no matter how many events it has. This method calculates the weightening values
+      (\f$ wf \f$) in advance, to improve the training speed. The method considers the case when we have
+      separate classes (pattern recognition). The weighting values are calculated
+      according to the following rule:
+      \f$ wf_i = \frac{\prod_{j=1/j \neq i}^{N_c}}{N_c \times \prod_{j=1}^{Nc} N_j} = \frac{1}{N_c \times N_i}\f$,
+      where \f$ N_c \f$ is the number of patterns, and \f$ N_j \f$ is the total number of events,
+      for the j-th pattern, to be presented to the network, per epoch, during the training.
+      @param[in] nPat A vector containing the number of events to be used per epoch, for each pattern.
+      */
+      virtual void createWeighteningValues(const vector<unsigned> &nPat);
+
+      ///Create the weighting values for dw and db for a normal network training.
+      /**
+      When calculating the new gradients, they must be weightened by the number of events to calculate
+      the mean gradient. The method considers the stardart case, where you have simply a
+      set of inputs and targets, not separated by classes. For this case, the weightening factor will
+      be simply \f$ wf = \frac{1}{N}\f$, where \f$ N \f$ is the total number of events applied, per
+      epoch, to the neural network.
+      @param[in] nPat The number of events to be used per epoch.
+      */      
+      virtual void createWeighteningValues(const unsigned nPat);
 
     public:
       //Base class pure virtual methods.
@@ -151,7 +186,7 @@ namespace FastNet
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 
         of another network.
-        @param[in] net The network that we will copy the parameters from.
+        @param[in] net The network that we will copy the parameters from.
       */
       Backpropagation(const Backpropagation &net);
 

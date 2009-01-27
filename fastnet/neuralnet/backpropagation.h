@@ -208,8 +208,7 @@ namespace FastNet
        @param[in] str The stream where the information will be written to.
        @see FastNet::NeuralNetwork#showInfo 
       */
-      virtual void showInfo(ostream &str) const;      
-      
+      virtual void showInfo(ostream &str) const;
   };
 }
 

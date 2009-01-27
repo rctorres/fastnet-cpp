@@ -266,25 +266,25 @@ REAL trainNetwork(NeuralNetwork *net, MatEvents *inData, MatEvents *outData, con
 */
 REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<const REAL*> &target, vector< vector<REAL*>* > &output)
 {
-  const REAL *out;
   REAL gbError = 0;
-  unsigned totEvents = 0;
-  const unsigned outSize = (*net)[net->getNumLayers()-1];
+  const unsigned outSize = (*net)[net->getNumLayers()-1] * sizeof(REAL);
   
   for (unsigned pat=0; pat<inList.size(); pat++)
   {
+    //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
+    const REAL wFactor = 1. / static_cast<REAL>(inList.size() * inList[pat]->getNumEvents());
+
     for (unsigned i=0; i<inList[pat]->getNumEvents(); i++)
     {
       // Getting the next input and target pair.
+      const REAL *out;
       const REAL *input = inList[pat]->readEvent(i);
-      gbError += net->applySupervisedInput(input, target[pat], out);
-      memcpy(output[pat]->at(i), out, outSize*sizeof(REAL));
+      gbError += ( wFactor * net->applySupervisedInput(input, target[pat], out) );
+      memcpy(output[pat]->at(i), out, outSize);
     }
-    
-    totEvents += inList[pat]->getNumEvents();
   }
 
-  return (gbError / static_cast<REAL>(totEvents));
+  return gbError;
 }
 
 
@@ -306,25 +306,26 @@ REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vec
 REAL trainNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<const REAL*> &target, const vector<unsigned> &epochSize)
 {
   REAL gbError = 0;
-  unsigned totEvents = 0;
   for(unsigned pat=0; pat<inList.size(); pat++)
   {
     const REAL *targ = target[pat];
+    
+    //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
+    const REAL wFactor = 1. / static_cast<REAL>(inList.size() * epochSize[pat]);
+    
     for (unsigned i=0; i<epochSize[pat]; i++)
     {
       unsigned evIndex;
       const REAL *output;
       // Getting the next input and target pair.
       const REAL *input = inList[pat]->readRandomEvent(evIndex);
-      gbError += net->applySupervisedInput(input, targ, output);
+      gbError += ( wFactor * net->applySupervisedInput(input, targ, output));
       //Calculating the weight and bias update values.
       net->calculateNewWeights(output, targ, pat);
     }
-    
-    totEvents += epochSize[pat];
   }
 
-  return (gbError / static_cast<REAL>(totEvents));  
+  return gbError;  
 }
 
 REAL greaterThan(REAL a, REAL b) {return (a>b);}
@@ -389,16 +390,11 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     // Determining if we will use all the events in each epoch or not.
     vector<unsigned> trnEpochList;
-    const unsigned trnEpochSize = (nargin == NUM_ARGS_FULL_EPOCH) ? mxGetN(args[IN_TRN_IDX]) : static_cast<unsigned>(mxGetScalar(args[TRN_EPOCH_SIZE_IDX]));
     if (patRecNet)
     {
       if (nargin == NUM_ARGS_FULL_EPOCH)
       {
         for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(args[IN_TRN_IDX], i)));
-        // If the number of patterns per epochs was not specified, the number of epochs for each
-        // class will be the size of the pattern with the largest amount of events.
-        const unsigned maxEpochSize = *max_element(trnEpochList.begin(), trnEpochList.end());
-        for (unsigned i=0; i<numPat; i++) trnEpochList[i] = maxEpochSize;
       }
       else
       {
@@ -411,6 +407,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else
     {
+      const unsigned trnEpochSize = (nargin == NUM_ARGS_FULL_EPOCH) ? mxGetN(args[IN_TRN_IDX]) : static_cast<unsigned>(mxGetScalar(args[TRN_EPOCH_SIZE_IDX]));
       trnEpochList.push_back(trnEpochSize);
     }
 
@@ -471,7 +468,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     {
       REPORT("TRAINING DATA INFORMATION (Regular Network)");
       REPORT("Number of Epochs                    : " << nEpochs);
-      REPORT("Number of training events per epoch : " << trnEpochSize);
+      REPORT("Number of training events per epoch : " << trnEpochList[0]);
       REPORT("Total number of training events     : " << inTrnData->getNumEvents());
       REPORT("Total number of testing events      : " << inTstData->getNumEvents());
     }
@@ -518,7 +515,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     {
       if (!patRecNet)
       {
-        trnError = trainNetwork(net, inTrnData, outTrnData, trnEpochSize);
+        trnError = trainNetwork(net, inTrnData, outTrnData, trnEpochList[0]);
         tstError = testNetwork(net, inTstData, outTstData);
       }
       else

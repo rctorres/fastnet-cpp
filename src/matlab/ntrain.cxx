@@ -141,7 +141,7 @@ void flushTrainInfo(const list<TrainData> &trnList, mxArray *&epoch, mxArray *&t
  memory, this vector must come ready to store all outut values, for all patterns.
  @return The maximum SP value obtained.
 */
-REAL sp(const vector<REAL*> &target, const vector< vector<REAL*>* > &output)
+REAL sp(const vector<const REAL*> &target, const vector< vector<REAL*>* > &output)
 {
   const REAL RESOLUTION = 0.001;
   unsigned TARG_SIGNAL, TARG_NOISE;
@@ -264,7 +264,7 @@ REAL trainNetwork(NeuralNetwork *net, MatEvents *inData, MatEvents *outData, con
  memory, this vector must come ready to store all outut values, for all patterns.
  @return The mean testing error obtained after the entire training set is presented to the network.
 */
-REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<REAL*> &target, vector< vector<REAL*>* > &output)
+REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<const REAL*> &target, vector< vector<REAL*>* > &output)
 {
   const REAL *out;
   REAL gbError = 0;
@@ -303,22 +303,22 @@ REAL testNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vec
  @param[in] epochSize The number of events in each pattern to apply to the network.
  @return The mean training error obtained after the entire training of each pattern set is presented to the network.
 */
-REAL trainNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<REAL*> &target, const vector<unsigned> &epochSize)
+REAL trainNetwork(NeuralNetwork *net, const vector<MatEvents*> &inList, const vector<const REAL*> &target, const vector<unsigned> &epochSize)
 {
-  unsigned evIndex;
-  const REAL *output;
   REAL gbError = 0;
   unsigned totEvents = 0;
-  
   for(unsigned pat=0; pat<inList.size(); pat++)
   {
+    const REAL *targ = target[pat];
     for (unsigned i=0; i<epochSize[pat]; i++)
     {
+      unsigned evIndex;
+      const REAL *output;
       // Getting the next input and target pair.
       const REAL *input = inList[pat]->readRandomEvent(evIndex);
-      gbError += net->applySupervisedInput(input, target[pat], output);
+      gbError += net->applySupervisedInput(input, targ, output);
       //Calculating the weight and bias update values.
-      net->calculateNewWeights(output, target[pat], epochSize[pat], inList.size());    
+      net->calculateNewWeights(output, targ, pat);
     }
     
     totEvents += epochSize[pat];
@@ -335,7 +335,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   MatEvents *inTrnData, *outTrnData, *inTstData, *outTstData;
   vector<MatEvents*> inTrnList, inTstList;
-  vector<REAL*> outList;
+  vector<const REAL*> outList;
   vector< vector<REAL*>* > epochTstOutputs;
   NeuralNetwork *net = NULL;
 
@@ -409,21 +409,24 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(static_cast<unsigned>(numTrnEvEp[i]));
       }
     }
+    else
+    {
+      trnEpochList.push_back(trnEpochSize);
+    }
 
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp(netStr);
+      net = new RProp(netStr, trnEpochList);
       REPORT("Starting Resilient Backpropagation training...");
     }
-/*  //Until we make Backpropagation training multithreaded, we canno use it.
+  //Until we make Backpropagation training multithreaded, we canno use it.
     else if (trnType == TRAINGD_ID)
     {
-      net = new Backpropagation(netStr);
+      net = new Backpropagation(netStr, trnEpochList);
       REPORT("Starting Gradient Descendent training...");
     }
-*/
     else throw "Invalid training algorithm option!";
     
     //Reading the showing period, epochs and max_fail.

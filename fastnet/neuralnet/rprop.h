@@ -196,8 +196,11 @@ namespace FastNet
       This constructor should be called when the network parameters are stored in a matlab
       network structure.
       @param[in] netStr The Matlab network structure as returned by newff.
+      @param[in] nEvPat A vector containing the number of events to be used for each pattern.
+      If you are not using a pattern recognition optimized network, the vector must contain only
+      one value, corresponding to the total number of events to be presented for each epoch.
       */
-      RProp(const mxArray *netStr);  
+      RProp(const mxArray *netStr, const vector<unsigned> &nEvPat);  
       
       /// Class destructor.
       /**

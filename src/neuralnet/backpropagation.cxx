@@ -14,7 +14,7 @@ namespace FastNet
 {
   Backpropagation::Backpropagation(const Backpropagation &net) : NeuralNetwork(net)
   { 
-    trnEventCounter = net.trnEventCounter;
+    wFactor.assign(net.wFactor.begin(), net.wFactor.end());
     learningRate = net.learningRate;
     decFactor = net.decFactor;
  
@@ -30,12 +30,15 @@ namespace FastNet
   }
   
 
-  Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
+  Backpropagation::Backpropagation(const mxArray *netStr, const vector<unsigned> &nEvPat) : NeuralNetwork(netStr)
   {
     DEBUG0("Initializing the Backpropagation class from a Matlab Network structure.");
 
-    this->trnEventCounter = 0;
-    
+    //Calculating the weightening factors.
+    if (nEvPat.size() == 1) createWeighteningValues(nEvPat[0]);
+    else if (nEvPat.size() > 1) createWeighteningValues(nEvPat);
+    else throw "You must provide the number of events to be used for each epoch!.";
+
     //We first test whether the values exists, otherwise, we use default ones.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "lr")) this->learningRate = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
@@ -115,31 +118,7 @@ namespace FastNet
   void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target)
   {
     const unsigned size = nNodes.size() - 1;
-
-    retropropagateError(output, target);
-
-    //Accumulating the deltas.
-    for (unsigned i=0; i<size; i++)
-    {
-      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
-      {
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
-        {
-          dw[i][j][k] += (sigma[i][j] * layerOutputs[i][k]);
-        }
-
-        db[i][j] += sigma[i][j];
-      }
-    }
-
-    //Increasing the event counter, for batch training.
-    trnEventCounter++;
-  }
-
-  void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, const unsigned nEv, const unsigned nPat)
-  {
-    const unsigned size = nNodes.size() - 1;
-    const REAL val = 1.0 / static_cast<REAL>(nEv * nPat);
+    const REAL val = wFactor[0];
 
     retropropagateError(output, target);
 
@@ -156,19 +135,32 @@ namespace FastNet
         db[i][j] += (val * sigma[i][j]);
       }
     }
+  }
 
-    // We will not use the trnEventCounter in this case.
-    trnEventCounter = 1;
+  void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, const unsigned patIdx)
+  {
+    const unsigned size = nNodes.size() - 1;
+    const REAL val = wFactor[patIdx];
+
+    retropropagateError(output, target);
+
+    //Accumulating the deltas.
+    for (unsigned i=0; i<size; i++)
+    {
+      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      {
+        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        {
+          dw[i][j][k] += (val * sigma[i][j] * layerOutputs[i][k]);
+        }
+
+        db[i][j] += (val * sigma[i][j]);
+      }
+    }
   }
   
   void Backpropagation::updateWeights()
   {    
-    //If the new weights has not been calculated, the function is aborted.
-    if (!trnEventCounter) return;
-
-    // Using the inverse, in order to improve speed.
-    const REAL invNTrnEv = (!trnEventCounter) ? 1. : 1. / static_cast<REAL>(trnEventCounter);
-
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       for (unsigned j=activeNodes[i+1].init; j<activeNodes[(i+1)].end; j++)
@@ -185,13 +177,13 @@ namespace FastNet
         {
           for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
           {
-            weights[i][j][k] += (learningRate * (dw[i][j][k] * invNTrnEv));
+            weights[i][j][k] += (learningRate * dw[i][j][k]);
             dw[i][j][k] = 0;
           }
 
           if (usingBias[i])
           {
-            bias[i][j] += (learningRate * (db[i][j] * invNTrnEv));
+            bias[i][j] += (learningRate * db[i][j]);
             db[i][j] = 0;
           }
           else
@@ -201,8 +193,6 @@ namespace FastNet
         }
       }
     }
-
-    trnEventCounter = 0;
   }
 
   void Backpropagation::createWeighteningValues(const unsigned nPat)

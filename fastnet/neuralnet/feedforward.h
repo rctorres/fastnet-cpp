@@ -36,7 +36,7 @@ namespace FastNet
 
     public:
       void calculateNewWeights(const REAL *output, const REAL *target){};
-      void calculateNewWeights(const REAL *output, const REAL *target, unsigned nEv, unsigned nPat){};
+      void calculateNewWeights(const REAL *output, const REAL *target, const unsigned patIdx){};
       virtual void updateWeights(){};
 
       ///Copy constructor

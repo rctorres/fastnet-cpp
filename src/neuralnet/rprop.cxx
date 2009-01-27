@@ -37,7 +37,7 @@ namespace FastNet
     }
   }
 
-  RProp::RProp(const mxArray *netStr) : Backpropagation(netStr)
+  RProp::RProp(const mxArray *netStr, const vector<unsigned> &nEvPat) : Backpropagation(netStr, nEvPat)
   {
     DEBUG0("Initializing the RProp class from a Matlab Network structure.");
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");

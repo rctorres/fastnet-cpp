@@ -413,7 +413,7 @@ namespace FastNet
       void setFrozen(unsigned layer, unsigned node, bool frozen)
       {
         frozenNode[layer][node] = frozen;
-        DEBUG1("frozenNode["<< layer << "]["<< node << "] = "<< frozen);
+        DEBUG2("frozenNode["<< layer << "]["<< node << "] = "<< frozen);
       };
 
       

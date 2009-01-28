@@ -4,14 +4,43 @@
 #Author: Rodrigo Coura Torres (Rodrigo.Torres@cern.ch)
 
 import os
+import platform
+import re
 import fnmatch
 
-import sc_globals
 import sc_libs
 import sc_matlab
 
+#To retrieve all source code files.
+def getSourceFiles(sourcesDir):
+	srcFilter = re.compile('\.cxx\Z|\.cpp\Z|\.c\Z')
+	return ['%s%s%s' % (sourcesDir, os.path.sep, f) for f in os.listdir(sourcesDir) if srcFilter.search(f) is not None]
+
+#Compiling flags.
+globalCPPFlags = []
+libCPPFlags = []
+mexCPPFlags = []
+
+#Getting whether to compile in debug mode.
+debug = int(ARGUMENTS.get('debug', 0))
+if debug > 0: 
+  globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
+
+#Am I using a MAC computer? Then I apply some optimizations for it
+if 'Darwin' in platform.system():
+  if debug == 0: libCPPFlags += ['-fast']
+  matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
+  matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
+else:
+  if debug == 0: libCPPFlags += ['-O3']
+  matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
+  matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
+
+incPath = ['../'] + matlabIncPath
+libPath = ['./'] + matlabLibPath
+
 #Setting the list of directories where to look for header files.
-env = Environment(CPPPATH = sc_globals.incPath, ENV = os.environ)
+env = Environment(CPPPATH = incPath, ENV = os.environ)
 
 #The installation dir is defined in the following environment variable. Otherwise, it will
 #be installed in fastnel/install.
@@ -25,10 +54,10 @@ env.Append(BUILDERS = {'Matlab' : matBuilder})
 libInstList = [];
 libMap = {}
 for lib, opt in sc_libs.libs.iteritems():
-  libName = env.SharedLibrary(target = lib, source = sc_globals.getSourceFiles('../src/%s' % lib),
-                              CCFLAGS = sc_globals.globalCPPFlags + sc_globals.libCPPFlags,
+  libName = env.SharedLibrary(target = lib, source = getSourceFiles('../src/%s' % lib),
+                              CCFLAGS = globalCPPFlags + libCPPFlags,
                               LIBS = opt['LIBS'] + ['pthread'] + ['mx', 'mex', 'mat', 'm'],
-                              LIBPATH = sc_globals.libPath)
+                              LIBPATH = libPath)
   libInstList.append(libName)
   libMap[lib] = libName
 
@@ -37,9 +66,9 @@ for lib, opt in sc_libs.libs.iteritems():
 matBinList = []
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
-                          CCFLAGS = sc_globals.globalCPPFlags + sc_globals.mexCPPFlags, 
+                          CCFLAGS = globalCPPFlags + mexCPPFlags, 
                           LIBS = opt['LIBS'], 
-                          LIBPATH = sc_globals.libPath)
+                          LIBPATH = libPath)
   matBinList.append(matBinding);
 
 ### Getting the matlab scripts.

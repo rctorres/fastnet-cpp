@@ -17,14 +17,14 @@ private:
 public:
   StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const mxArray *epochSize) : Training()
   {
-    DEBUG1("Creating StandardTraining object.");
+    DEBUG2("Creating StandardTraining object.");
     inTrnData = new MatEvents (inTrn);
     outTrnData = new MatEvents (outTrn);
     inValData = new MatEvents (inVal);
     outValData = new MatEvents (outVal);
-    DEBUG1("User defined epoch size? " << (epochSize != NULL));
+    DEBUG2("User defined epoch size? " << (epochSize != NULL));
     trnEpochSize = (!epochSize) ? inTrnData->getNumEvents() : static_cast<unsigned>(mxGetScalar(epochSize));
-    DEBUG1("Training epoch size: " << trnEpochSize);
+    DEBUG2("Training epoch size: " << trnEpochSize);
   };
 
 

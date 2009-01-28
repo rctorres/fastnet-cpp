@@ -32,7 +32,7 @@ namespace FastNet
 
   Backpropagation::Backpropagation(const mxArray *netStr, const vector<unsigned> &nEvPat) : NeuralNetwork(netStr)
   {
-    DEBUG0("Initializing the Backpropagation class from a Matlab Network structure.");
+    DEBUG1("Initializing the Backpropagation class from a Matlab Network structure.");
 
     //Calculating the weightening factors.
     if (nEvPat.size() == 1) createWeighteningValues(nEvPat[0]);
@@ -199,7 +199,7 @@ namespace FastNet
   {
     wFactor.clear();
     wFactor.push_back( 1. / static_cast<REAL>(nPat) );
-    DEBUG1("Number of events = " << nPat << ". Weightening value = " << wFactor[0]);
+    DEBUG2("Number of events = " << nPat << ". Weightening value = " << wFactor[0]);
   }
 
   void Backpropagation::createWeighteningValues(const vector<unsigned> &nPat)
@@ -209,7 +209,7 @@ namespace FastNet
     {
       const REAL val = 1. / (static_cast<REAL>( nPat.size() * (*itr) ));
       wFactor.push_back(val);
-      DEBUG1("Number of events = " << *itr << ". Weightening value = " << val);
+      DEBUG2("Number of events = " << *itr << ". Weightening value = " << val);
     }
   }
 

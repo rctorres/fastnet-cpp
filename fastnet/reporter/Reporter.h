@@ -45,25 +45,25 @@
 
 #ifdef DEBUG
 
-#if (DEBUG==0)
-#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
-#define DEBUG1(m)
-#define DEBUG2(m)
-#elif (DEBUG==1)
-#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#if (DEBUG==1)
 #define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #define DEBUG2(m)
-#elif (DEBUG>=2)
-#define DEBUG0(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG3(m)
+#elif (DEBUG==2)
 #define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #define DEBUG2(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG3(m)
+#elif (DEBUG>=3)
+#define DEBUG1(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG2(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
+#define DEBUG3(m){std::ostringstream s; s << m; mexPrintf((s.str() + "\n").c_str()); mexEvalString("drawnow;");}
 #endif
 
 #else //debug
 
-#define DEBUG0(m)
 #define DEBUG1(m)
 #define DEBUG2(m)
+#define DEBUG3(m)
 
 #endif //DEBUG
 

@@ -182,6 +182,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     //Deleting the allocated memory.
     delete net;
+    delete train;
     REPORT("Training process finished!");
   }
   catch(bad_alloc xa)

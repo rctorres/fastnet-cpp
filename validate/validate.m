@@ -1,3 +1,6 @@
+clear all;
+close all;
+
 %Creating the data for validation.
 nClasses = 2;
 c1 = [randn(1,3000); randn(1,3000)];

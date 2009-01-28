@@ -92,7 +92,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
 
-    //Creating the ibject for the desired training type.
+    //Creating the object for the desired training type.
     if ( (!mxIsEmpty(args[OUT_TRN_IDX])) && (!mxIsEmpty(args[OUT_VAL_IDX])) )
     {
       train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], args[TRN_EPOCH_SIZE_IDX]);

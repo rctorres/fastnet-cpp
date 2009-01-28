@@ -199,13 +199,18 @@ namespace FastNet
   {
     wFactor.clear();
     wFactor.push_back( 1. / static_cast<REAL>(nPat) );
+    DEBUG1("Number of events = " << nPat << ". Weightening value = " << wFactor[0]);
   }
 
   void Backpropagation::createWeighteningValues(const vector<unsigned> &nPat)
   {
     wFactor.clear();
     for (vector<unsigned>::const_iterator itr = nPat.begin(); itr != nPat.end(); itr++)
-      wFactor.push_back(1. / (static_cast<REAL>( nPat.size() * (*itr) )));
+    {
+      const REAL val = 1. / (static_cast<REAL>( nPat.size() * (*itr) ));
+      wFactor.push_back(val);
+      DEBUG1("Number of events = " << *itr << ". Weightening value = " << val);
+    }
   }
 
   void Backpropagation::showInfo(ostream &str) const

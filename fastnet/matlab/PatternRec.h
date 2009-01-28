@@ -44,7 +44,7 @@ public:
       epochValOutputs.push_back(aux);
     }
 
-    if (!mxGetPr(epochSize))
+    if (!epochSize)
     {
       for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(inTrn, i)));
     }

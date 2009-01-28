@@ -38,11 +38,17 @@ val.P = contInVal;
 val.T = outVal;
 
 %Training the networks to be compared.
+tic
 matNet = train(net, contInTrn, outTrn, [], [], val);
+toc
+tic
 fastNetCont = ntrain(net, single(contInTrn), single(outTrn), single(val.P), single(val.T));
+toc
 inTrn = {single(c1(:,1:3:end)) single(c2(:,1:3:end))};
 inVal = {single(c1(:,2:3:end)) single(c2(:,2:3:end))};
+tic
 fastNet = ntrain(net, inTrn, [], inVal, []);
+toc
 
 %Generating the testing outputs.
 matOut = {sim(matNet, double(inTst{1})) sim(matNet, double(inTst{2}))};

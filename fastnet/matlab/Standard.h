@@ -22,8 +22,8 @@ public:
     outTrnData = new MatEvents (outTrn);
     inValData = new MatEvents (inVal);
     outValData = new MatEvents (outVal);
-    DEBUG1("User defined epoch size? " << (mxGetPr(epochSize) != NULL));
-    trnEpochSize = (!mxGetPr(epochSize)) ? inTrnData->getNumEvents() : static_cast<unsigned>(mxGetScalar(epochSize));
+    DEBUG1("User defined epoch size? " << (epochSize != NULL));
+    trnEpochSize = (!epochSize) ? inTrnData->getNumEvents() : static_cast<unsigned>(mxGetScalar(epochSize));
     DEBUG1("Training epoch size: " << trnEpochSize);
   };
 

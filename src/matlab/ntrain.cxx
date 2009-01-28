@@ -88,6 +88,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     {
       throw "Incorrect number of arguments! See help for information!";
     }
+    
+    const mxArray *trnEpochsPtr = (nargin == NUM_ARGS_FULL_EPOCH) ? NULL : args[TRN_EPOCH_SIZE_IDX];
 
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
@@ -95,14 +97,14 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Creating the object for the desired training type.
     if ( (!mxIsEmpty(args[OUT_TRN_IDX])) && (!mxIsEmpty(args[OUT_VAL_IDX])) )
     {
-      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], args[TRN_EPOCH_SIZE_IDX]);
+      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], trnEpochsPtr);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], args[TRN_EPOCH_SIZE_IDX], useSP);
+      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], trnEpochsPtr, useSP);
     }
     
     //Selecting the training type by reading the training agorithm.    

@@ -29,15 +29,15 @@ if debug > 0:
 #Am I using a MAC computer? Then I apply some optimizations for it
 if 'Darwin' in platform.system():
   if debug == 0: libCPPFlags += ['-fast']
-  matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
-  matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
+  matlabPath = '/Applications/MATLAB_R2008a'
+  matlabArch = 'maci'
 else:
   if debug == 0: libCPPFlags += ['-O3']
-  matlabIncPath = ['/Applications/MATLAB_R2008a/extern/include']
-  matlabLibPath = ['/Applications/MATLAB_R2008a/bin/maci']
-
-incPath = ['../'] + matlabIncPath
-libPath = ['./'] + matlabLibPath
+  matlabPath = '/usr/local/matlab'
+  matlabArch = 'glnx86'
+  
+incPath = ['../', '%s/extern/include' % matlabPath]
+libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
 
 #Setting the list of directories where to look for header files.
 env = Environment(CPPPATH = incPath, ENV = os.environ)

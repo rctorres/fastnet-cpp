@@ -35,7 +35,7 @@ else:
   if debug == 0: libCPPFlags += ['-O3']
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnx86'
-  
+    
 incPath = ['../', '%s/extern/include' % matlabPath]
 libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
 

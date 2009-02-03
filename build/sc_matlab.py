@@ -14,7 +14,7 @@ def matlabBuild(target, source, env, for_signature):
 
 def getMatlabSuffix():
 	retCode, ext = commands.getstatusoutput('mexext');
-	if retCode != 0: return 'mex';
+	if retCode != 0: return 'mexglx';
 	else: return ext;
 
 

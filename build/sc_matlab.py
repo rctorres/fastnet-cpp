@@ -1,7 +1,5 @@
 import commands
 
-import sc_globals
-
 def matlabBuild(target, source, env, for_signature):
 	if commands.getstatusoutput('mex -help')[0] != 0:
 		print "\nWARINING: MATLAB Compiler not found! Skiping matlab modules...\n"

@@ -12,7 +12,6 @@
 
 #include "fastnet/events/events.h"
 #include "fastnet/defines.h"
-#include "fastnet/events/mxhandler.h"
 
 using namespace std;
 
@@ -45,7 +44,7 @@ namespace FastNet
        Handles all the events, so, once a network requires a new
        event, it is read from this source.
 '      */
-      MxArrayHandler<REAL> events;
+      const REAL *events;
       
       /// Contains a usable copy of the current event.
       /**
@@ -55,7 +54,7 @@ namespace FastNet
        so, this pointer points to the place where a copy of the current 
        event is.
       */
-      REAL *currEvent;
+      const REAL *currEvent;
       
       /// Contains the list of scrambled indexes for ramdom event access.
       /**
@@ -95,11 +94,10 @@ namespace FastNet
         if ( (!numInputs) || (!numEvents) ) throw "Error in matrix limits!";
 
         // Pointing the events data to the events handler.
-        events = MatlabEvents;
+        events = static_cast<REAL*>(mxGetData(MatlabEvents));
         
         try
         {
-          currEvent = new REAL [numInputs];
           rndList = new unsigned [numEvents];
           
           //Initializing the random list with values
@@ -120,7 +118,6 @@ namespace FastNet
       */
       ~MatEvents()
       {
-        if (currEvent) delete [] currEvent;
         if (rndList) delete [] rndList;
       }
     
@@ -136,15 +133,7 @@ namespace FastNet
       */
       const REAL* readEvent()
       {
-        int k = 0;
-        
-        for (unsigned i=events.getColInit(evCounter); i<events.getColEnd(evCounter); i+=events.getColInc())
-        {
-          currEvent[k++] = (REAL) events(i);
-        }
-        
-        evCounter++;
-        return currEvent;
+        return events + ( (evCounter++) * numInputs);
       }
       
       /// Reads an specific event.
@@ -155,14 +144,7 @@ namespace FastNet
       */
       const REAL* readEvent(const unsigned evIndex)
       {
-        unsigned k = 0;
-        
-        for (unsigned i=events.getColInit(evIndex); i<events.getColEnd(evIndex); i+=events.getColInc())
-        {
-          currEvent[k++] = (REAL) events(i);
-        }
-
-        return currEvent;
+        return events + ( evIndex * numInputs);
       }
       
       /// Read a ramdomly choosen event.

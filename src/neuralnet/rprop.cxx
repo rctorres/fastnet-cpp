@@ -37,6 +37,36 @@ namespace FastNet
     }
   }
 
+  void RProp::operator=(const NeuralNetwork &net)
+  {
+    DEBUG1("Attributing all values using assignment operator for RProp class");
+    Backpropagation::operator=(net);
+
+    try
+    {
+      const RProp *rNet = dynamic_cast<const RProp*>(&net);
+
+      deltaMax = rNet->deltaMax;
+      deltaMin = rNet->deltaMin;
+      incEta = rNet->incEta;
+      decEta = rNet->decEta;
+      initEta = rNet->initEta;
+
+      for (unsigned i=0; i<(nNodes.size() - 1); i++)
+      {
+        memcpy(prev_db[i], rNet->prev_db[i], nNodes[i+1]*sizeof(REAL));
+        memcpy(delta_b[i], rNet->delta_b[i], nNodes[i+1]*sizeof(REAL));
+        for (unsigned j=0; j<nNodes[i+1]; j++) 
+        {
+          memcpy(prev_dw[i][j], rNet->prev_dw[i][j], nNodes[i]*sizeof(REAL));
+          memcpy(delta_w[i][j], rNet->delta_w[i][j], nNodes[i]*sizeof(REAL));
+        }
+      }
+    }
+    catch (bad_cast xa) {throw;}
+  }
+
+
   RProp::RProp(const mxArray *netStr, const vector<unsigned> &nEvPat) : Backpropagation(netStr, nEvPat)
   {
     DEBUG1("Initializing the RProp class from a Matlab Network structure.");

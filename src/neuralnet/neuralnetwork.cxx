@@ -42,6 +42,33 @@ namespace FastNet
   }
 
 
+  void NeuralNetwork::operator=(const NeuralNetwork &net);
+  {
+    nNodes.clear();
+    activeNodes.clear();
+    usingBias.clear();
+    trfFunc.clear();
+    nNodes.assign(net.nNodes.begin(), net.nNodes.end());
+    activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
+    usingBias.assign(net.usingBias.begin(), net.usingBias.end());
+    trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
+      
+    layerOutputs[0] = net.layerOutputs[0]; // This will be a pointer to the input event.
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
+    {
+      memcpy(bias[i], net.bias[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(savedB[i], net.savedB[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
+      memcpy(layerOutputs[i+1], net.layerOutputs[i+1], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++)
+      {
+        memcpy(weights[i][j], net.weights[i][j], nNodes[i]*sizeof(REAL));
+        memcpy(savedW[i][j], net.savedW[i][j], nNodes[i]*sizeof(REAL));
+      }
+    } 
+  }
+
+
   NeuralNetwork::NeuralNetwork(const mxArray *netStr)
   {
     DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");

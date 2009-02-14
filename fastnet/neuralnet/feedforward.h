@@ -31,13 +31,7 @@ namespace FastNet
   */
   class FeedForward : public NeuralNetwork 
   {
-    protected:
-      void retropropagateError(const REAL *output, const REAL *target){};
-
     public:
-      void calculateNewWeights(const REAL *output, const REAL *target){};
-      void calculateNewWeights(const REAL *output, const REAL *target, const unsigned patIdx){};
-      virtual void updateWeights(){};
 
       ///Copy constructor
       /**This constructor should be used to create a new network which is an exactly copy 
@@ -46,7 +40,6 @@ namespace FastNet
       */
       FeedForward(const FeedForward &net) : NeuralNetwork(net){};
 
-
       /// Constructor taking the parameters for a matlab net structure.
       /**
       This constructor should be called when the network parameters are stored in a matlab
@@ -54,13 +47,20 @@ namespace FastNet
       @param[in] netStr The Matlab network structure as returned by newff.
       */
       FeedForward(const mxArray *netStr) : NeuralNetwork(netStr){};
-      
+
+      /// Returns a clone of the object.
+      /**
+      Returns a clone of the calling object. The clone is dynamically allocated,
+      so it must be released with delete at the end of its use.
+      @return A dynamically allocated clone of the calling object.
+      */
+      virtual NeuralNetwork *clone(){return new FeedForward(*this);}      
 
       /// Class destructor.
       /**
        Releases all the dynamically allocated memory used by the class.
       */
-      virtual ~FeedForward() {};      
+      virtual ~FeedForward() {};
   };
 }
 

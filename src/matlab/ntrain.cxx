@@ -20,6 +20,7 @@
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/matlab/Standard.h"
+//#include "fastnet/matlab/StandardMT.h"
 #include "fastnet/matlab/PatternRec.h"
 
 using namespace std;

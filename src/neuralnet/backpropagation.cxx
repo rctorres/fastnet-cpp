@@ -28,6 +28,31 @@ namespace FastNet
       for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(dw[i][j], net.dw[i][j], nNodes[i]*sizeof(REAL));
     }
   }
+
+
+  void Backpropagation::operator=(const NeuralNetwork &net)
+  { 
+    DEBUG1("Attributing all values using assignment operator for Backpropagation class");
+    NeuralNetwork::operator=(net);
+    
+    try
+    {
+      const Backpropagation *bNet = dynamic_cast<const Backpropagation*>(&net);
+    
+      wFactor.clear();
+      wFactor.assign(bNet->wFactor.begin(), bNet->wFactor.end());
+      learningRate = bNet->learningRate;
+      decFactor = bNet->decFactor;
+
+      for (unsigned i=0; i<(nNodes.size() - 1); i++)
+      {
+        memcpy(db[i], bNet->db[i], nNodes[i+1]*sizeof(REAL));
+        memcpy(sigma[i], bNet->sigma[i], nNodes[i+1]*sizeof(REAL));
+        for (unsigned j=0; j<nNodes[i+1]; j++) memcpy(dw[i][j], bNet->dw[i][j], nNodes[i]*sizeof(REAL));
+      }
+    }
+    catch (bad_cast xa) {throw;}
+  }
   
 
   Backpropagation::Backpropagation(const mxArray *netStr, const vector<unsigned> &nEvPat) : NeuralNetwork(netStr)
@@ -137,6 +162,7 @@ namespace FastNet
     }
   }
 
+
   void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, const unsigned patIdx)
   {
     const unsigned size = nNodes.size() - 1;
@@ -158,7 +184,24 @@ namespace FastNet
       }
     }
   }
-  
+
+
+  void Backpropagation::addToGradient(const NeuralNetwork *net)
+  {
+    //Accumulating the deltas.
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
+    {
+      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      {
+        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        {
+          dw[i][j][k] += net->dw[i][j][k];
+        }
+        db[i][j] += net->db[i][j];
+      }
+    }
+  }
+
   void Backpropagation::updateWeights()
   {    
     for (unsigned i=0; i<(nNodes.size()-1); i++)

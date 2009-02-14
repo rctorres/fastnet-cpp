@@ -201,7 +201,15 @@ namespace FastNet
       one value, corresponding to the total number of events to be presented for each epoch.
       */
       RProp(const mxArray *netStr, const vector<unsigned> &nEvPat);  
-      
+
+      /// Returns a clone of the object.
+      /**
+      Returns a clone of the calling object. The clone is dynamically allocated,
+      so it must be released with delete at the end of its use.
+      @return A dynamically allocated clone of the calling object.
+      */
+      virtual NeuralNetwork *clone(){return new RProp(*this);}
+
       /// Class destructor.
       /**
        Releases all the dynamically allocated memory used by the class,
@@ -219,6 +227,15 @@ namespace FastNet
        @see FastNet::NeuralNetwork#showInfo 
       */
       virtual void showInfo(ostream &str) const;
+
+      //Copy the status from the passing network.
+      /**
+        This method will make a deep copy of all attributes from the passing network,
+        making them exactly equal. This method <b>does not</b> allocate any memory for
+        the calling object. The space for weights and bias info must have been previously created.
+        @param[in] net The network from where to copy the data from.
+      */
+      virtual void operator=(const NeuralNetwork &net);
   };
 }
 

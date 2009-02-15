@@ -202,7 +202,7 @@ namespace FastNet
       dynamically allocated. Caution: you <b>MUST</b> set, prior to call this function, the
       nNodes vector.
       */
-      virtual void allocateSpace();
+      virtual void allocateSpace(const vector<unsigned> &nNodes);
       
       /// Reads the initial weights and biases from the matlab structure.
       /**

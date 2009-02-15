@@ -128,7 +128,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(NeuralNetwork *net)
+  REAL valNetwork(Backpropagation *net)
   {
     REAL gbError = 0;
     const unsigned outSize = (*net)[net->getNumLayers()-1] * sizeof(REAL);
@@ -164,7 +164,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training of each pattern set is presented to the network.
   */
-  REAL trainNetwork(NeuralNetwork *net)
+  REAL trainNetwork(Backpropagation *net)
   {
     REAL gbError = 0;
     for(unsigned pat=0; pat<inTrnList.size(); pat++)
@@ -191,7 +191,7 @@ public:
   
   vector<unsigned> getEpochSize() const {return trnEpochList;};
   
-  void checkSizeMismatch(const NeuralNetwork *net) const
+  void checkSizeMismatch(const Backpropagation *net) const
   {
     for (unsigned i=0; i<inTrnList.size(); i++)
     {

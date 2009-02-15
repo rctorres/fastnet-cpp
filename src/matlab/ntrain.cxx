@@ -76,7 +76,7 @@ const unsigned NUM_THREADS = 2;
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
-  NeuralNetwork *net = NULL;
+  Backpropagation *net = NULL;
   Training *train = NULL;
   
   try

@@ -167,7 +167,7 @@ namespace FastNet
       This function will take the nNodes vector ans will allocate all the memory that must be
       dynamically allocated.
       */
-      virtual void allocateSpace();
+      virtual void allocateSpace(const vector<unsigned> &nNodes);
 
     public:
       //Base class virtual methods overrided.

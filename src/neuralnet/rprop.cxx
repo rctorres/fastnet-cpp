@@ -16,25 +16,9 @@ namespace FastNet
 {
   RProp::RProp(const RProp &net) : Backpropagation(net)
   {
-    deltaMax = net.deltaMax;
-    deltaMin = net.deltaMin;
-    incEta = net.incEta;
-    decEta = net.decEta;
-    initEta = net.initEta;
-
-    try {allocateSpace();}
+    try {allocateSpace(net.nNodes);}
     catch (bad_alloc xa) {throw;}
-
-    for (unsigned i=0; i<(nNodes.size() - 1); i++)
-    {
-      memcpy(prev_db[i], net.prev_db[i], nNodes[i+1]*sizeof(REAL));
-      memcpy(delta_b[i], net.delta_b[i], nNodes[i+1]*sizeof(REAL));
-      for (unsigned j=0; j<nNodes[i+1]; j++) 
-      {
-        memcpy(prev_dw[i][j], net.prev_dw[i][j], nNodes[i]*sizeof(REAL));
-        memcpy(delta_w[i][j], net.delta_w[i][j], nNodes[i]*sizeof(REAL));
-      }
-    }
+    (*this) = net;
   }
 
   void RProp::operator=(const NeuralNetwork &net)
@@ -82,7 +66,7 @@ namespace FastNet
     if (mxGetField(trnParam, 0, "delta0")) this->initEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delta0")));
     else this->initEta = 0.1;
 
-    try {allocateSpace();}
+    try {allocateSpace(nNodes);}
     catch (bad_alloc xa) {throw;}
 
     //Initializing the dynamically allocated values.
@@ -103,7 +87,7 @@ namespace FastNet
   }
 
 
-  void RProp::allocateSpace()
+  void RProp::allocateSpace(const vector<unsigned> &nNodes)
   {
     const unsigned size = nNodes.size() - 1;
     

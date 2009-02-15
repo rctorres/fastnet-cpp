@@ -46,7 +46,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(NeuralNetwork *net)
+  REAL valNetwork(Backpropagation *net)
   {
     REAL gbError = 0.;
     const REAL *out;
@@ -75,7 +75,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(NeuralNetwork *net)
+  REAL trainNetwork(Backpropagation *net)
   {
     unsigned evIndex;
     REAL gbError = 0.;
@@ -100,7 +100,7 @@ public:
     return ret;
   };
   
-  void checkSizeMismatch(const NeuralNetwork *net) const
+  void checkSizeMismatch(const Backpropagation *net) const
   {
     if ( (inTrnData->getEventSize() != (*net)[0]) || (inValData->getEventSize() != (*net)[0]) )
       throw "Input training or validating data do not match the network input layer size!";

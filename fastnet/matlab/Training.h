@@ -3,7 +3,7 @@
 
 #include <mex.h>
 
-#include "fastnet/neuralnet/neuralnetwork.h"
+#include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/defines.h"
 #include "fastnet/events/matevents.h"
@@ -83,7 +83,7 @@ public:
   
   virtual vector<unsigned> getEpochSize() const = 0;
   
-  virtual void checkSizeMismatch(const NeuralNetwork *net) const = 0;
+  virtual void checkSizeMismatch(const Backpropagation *net) const = 0;
   
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
@@ -102,9 +102,9 @@ public:
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << "mse (val) = " << valError);
   };
   
-  virtual REAL valNetwork(NeuralNetwork *net) = 0;
+  virtual REAL valNetwork(Backpropagation *net) = 0;
 
-  virtual REAL trainNetwork(NeuralNetwork *net) = 0;
+  virtual REAL trainNetwork(Backpropagation *net) = 0;
 };
 
 #endif

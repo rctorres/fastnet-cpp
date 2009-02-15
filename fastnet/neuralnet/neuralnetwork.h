@@ -14,7 +14,7 @@
 #include <mex.h>
 
 #include "fastnet/defines.h"
-#include "fastnet/events/mxhandler.h"
+#include "fastnet/matlab/mxhandler.h"
 #include "fastnet/reporter/Reporter.h"
 
 using namespace std;

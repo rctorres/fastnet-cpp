@@ -8,11 +8,15 @@ using namespace FastNet;
 class PatternRecognition : public Training
 {
 private:
-  vector<MatEvents*> inTrnList;
-  vector<MatEvents*> inValList;
-  vector<const REAL*> targList;
-  vector< vector<REAL*>* > epochValOutputs;
-  vector<unsigned> trnEpochList;
+  const REAL **inTrnList;
+  const REAL **inValList;
+  const REAL **targList;
+  REAL **epochValOutputs;
+  unsigned *numTrnEvents;
+  unsigned *numValEvents;
+  unsigned numPatterns;
+  unsigned inputSize;
+  unsigned outputSize;
   bool useSP;
 
 
@@ -24,40 +28,57 @@ public:
     
     useSP = usingSP;
     if (useSP) bestGoal = 0.;
-    const unsigned numPat = mxGetN(inTrn);
-    for (unsigned i=0; i<numPat; i++)
+    
+    numPatterns = mxGetN(inTrn);
+    outputSize = (numPatterns == 2) ? 1 : numPatterns;
+    inTrnList = new const REAL* [numPatterns];
+    inValList = new const REAL* [numPatterns];
+    targList = new const REAL* [numPatterns];
+    if (useSP) epochValOutputs = new REAL* [numPatterns];
+    numTrnEvents = new unsigned [numPatterns];
+    numValEvents = new unsigned [numPatterns];
+    
+    for (unsigned i=0; i<numPatterns; i++)
     {
-      //Getting the training data for each pattern.
-      inTrnList.push_back(new MatEvents (mxGetCell(inTrn, i)));
-      //Getting the val data for each pattern.
-      inValList.push_back(new MatEvents (mxGetCell(inVal, i)));
+      const mxArray *patTrnData = mxGetCell(inTrn, i);
+      const mxArray *patValData = mxGetCell(inVal, i);      
+
+      //Checking whether the dimensions are ok.
+      if ( mxGetM(patTrnData) != mxGetM(patValData) ) throw "Input training and validating events dimension does not match!";
+      if ( (i) and (mxGetM(patTrnData) != inputSize)) throw "Events dimension between patterns does not match!";
+      else inputSize = mxGetM(patTrnData);
+
+      //Getting the desired values.      
+      inTrnList[i] = static_cast<REAL*>(mxGetData(patTrnData));
+      inValList[i] = static_cast<REAL*>(mxGetData(patValData));
+      numTrnEvents[i] = mxGetN(patTrnData);
+      numValEvents[i] = mxGetN(patValData);
+      if (useSP) epochValOutputs[i] = new REAL [outputSize*numValEvents[i]];
+      
       //Generating the desired output for each pattern for maximum sparsed outputs.
-      REAL *target = new REAL [numPat];
-      for (unsigned j=0; j<numPat; j++) target[j] = -1;
+      REAL *target = new REAL [outputSize];
+      for (unsigned j=0; j<outputSize; j++) target[j] = -1;
       target[i] = 1;
       //Saving the target in the list.
-      targList.push_back(target);
-      
-      //Allocating space for the generated outputs...
-      vector<REAL*> *aux = new vector<REAL*>;
-      for (unsigned j=0; j<inValList[i]->getNumEvents(); j++) aux->push_back(new REAL [numPat]);
-      epochValOutputs.push_back(aux);
+      targList[i] = target;      
     }
-    
-    //Taking the number of events per epoch, for each pattern.
-    for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(inTrn, i)));
   };
 
   virtual ~PatternRecognition()
   {
-    for (unsigned i=0; i<inTrnList.size(); i++)
+    delete [] numTrnEvents;
+    delete [] numValEvents;
+    for (unsigned i=0; i<numPatterns; i++)
     {
-      delete inTrnList[i];
-      delete inValList[i];
+      delete [] inTrnList[i];
+      delete [] inValList[i];
       delete [] targList[i];
-      for (unsigned j=0; j<epochValOutputs[i]->size(); j++) delete [] epochValOutputs[i]->at(j);
-      delete epochValOutputs[i];
+      if (useSP) delete [] epochValOutputs[i];
     }
+    delete [] inTrnList;
+    delete [] inValList;
+    delete [] targList;
+    if (useSP) delete [] epochValOutputs;
   };
 
   /// Calculates the SP product.
@@ -69,7 +90,6 @@ public:
   */
   REAL sp()
   {
-    const REAL RESOLUTION = 0.001;
     unsigned TARG_SIGNAL, TARG_NOISE;
   
     //We consider that our signal has target output +1 and the noise, -1. So, the if below help us
@@ -77,30 +97,33 @@ public:
     if (targList[0][0] > targList[1][0]) // target[0] is our signal.
     {
       TARG_NOISE = 1;
-      TARG_SIGNAL = 0;
+      TARG_SIGNAL = 0;      
     }
     else //target[1] is the signal.
     {
       TARG_NOISE = 0;
       TARG_SIGNAL = 1;
     }
-  
+
+    const REAL *signal = epochValOutputs[TARG_SIGNAL];
+    const unsigned numSignalEvents = numValEvents[TARG_SIGNAL];
+    const REAL *noise = epochValOutputs[TARG_NOISE];
+    const unsigned numNoiseEvents = numValEvents[TARG_NOISE];
+    const REAL signalTarget = targList[TARG_SIGNAL][0];
+    const REAL noiseTarget = targList[TARG_NOISE][0];
+    const REAL RESOLUTION = 0.001;
     REAL maxSP = -1.;
-    for (REAL pos = targList[TARG_NOISE][0]; pos < targList[TARG_SIGNAL][0]; pos += RESOLUTION)
+
+    for (REAL pos = noiseTarget; pos < signalTarget; pos += RESOLUTION)
     {
       REAL sigEffic = 0.;
-      for (vector<REAL*>::const_iterator itr = epochValOutputs[TARG_SIGNAL]->begin(); itr != epochValOutputs[TARG_SIGNAL]->end(); itr++)
-      {
-        if ((*itr)[0] >= pos) sigEffic++;
-      }
-      sigEffic /= static_cast<REAL>(epochValOutputs[TARG_SIGNAL]->size());
+      
+      for (unsigned i=0; i<numSignalEvents; i++) if (signal[i] >= pos) sigEffic++;
+      sigEffic /= static_cast<REAL>(numSignalEvents);
 
       REAL noiseEffic = 0.;
-      for (vector<REAL*>::const_iterator itr = epochValOutputs[TARG_NOISE]->begin(); itr != epochValOutputs[TARG_NOISE]->end(); itr++)
-      {
-        if ((*itr)[0] < pos) noiseEffic++;
-      }
-      noiseEffic /= static_cast<REAL>(epochValOutputs[TARG_NOISE]->size());
+      for (unsigned i=0; i<numNoiseEvents; i++) if (noise[i] < pos) noiseEffic++;
+      noiseEffic /= static_cast<REAL>(numNoiseEvents);
 
       //Using normalized SP calculation.
       const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
@@ -122,20 +145,20 @@ public:
   REAL valNetwork(Backpropagation *net)
   {
     REAL gbError = 0;
-    const unsigned outSize = (*net)[net->getNumLayers()-1] * sizeof(REAL);
-  
-    for (unsigned pat=0; pat<inValList.size(); pat++)
+    
+    for (unsigned pat=0; pat<numPatterns; pat++)
     {
       //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-      const REAL wFactor = 1. / static_cast<REAL>(inValList.size() * inValList[pat]->getNumEvents());
-
-      for (unsigned i=0; i<inValList[pat]->getNumEvents(); i++)
+      const REAL wFactor = 1. / static_cast<REAL>(numPatterns * numValEvents[pat]);
+      const REAL *target = targList[pat];
+      const REAL *input = inValList[pat];
+      const REAL *output;
+      REAL *outList = epochValOutputs[pat];
+      for (unsigned i=0; i<numValEvents[pat]; i++)
       {
-        // Getting the next input and target pair.
-        const REAL *out;
-        const REAL *input = inValList[pat]->readEvent(i);
-        gbError += ( wFactor * net->applySupervisedInput(input, targList[pat], out) );
-        if (useSP) memcpy(epochValOutputs[pat]->at(i), out, outSize);
+        gbError += ( wFactor * net->applySupervisedInput(input, target, output) );
+        if (useSP) outList[i] = output[0];
+        input += inputSize;
       }
     }
 
@@ -158,37 +181,36 @@ public:
   REAL trainNetwork(Backpropagation *net)
   {
     REAL gbError = 0;
-    for(unsigned pat=0; pat<inTrnList.size(); pat++)
+    for(unsigned pat=0; pat<numPatterns; pat++)
     {
-      const REAL *targ = targList[pat];
-    
       //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-      const REAL wFactor = 1. / static_cast<REAL>(inTrnList.size() * trnEpochList[pat]);
-    
-      for (unsigned i=0; i<trnEpochList[pat]; i++)
+      const REAL wFactor = 1. / static_cast<REAL>(numPatterns * numTrnEvents[pat]);
+      const REAL *target = targList[pat];
+      const REAL *input = inTrnList[pat];
+      const REAL *output;
+      
+      for (unsigned i=0; i<numTrnEvents[pat]; i++)
       {
-        unsigned evIndex;
-        const REAL *output;
-        // Getting the next input and target pair.
-        const REAL *input = inTrnList[pat]->readRandomEvent(evIndex);
-        gbError += ( wFactor * net->applySupervisedInput(input, targ, output));
+        gbError += ( wFactor * net->applySupervisedInput(input, target, output));
         //Calculating the weight and bias update values.
-        net->calculateNewWeights(output, targ, pat);
+        net->calculateNewWeights(output, target, pat);
+        input += inputSize;
       }
     }
 
     return gbError;  
   };
   
-  vector<unsigned> getEpochSize() const {return trnEpochList;};
+  vector<unsigned> getEpochSize() const
+  {
+    vector<unsigned> ret;
+    for (unsigned i=0; i<numPatterns; i++) ret.push_back(numTrnEvents[i]);
+    return ret;
+  }
   
   void checkSizeMismatch(const Backpropagation *net) const
   {
-    for (unsigned i=0; i<inTrnList.size(); i++)
-    {
-      if ( (inTrnList[i]->getEventSize() != (*net)[0]) || (inValList[i]->getEventSize() != (*net)[0]) )
-        throw "Input training or validating data do not match the network input layer size!";
-    }
+    if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";
   };
 
 
@@ -197,12 +219,11 @@ public:
     REPORT("TRAINING DATA INFORMATION (Pattern Recognition Optimized Network)");
     REPORT("Number of Epochs                    : " << nEpochs);
     REPORT("Using SP Stopping Criteria          : " << (useSP) ? "true" : "false");
-    for (unsigned i=0; i<inTrnList.size(); i++)
+    for (unsigned i=0; i<numPatterns; i++)
     {
       REPORT("Information for pattern " << (i+1) << ":");
-      REPORT("Number of training events per epoch : " << trnEpochList[i]);
-      REPORT("Total number of training events     : " << inTrnList[i]->getNumEvents());
-      REPORT("Total number of validating events      : " << inValList[i]->getNumEvents());
+      REPORT("Total number of training events     : " << numTrnEvents[i]);
+      REPORT("Total number of validating events      : " << numValEvents[i]);
     }
   };
 

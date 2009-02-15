@@ -6,7 +6,6 @@
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/defines.h"
-#include "fastnet/events/matevents.h"
 
 using namespace FastNet;
 

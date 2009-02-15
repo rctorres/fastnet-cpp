@@ -8,10 +8,10 @@ using namespace FastNet;
 class StandardTraining : public Training
 {
 private:
-  REAL *inTrnData;
-  REAL *outTrnData;
-  REAL *inValData;
-  REAL *outValData;
+  const REAL *inTrnData;
+  const REAL *outTrnData;
+  const REAL *inValData;
+  const REAL *outValData;
   unsigned numTrnEvents;
   unsigned numValEvents;
   unsigned inputSize;

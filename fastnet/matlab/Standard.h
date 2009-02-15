@@ -15,7 +15,7 @@ private:
   unsigned trnEpochSize;
 
 public:
-  StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const mxArray *epochSize) : Training()
+  StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal) : Training()
   {
     DEBUG2("Creating StandardTraining object.");
     inTrnData = new MatEvents (inTrn);
@@ -23,7 +23,7 @@ public:
     inValData = new MatEvents (inVal);
     outValData = new MatEvents (outVal);
     DEBUG2("User defined epoch size? " << (epochSize != NULL));
-    trnEpochSize = (!epochSize) ? inTrnData->getNumEvents() : static_cast<unsigned>(mxGetScalar(epochSize));
+    trnEpochSize = inTrnData->getNumEvents();
     DEBUG2("Training epoch size: " << trnEpochSize);
   };
 

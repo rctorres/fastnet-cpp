@@ -47,7 +47,7 @@ toc
 inTrn = {single(c1(:,1:3:end)) single(c2(:,1:3:end))};
 inVal = {single(c1(:,2:3:end)) single(c2(:,2:3:end))};
 tic
-fastNet = ntrain(net, inTrn, [], inVal, []);
+fastNet = ntrain(net, inTrn, inVal);
 toc
 
 %Generating the testing outputs.

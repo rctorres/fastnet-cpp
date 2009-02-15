@@ -26,20 +26,20 @@
 using namespace std;
 using namespace FastNet;
 
-/// Specifies the correct number of arguments if the neural network will just be trained.
+/// Specifies the correct number of arguments for the standart training case.
 /**
- If the user specifies only 5 input parameters, the network will be trained and validated
- with an epoch size (training and validating) corresponding to the total amount of 
- training and validating data.
+This constant holds the number of parameters to be supplied when training a standart
+neural network. That means supplying the input and target training and validating sets.
 */
-const unsigned NUM_ARGS_FULL_EPOCH = 5;
+const unsigned NUM_INPUT_ARGS_STD_CASE = 5;
 
-/// Specifies the correct number of arguments if the neural network will be trained and validated with specified epochs size.
+/// Specifies the correct number of arguments for the Pattern Recognition training case.
 /**
- If the user specifies the 6 input parameters, the network will be trained and validated
- considering, in each epoch, the number of events specified in the last 2 parameters.
- */
-const unsigned NUM_ARGS_PARTIAL_EPOCH = 6;
+This constant holds the number of parameters to be supplied when training a pattern recognition
+optimized neural network. That means supplying only input training and validating sets, organized
+as a cell vector, where each cells contains the events for a given pattern class.
+*/
+const unsigned NUM_INPUT_ARGS_PAT_CASE = 3;
 
 /// Index, in the arguments list, of the neural network structure.
 const unsigned NET_STR_IDX = 0;
@@ -51,7 +51,12 @@ const unsigned IN_TRN_IDX = 1;
 const unsigned OUT_TRN_IDX = 2;
 
 /// Index, in the arguments list, of the input validating events.
-const unsigned IN_VAL_IDX = 3;
+/**
+This value might have to be changed during execution, because the index of the
+validating input events is 3 for the standart training case, but it is 2 for the
+Pattern recognition network case.
+*/
+unsigned IN_VAL_IDX = 3;
 
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
@@ -82,27 +87,24 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   try
   {  
     //Verifying if the number of input parameters is ok.
-    if ( (nargin != NUM_ARGS_FULL_EPOCH) && (nargin != NUM_ARGS_PARTIAL_EPOCH) )
-    {
-      throw "Incorrect number of arguments! See help for information!";
-    }
-    
-    const mxArray *trnEpochsPtr = (nargin == NUM_ARGS_FULL_EPOCH) ? NULL : args[TRN_EPOCH_SIZE_IDX];
+    if (nargin == NUM_INPUT_ARGS_STD_CASE) IN_VAL_IDX = 3;
+    else if (nargin == NUM_INPUT_ARGS_PAT_CASE) IN_VAL_IDX = 2;
+    else throw "Incorrect number of arguments! See help for information!";
 
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
 
     //Creating the object for the desired training type.
-    if ( (!mxIsEmpty(args[OUT_TRN_IDX])) && (!mxIsEmpty(args[OUT_VAL_IDX])) )
+    if ( nargin == NUM_INPUT_ARGS_STD_CASE )
     {
-      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], trnEpochsPtr);
+      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], trnEpochsPtr, useSP);
+      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
     }
     
     //Selecting the training type by reading the training agorithm.    

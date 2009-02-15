@@ -18,7 +18,7 @@ private:
 
 public:
 
-  PatternRecognition(const mxArray *inTrn, const mxArray *inVal, const mxArray *epochSize, const bool usingSP) : Training()
+  PatternRecognition(const mxArray *inTrn, const mxArray *inVal, const bool usingSP) : Training()
   {
     if (mxGetN(inTrn) != mxGetN(inVal)) throw "Number of training and validating patterns are not equal";
     
@@ -43,18 +43,9 @@ public:
       for (unsigned j=0; j<inValList[i]->getNumEvents(); j++) aux->push_back(new REAL [numPat]);
       epochValOutputs.push_back(aux);
     }
-
-    if (!epochSize)
-    {
-      for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(inTrn, i)));
-    }
-    else
-    {
-      if ( (mxGetN(epochSize) != mxGetN(inTrn)) ) 
-           throw "Number of patterns in the training events per epoch vector are not the same as the total number of patterns!";
-      const double *numTrnEvEp = mxGetPr(epochSize);
-      for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(static_cast<unsigned>(numTrnEvEp[i]));
-    }
+    
+    //Taking the number of events per epoch, for each pattern.
+    for (unsigned i=0; i<numPat; i++) trnEpochList.push_back(mxGetN(mxGetCell(inTrn, i)));
   };
 
   virtual ~PatternRecognition()

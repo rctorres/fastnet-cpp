@@ -8,33 +8,35 @@ using namespace FastNet;
 class StandardTraining : public Training
 {
 private:
-  MatEvents *inTrnData;
-  MatEvents *outTrnData;
-  MatEvents *inValData;
-  MatEvents *outValData;
-  unsigned trnEpochSize;
+  REAL *inTrnData;
+  REAL *outTrnData;
+  REAL *inValData;
+  REAL *outValData;
+  unsigned numTrnEvents;
+  unsigned numValEvents;
+  unsigned inputSize;
+  unsigned outputSize;
 
 public:
   StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal) : Training()
   {
     DEBUG2("Creating StandardTraining object.");
-    inTrnData = new MatEvents (inTrn);
-    outTrnData = new MatEvents (outTrn);
-    inValData = new MatEvents (inVal);
-    outValData = new MatEvents (outVal);
-    DEBUG2("User defined epoch size? " << (epochSize != NULL));
-    trnEpochSize = inTrnData->getNumEvents();
-    DEBUG2("Training epoch size: " << trnEpochSize);
+    
+    if ( mxGetM(inTrn) != mxGetM(inVal) ) throw "Input training and validating events dimension does not match!";
+    if ( mxGetM(outTrn) != mxGetM(outVal) ) throw "Output training and validating events dimension does not match!";
+    if ( mxGetN(inTrn) != mxGetN(outTrn) ) throw "Number of input and target training events does not match!";
+    if ( mxGetN(inVal) != mxGetN(outVal) ) throw "Number of input and target validating events does not match!";
+    
+    inTrnData = static_cast<REAL*>(mxGetData(inTrn));
+    outTrnData = static_cast<REAL*>(mxGetData(outTrn));
+    inValData = static_cast<REAL*>(mxGetData(inVal));
+    outValData = static_cast<REAL*>(mxGetData(outVal));
+    numTrnEvents = static_cast<unsigned>(mxGetN(inTrn));
+    numValEvents = static_cast<unsigned>(mxGetN(inVal));
+    inputSize = static_cast<unsigned>(mxGetM(inTrn));
+    outputSize = static_cast<unsigned>(mxGetM(outTrn));
   };
 
-
-  virtual ~StandardTraining()
-  {
-    delete inTrnData;
-    delete outTrnData;
-    delete inValData;
-    delete outValData;
-  };
 
   /// Applies the validating set for the network's validation.
   /**
@@ -50,16 +52,16 @@ public:
   {
     REAL gbError = 0.;
     const REAL *out;
-  
-    for (unsigned i=0; i<inValData->getNumEvents(); i++)
-    {
-      // Getting the next input and target pair.
-      const REAL *input = inValData->readEvent(i);
-      const REAL *target = outValData->readEvent(i);
-      gbError += net->applySupervisedInput(input, target, out);
-    }
 
-    return (gbError / static_cast<REAL>(inValData->getNumEvents()));
+    const REAL *input = inValData;
+    const REAL *target = outValData;
+    for (unsigned i=0; i<numValEvents; i++)
+    {
+      gbError += net->applySupervisedInput(input, target, out);
+      input += inputSize;
+      target += outputSize;
+    }
+    return (gbError / static_cast<REAL>(numValEvents));
   };
 
 
@@ -81,31 +83,30 @@ public:
     REAL gbError = 0.;
     const REAL *output;
 
-    for (unsigned i=0; i<trnEpochSize; i++)
+    const REAL *input = inTrnData;
+    const REAL *target = outTrnData;
+    for (unsigned i=0; i<numTrnEvents; i++)
     {
-      // Getting the next input and target pair.
-      const REAL *input = inTrnData->readRandomEvent(evIndex);
-      const REAL *target = outTrnData->readEvent(evIndex);
       gbError += net->applySupervisedInput(input, target, output);
-
-      //Calculating the weight and bias update values
       net->calculateNewWeights(output, target);
+      input += inputSize;
+      target += outputSize;
     }
-    return (gbError / static_cast<REAL>(trnEpochSize));
+    return (gbError / static_cast<REAL>(numTrnEvents));
   }
   
   vector<unsigned> getEpochSize() const
   {
-    vector<unsigned> ret(1, trnEpochSize);
+    vector<unsigned> ret(1, numTrnEvents);
     return ret;
   };
   
   void checkSizeMismatch(const Backpropagation *net) const
   {
-    if ( (inTrnData->getEventSize() != (*net)[0]) || (inValData->getEventSize() != (*net)[0]) )
+    if (inputSize != (*net)[0])
       throw "Input training or validating data do not match the network input layer size!";
 
-    if ( (outTrnData->getEventSize() != (*net)[net->getNumLayers()-1]) || (outValData->getEventSize() != (*net)[net->getNumLayers()-1]) )
+    if ( outputSize != (*net)[net->getNumLayers()-1] )
       throw "Output training or validating data do not match the network output layer size!";
   };
   
@@ -113,9 +114,8 @@ public:
   {
     REPORT("TRAINING DATA INFORMATION (Standard Network)");
     REPORT("Number of Epochs                    : " << nEpochs);
-    REPORT("Number of training events per epoch : " << trnEpochSize);
-    REPORT("Total number of training events     : " << inTrnData->getNumEvents());
-    REPORT("Total number of validating events      : " << inValData->getNumEvents());
+    REPORT("Total number of training events     : " << numTrnEvents);
+    REPORT("Total number of validating events      : " << numValEvents);
   };
 };
 

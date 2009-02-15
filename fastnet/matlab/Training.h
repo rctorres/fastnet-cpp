@@ -25,7 +25,7 @@ class Training
 protected:
   list<TrainData> trnEvolution;
   REAL bestGoal;
-  
+
 public:
 
   Training()

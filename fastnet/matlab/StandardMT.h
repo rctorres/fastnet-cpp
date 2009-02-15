@@ -1,13 +1,12 @@
-#ifndef STANDARD_H
-#define STANDARD_H
-
+#ifndef STANDARDMT_H
+#define STANDARDMT_H
 
 #include "fastnet/matlab/Training.h"
 #include "fastnet/matlab/MTHelper.h"
 
 using namespace FastNet;
 
-class StandardTraining : public Training
+class StandardTrainingMT : public Training
 {
 private:
   MatEvents *inTrnData;
@@ -15,9 +14,10 @@ private:
   MatEvents *inValData;
   MatEvents *outValData;
   unsigned trnEpochSize;
+  MT::MTHelper *mtObj;
 
 public:
-  StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const mxArray *epochSize) : Training()
+  StandardTrainingMT(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const mxArray *epochSize) : Training()
   {
     DEBUG2("Creating StandardTraining object.");
     inTrnData = new MatEvents (inTrn);
@@ -27,11 +27,16 @@ public:
     DEBUG2("User defined epoch size? " << (epochSize != NULL));
     trnEpochSize = (!epochSize) ? inTrnData->getNumEvents() : static_cast<unsigned>(mxGetScalar(epochSize));
     DEBUG2("Training epoch size: " << trnEpochSize);
+    
+    mtObj = new MT::MTHelper(inTrnData, outTrnData, inValData, outValData, trnEpochSize);
   };
 
+  virtual void addNetwork(Backpropagation *net){mtObj->addNetwork(net);};
 
-  virtual ~StandardTraining()
+
+  virtual ~StandardTrainingMT()
   {
+    delete mtObj;
     delete inTrnData;
     delete outTrnData;
     delete inValData;
@@ -48,20 +53,9 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(NeuralNetwork *net)
+  REAL valNetwork()
   {
-    REAL gbError = 0.;
-    const REAL *out;
-  
-    for (unsigned i=0; i<inValData->getNumEvents(); i++)
-    {
-      // Getting the next input and target pair.
-      const REAL *input = inValData->readEvent(i);
-      const REAL *target = outValData->readEvent(i);
-      gbError += net->applySupervisedInput(input, target, out);
-    }
-
-    return (gbError / static_cast<REAL>(inValData->getNumEvents()));
+    return mtObj->valNetwork();
   };
 
 
@@ -77,23 +71,9 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(NeuralNetwork *net)
+  REAL trainNetwork()
   {
-    unsigned evIndex;
-    REAL gbError = 0.;
-    const REAL *output;
-
-    for (unsigned i=0; i<trnEpochSize; i++)
-    {
-      // Getting the next input and target pair.
-      const REAL *input = inTrnData->readRandomEvent(evIndex);
-      const REAL *target = outTrnData->readEvent(evIndex);
-      gbError += net->applySupervisedInput(input, target, output);
-
-      //Calculating the weight and bias update values
-      net->calculateNewWeights(output, target);
-    }
-    return (gbError / static_cast<REAL>(trnEpochSize));
+    return mtObj->trainNetwork();
   }
   
   vector<unsigned> getEpochSize() const
@@ -102,7 +82,7 @@ public:
     return ret;
   };
   
-  void checkSizeMismatch(const NeuralNetwork *net) const
+  void checkSizeMismatch(const Backpropagation *net) const
   {
     if ( (inTrnData->getEventSize() != (*net)[0]) || (inValData->getEventSize() != (*net)[0]) )
       throw "Input training or validating data do not match the network input layer size!";

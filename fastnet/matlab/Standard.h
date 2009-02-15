@@ -26,7 +26,7 @@ public:
     if ( mxGetM(outTrn) != mxGetM(outVal) ) throw "Output training and validating events dimension does not match!";
     if ( mxGetN(inTrn) != mxGetN(outTrn) ) throw "Number of input and target training events does not match!";
     if ( mxGetN(inVal) != mxGetN(outVal) ) throw "Number of input and target validating events does not match!";
-    
+
     inTrnData = static_cast<REAL*>(mxGetData(inTrn));
     outTrnData = static_cast<REAL*>(mxGetData(outTrn));
     inValData = static_cast<REAL*>(mxGetData(inVal));
@@ -94,12 +94,6 @@ public:
     }
     return (gbError / static_cast<REAL>(numTrnEvents));
   }
-  
-  vector<unsigned> getEpochSize() const
-  {
-    vector<unsigned> ret(1, numTrnEvents);
-    return ret;
-  };
   
   void checkSizeMismatch(const Backpropagation *net) const
   {

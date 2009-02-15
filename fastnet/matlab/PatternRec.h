@@ -201,13 +201,6 @@ public:
     return gbError;  
   };
   
-  vector<unsigned> getEpochSize() const
-  {
-    vector<unsigned> ret;
-    for (unsigned i=0; i<numPatterns; i++) ret.push_back(numTrnEvents[i]);
-    return ret;
-  }
-  
   void checkSizeMismatch(const Backpropagation *net) const
   {
     if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";

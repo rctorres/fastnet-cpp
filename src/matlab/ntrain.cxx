@@ -106,17 +106,17 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
       train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
     }
-    
+
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp(netStr, train->getEpochSize());
+      net = new RProp(netStr, Training::getNumEvents(args[IN_TRN_IDX]));
       REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
-      net = new Backpropagation(netStr, train->getEpochSize());
+      net = new Backpropagation(netStr, Training::getNumEvents(args[IN_TRN_IDX]));
       REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";

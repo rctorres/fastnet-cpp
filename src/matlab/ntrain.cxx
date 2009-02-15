@@ -78,6 +78,28 @@ const unsigned OUT_VAL_ERROR_IDX = 3;
 
 const unsigned NUM_THREADS = 2;
 
+vector<unsigned> getNumEvents(const mxArray *dataStr)
+{
+  vector<unsigned> ret;
+  if (mxIsCell(dataStr)) // We have multiple patterns
+  {
+    DEBUG2("We have a cell vector (multiple patterns)");
+    for (unsigned i=0; i<mxGetN(dataStr); i++)
+    {
+      ret.push_back(mxGetN(mxGetCell(dataStr, i)));
+      DEBUG2("Number of events for pattern " << i << ": " << ret[i]);
+    }
+  }
+  else
+  {
+    DEBUG2("We have just a matrix of events.");
+    ret.push_back(mxGetN(dataStr));
+    DEBUG2("Number of events: " << ret[0]);
+  }
+  return ret;
+}
+
+
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
@@ -111,12 +133,12 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp(netStr, train->getNumEvents(args[IN_TRN_IDX]));
+      net = new RProp(netStr, getNumEvents(args[IN_TRN_IDX]));
       REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
-      net = new Backpropagation(netStr, train->getNumEvents(args[IN_TRN_IDX]));
+      net = new Backpropagation(netStr, getNumEvents(args[IN_TRN_IDX]));
       REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";

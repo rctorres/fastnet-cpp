@@ -101,28 +101,7 @@ public:
   
   virtual REAL valNetwork(Backpropagation *net) = 0;
 
-  virtual REAL trainNetwork(Backpropagation *net) = 0;
-  
-  static vector<unsigned> getNumEvents(const mxArray *dataStr)
-  {
-    vector<unsigned> ret;
-    if (mxIsCell(dataStr)) // We have multiple patterns
-    {
-      DEBUG2("We have a cell vector (multiple patterns)");
-      for (unsigned i=0; i<mxGetN(dataStr); i++)
-      {
-        ret.push_back(mxGetN(mxGetCell(dataStr, i)));
-        DEBUG2("Number of events for pattern " << i << ": " << ret[i]);
-      }
-    }
-    else
-    {
-      DEBUG2("We have just a matrix of events.");
-      ret.push_back(mxGetN(dataStr));
-      DEBUG2("Number of events: " << ret[0]);
-    }
-    return ret;
-  }
+  virtual REAL trainNetwork(Backpropagation *net) = 0;  
 };
 
 #endif

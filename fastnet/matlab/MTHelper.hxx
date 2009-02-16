@@ -14,19 +14,21 @@ namespace MT
   struct ThreadParams
   {
     Backpropagation *net;
-    MatEvents *inData;
-    MatEvents *outData;
-    unsigned initEvPos;
-    unsigned endEvPos;
+    const REAL *inData;
+    const REAL *outData;
+    unsigned id;
     unsigned numEvents;
+    unsigned inputsize;
+    unsigned outputsize;
     REAL error;
   };
 
   void *MTValNetwork(void *param)
   {
-    const REAL *out;
+    const REAL *output;
     ThreadParams *par = static_cast<ThreadParams*>(param);
-
+    const unsigned initPos = par->id * par->inputsize;
+    const unsigned incVal = (par->id + 1) * par->inputsize;
     while (true)
     {
       //Waiting for the signal to start.
@@ -34,16 +36,15 @@ namespace MT
       pthread_cond_wait(&valRequest, &valMutex);
       
       par->error = 0.;
-      for (unsigned i=par->initEvPos; i<par->endEvPos; i++)
+      for (unsigned i=initPos; i<par->numEvents; i+=incVal)
       {
         // Getting the next input and target pair.
         pthread_mutex_lock(&dataMutex);
-        const REAL *input = par->inData->readEvent(i);
-        const REAL *target = par->outData->readEvent(i);
+        const REAL *input = par->inData[i];
+        const REAL *target = par->outData[i];
         pthread_mutex_unlock(&dataMutex);
-        par->error += par->net->applySupervisedInput(input, target, out);
+        par->error += par->net->applySupervisedInput(input, target, output);
       }
-
       pthread_mutex_unlock(&valMutex);
     }
     pthread_exit(NULL);
@@ -53,7 +54,8 @@ namespace MT
   void *MTTrainNetwork(void *param)
   {
     ThreadParams *par = static_cast<ThreadParams*>(param);
-    unsigned evIndex;
+    const unsigned initPos = par->id * par->inputsize;
+    const unsigned incVal = (par->id + 1) * par->inputsize;
     const REAL *output;
 
     while (true)
@@ -63,19 +65,18 @@ namespace MT
       pthread_cond_wait(&trnRequest, &trnMutex);
 
       par->error = 0.;
-      for (unsigned i=0; i<par->numEvents; i++)
+      for (unsigned i=initPos; i<par->numEvents; i+=incVal)
       {
         // Getting the next input and target pair.
         pthread_mutex_lock(&dataMutex);
-        const REAL *input = par->inData->readRandomEvent(evIndex);
-        const REAL *target = par->outData->readEvent(evIndex);
+        const REAL *input = par->inData[i];
+        const REAL *target = par->outData[i];
         pthread_mutex_unlock(&dataMutex);
         par->error += par->net->applySupervisedInput(input, target, output);
 
         //Calculating the weight and bias update values
         par->net->calculateNewWeights(output, target);
       }
-      
       pthread_mutex_unlock(&trnMutex);
     }
     pthread_exit(NULL);
@@ -93,9 +94,9 @@ private:
   ThreadParams *trnThPar;
   ThreadParams *valThPar;
   pthread_attr_t threadAttr;
-  std::vector<Backpropagation*> netVec;
+  Backpropagation **netVec;
 
-  
+  DEBUG1("Starting Multi-Thread Helper Object.");
   std::vector<unsigned> distributeEvents(const unsigned totalNumEvents)
   {
     const unsigned amount = static_cast<unsigned>(totalNumEvents / nThreads);
@@ -113,25 +114,21 @@ private:
     return ret;
   }
   
-  void createThreads(MatEvents *inData, MatEvents *outData, pthread_t *th, ThreadParams *thp, void *(*funcPtr)(void*))
+  void createThreads(const REAL *inData, const REAL *outData, const unsigned numEvents, const unsigned inputSize, const unsigned outputSize, pthread_t *&th, ThreadParams *&thp, void *(*funcPtr)(void*))
   {
     th = new pthread_t[nThreads];
     thp = new ThreadParams[nThreads];
     
-    //Getting the number of events per thread.
-    std::vector<unsigned> evThreads = distributeEvents(inData->getNumEvents());
-
     DEBUG2("Setting the parameters for each thread.");
-    unsigned evStartPos = 0;
     for (unsigned i=0; i<nThreads; i++)
     {
+      thp[i].id = i;
       thp[i].net = netVec[i];
       thp[i].inData = inData;
       thp[i].outData = outData;
-      thp[i].initEvPos = evStartPos;
-      thp[i].endEvPos = evStartPos + evThreads[i];
-      thp[i].numEvents = evThreads[i];
-      evStartPos += evThreads[i];
+      thp[i].numEvents = numEvents;
+      thp[i].inputSize = inputSize;
+      thp[i].outputSize = outputSize;
       
       const int rc = pthread_create(&th[i], &threadAttr, funcPtr, static_cast<void*>(&thp[i]));
       if (rc) throw "Impossible to create thread! Aborting...";
@@ -141,25 +138,24 @@ private:
 
 
 public:
-  MTHelper(MatEvents *inTrn, MatEvents *outTrn, MatEvents *inVal, MatEvents *outVal, const unsigned epochSize, const unsigned numThreads = 2)
+  MTHelper(REAL *inTrn, REAL *outTrn, const unsigned numTrnEvents, REAL *inVal, REAL *outVal, const unsigned numValEvents,, const unsigned inputSize, const unsigned outputSize, const unsigned numThreads = 2)
   {
-    DEBUG1("Creating MTHelper object.");
-    trnEpochSize = epochSize;
-    DEBUG2("Training epoch size: " << trnEpochSize);
     nThreads = numThreads;
+    DEBUG1("Creating MTHelper object for " << nThreads << "threads.");
 
     //Setting threads for being joinable.
     pthread_attr_init(&threadAttr);
     pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_JOINABLE);    
 
     //Generating copies of the neural network to be used.
-    netVec.push_back(net);
-    for (unsigned i=0; i<(nThreads - 1); i++) netVec.push_back(dynamic_cast<Backpropagation*>(net->clone()));
+    netVec = new Backpropagation* [nThreads];
+    netVec[0] = net;
+    for (unsigned i=1; i<nThreads; i++) netVec[i] = dynamic_cast<Backpropagation*>(net->clone());
 
     DEBUG1("Creating training threads.");
-    createThreads(inTrn, outTrn, trnThreads, trnThPar, &MTTrainNetwork);
+    createThreads(inTrn, outTrn, numTrnEvents, inputSize, outputSize, trnThPar, &MTTrainNetwork);
     DEBUG1("Creating validating threads.");
-    createThreads(inVal, outVal, valThreads, valThPar, &MTValNetwork);
+    createThreads(inVal, outVal, numValEvents, inputSize, outputSize, valThPar, &MTValNetwork);
   };
 
   virtual ~MTHelper()
@@ -169,7 +165,8 @@ public:
     delete valThreads;
     delete trnThPar;
     delete valThPar;
-    for (vector<Backpropagation*>::iterator itr = (netVec.begin()+1); itr !=netVec.end(); itr++) delete *itr;
+    for (unsigned i=1; i<nThreads; i++) delete netVec[i];
+    delete netVec;
   };
 
   REAL valNetwork()
@@ -182,7 +179,7 @@ public:
       pthread_join(valThreads[i], &ret);
       gbError += valThPar[i].error;
     }
-    return (gbError / static_cast<REAL>(valThPar[0].inData->getNumEvents()));
+    return (gbError / static_cast<REAL>(valThPar[0].numEvents));
   };
 
 
@@ -202,7 +199,7 @@ public:
       gbError += trnThPar[i].error;
       if (i) mainNet->addToGradient(*netVec[i]);
     }
-    return (gbError / static_cast<REAL>(trnThPar[0].inData->getNumEvents()));
+    return (gbError / static_cast<REAL>(trnThPar[0].numEvents));
   }
   
 };

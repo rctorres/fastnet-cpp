@@ -24,12 +24,19 @@ public:
 
   PatternRecognition(const mxArray *inTrn, const mxArray *inVal, const bool usingSP) : Training()
   {
+    DEBUG1("Starting a Pattern Recognition Training Object");
     if (mxGetN(inTrn) != mxGetN(inVal)) throw "Number of training and validating patterns are not equal";
     
     useSP = usingSP;
-    if (useSP) bestGoal = 0.;
+    if (useSP)
+    {
+      bestGoal = 0.;
+      DEBUG2("I'll use SP validating criterium.");
+    }
+    else DEBUG2("I'll NOT use SP validating criterium.");
     
     numPatterns = mxGetN(inTrn);
+    DEBUG2("Number of patterns: " << numPatterns);
     outputSize = (numPatterns == 2) ? 1 : numPatterns;
     inTrnList = new const REAL* [numPatterns];
     inValList = new const REAL* [numPatterns];
@@ -54,6 +61,8 @@ public:
       numTrnEvents[i] = mxGetN(patTrnData);
       numValEvents[i] = mxGetN(patValData);
       if (useSP) epochValOutputs[i] = new REAL [outputSize*numValEvents[i]];
+      DEBUG2("Number of training events for pattern " << i << ": " << numTrnEvents[i]);
+      DEBUG2("Number of validating events for pattern " << i << ": " << numValEvents[i]);
       
       //Generating the desired output for each pattern for maximum sparsed outputs.
       REAL *target = new REAL [outputSize];
@@ -62,6 +71,9 @@ public:
       //Saving the target in the list.
       targList[i] = target;      
     }
+    
+    DEBUG2("Input events dimension: " << inputSize);
+    DEBUG2("Output events dimension: " << outputSize);
   };
 
   virtual ~PatternRecognition()
@@ -144,6 +156,7 @@ public:
   */
   REAL valNetwork(Backpropagation *net)
   {
+    DEBUG2("Starting validation process for an epoch.");
     REAL gbError = 0;
     
     for (unsigned pat=0; pat<numPatterns; pat++)
@@ -153,7 +166,9 @@ public:
       const REAL *target = targList[pat];
       const REAL *input = inValList[pat];
       const REAL *output;
-      REAL *outList = epochValOutputs[pat];
+      REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
+      
+      DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
       for (unsigned i=0; i<numValEvents[pat]; i++)
       {
         gbError += ( wFactor * net->applySupervisedInput(input, target, output) );
@@ -180,6 +195,7 @@ public:
   */
   REAL trainNetwork(Backpropagation *net)
   {
+    DEBUG2("Starting training process for an epoch.");
     REAL gbError = 0;
     for(unsigned pat=0; pat<numPatterns; pat++)
     {
@@ -188,7 +204,8 @@ public:
       const REAL *target = targList[pat];
       const REAL *input = inTrnList[pat];
       const REAL *output;
-      
+
+      DEBUG3("Applying training set for pattern " << pat << ". Weighting factor to use: " << wFactor);
       for (unsigned i=0; i<numTrnEvents[pat]; i++)
       {
         gbError += ( wFactor * net->applySupervisedInput(input, target, output));

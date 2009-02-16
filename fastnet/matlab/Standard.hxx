@@ -7,7 +7,7 @@ using namespace FastNet;
 
 class StandardTraining : public Training
 {
-private:
+protected:
   const REAL *inTrnData;
   const REAL *outTrnData;
   const REAL *inValData;
@@ -48,7 +48,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(Backpropagation *net)
+  virtual REAL valNetwork(Backpropagation *net)
   {
     REAL gbError = 0.;
     const REAL *out;
@@ -77,7 +77,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(Backpropagation *net)
+  virtual REAL trainNetwork(Backpropagation *net)
   {
     unsigned evIndex;
     REAL gbError = 0.;
@@ -95,7 +95,7 @@ public:
     return (gbError / static_cast<REAL>(numTrnEvents));
   }
   
-  void checkSizeMismatch(const Backpropagation *net) const
+  virtual void checkSizeMismatch(const Backpropagation *net) const
   {
     if (inputSize != (*net)[0])
       throw "Input training or validating data do not match the network input layer size!";
@@ -104,7 +104,7 @@ public:
       throw "Output training or validating data do not match the network output layer size!";
   };
   
-  void showInfo(const unsigned nEpochs) const
+  virtual void showInfo(const unsigned nEpochs) const
   {
     REPORT("TRAINING DATA INFORMATION (Standard Network)");
     REPORT("Number of Epochs                    : " << nEpochs);

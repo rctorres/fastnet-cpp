@@ -20,7 +20,7 @@
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/matlab/Standard.hxx"
-//#include "fastnet/matlab/StandardMT.h"
+#include "fastnet/matlab/StandardMT.hxx"
 #include "fastnet/matlab/PatternRec.hxx"
 
 using namespace std;
@@ -133,7 +133,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Creating the object for the desired training type.
     if ( nargin == NUM_INPUT_ARGS_STD_CASE )
     {
-      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+      train = new StandardTrainingMT(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
     }
     else // It is a pattern recognition network.
     {

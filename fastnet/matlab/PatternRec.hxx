@@ -7,7 +7,7 @@ using namespace FastNet;
 
 class PatternRecognition : public Training
 {
-private:
+protected:
   const REAL **inTrnList;
   const REAL **inValList;
   const REAL **targList;
@@ -100,7 +100,7 @@ public:
   product obtained.
   @return The maximum SP value obtained.
   */
-  REAL sp()
+  virtual REAL sp()
   {
     unsigned TARG_SIGNAL, TARG_NOISE;
   
@@ -154,7 +154,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(Backpropagation *net)
+  virtual REAL valNetwork(Backpropagation *net)
   {
     DEBUG2("Starting validation process for an epoch.");
     REAL gbError = 0;
@@ -193,7 +193,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training of each pattern set is presented to the network.
   */
-  REAL trainNetwork(Backpropagation *net)
+  virtual REAL trainNetwork(Backpropagation *net)
   {
     DEBUG2("Starting training process for an epoch.");
     REAL gbError = 0;
@@ -218,13 +218,13 @@ public:
     return gbError;  
   };
   
-  void checkSizeMismatch(const Backpropagation *net) const
+  virtual void checkSizeMismatch(const Backpropagation *net) const
   {
     if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";
   };
 
 
-  void showInfo(const unsigned nEpochs) const
+  virtual void showInfo(const unsigned nEpochs) const
   {
     REPORT("TRAINING DATA INFORMATION (Pattern Recognition Optimized Network)");
     REPORT("Number of Epochs                    : " << nEpochs);
@@ -237,7 +237,7 @@ public:
     }
   };
 
-  bool isBestNetwork(const REAL currError)
+  virtual bool isBestNetwork(const REAL currError)
   {
     if (useSP)
     {

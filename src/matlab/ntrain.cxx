@@ -116,19 +116,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
 
-    //Creating the object for the desired training type.
-    if ( nargin == NUM_INPUT_ARGS_STD_CASE )
-    {
-      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
-    }
-    else // It is a pattern recognition network.
-    {
-      //Getting whether we will use SP stoping criteria.
-      const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
-      const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
-    }
-
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
@@ -142,6 +129,19 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";
+
+    //Creating the object for the desired training type.
+    if ( nargin == NUM_INPUT_ARGS_STD_CASE )
+    {
+      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+    }
+    else // It is a pattern recognition network.
+    {
+      //Getting whether we will use SP stoping criteria.
+      const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
+      const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
+      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+    }
     
     //Reading the showing period, epochs and max_fail.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");

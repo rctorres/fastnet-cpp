@@ -19,9 +19,9 @@
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
-#include "fastnet/matlab/Standard.h"
+#include "fastnet/matlab/Standard.hxx"
 //#include "fastnet/matlab/StandardMT.h"
-#include "fastnet/matlab/PatternRec.h"
+#include "fastnet/matlab/PatternRec.hxx"
 
 using namespace std;
 using namespace FastNet;

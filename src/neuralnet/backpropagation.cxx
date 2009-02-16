@@ -9,6 +9,7 @@
 
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/reporter/Reporter.h"
+#include "fastnet/matlab/mxhandler.hxx"
 
 namespace FastNet
 {

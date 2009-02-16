@@ -10,6 +10,7 @@
 #include <string>
 
 #include "fastnet/neuralnet/neuralnetwork.h"
+#include "fastnet/matlab/mxhandler.hxx"
 
 using namespace std;
 

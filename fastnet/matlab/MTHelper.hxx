@@ -17,9 +17,9 @@ namespace MT
 
 
 #ifdef DEBUG
-  pthread_mutex_t dbMutex = PTHREAD_MUTEX_INITIALIZER;
-  #define MTDB(dbmsg){pthread_mutex_lock(&dbMutex); {dbmsg}; pthread_mutex_unlock(&dbMutex);}
-//  #define MTDB(dbmsg)
+//  pthread_mutex_t dbMutex = PTHREAD_MUTEX_INITIALIZER;
+//  #define MTDB(dbmsg){pthread_mutex_lock(&dbMutex); {dbmsg}; pthread_mutex_unlock(&dbMutex);}
+  #define MTDB(dbmsg)
 #else
   #define MTDB(dbmsg)
 #endif
@@ -53,6 +53,21 @@ namespace MT
     }
   }
 
+  inline void safeSignal(bool &cond, pthread_mutex_t &mutex, pthread_cond_t &req)
+  {
+    waitCond(cond, mutex);
+    pthread_cond_signal(&req);
+  }
+
+  inline void safeWait(bool &cond, pthread_mutex_t &mutex, pthread_cond_t &req)
+  {
+    pthread_mutex_lock(&mutex);
+    cond = true;
+    pthread_cond_wait(&req, &mutex);
+    cond = false;
+    pthread_mutex_unlock(&mutex);
+  }
+  
   void *MTValNetwork(void *param)
   {
     const REAL *output;
@@ -62,11 +77,7 @@ namespace MT
     while (true)
     {
       //Waiting for waking up...
-      pthread_mutex_lock(&valProcMutex);
-      par->threadReady = true;
-      pthread_cond_wait(&valProcRequest, &valProcMutex);
-      par->threadReady = false;
-      pthread_mutex_unlock(&valProcMutex);
+      safeWait(par->threadReady, valProcMutex, valProcRequest);
    
       if (par->finishThread)
       {
@@ -83,11 +94,10 @@ namespace MT
         const REAL *input = &(par->inData[i]);
         const REAL *target = &(par->outData[i]);
         pthread_mutex_unlock(&dataMutex);
-//        par->error += par->net->applySupervisedInput(input, target, output);
+        par->error += par->net->applySupervisedInput(input, target, output);
       }
       MTDB(DEBUG2("Validation process on thread " << par->id << " finished. Waiting for a new epoch..."));
-      waitCond(par->analysisReady, valGetResMutex);
-      pthread_cond_signal(&valGetResRequest);
+      safeSignal(par->analysisReady, valGetResMutex, valGetResRequest);
     }
   };
 
@@ -102,11 +112,7 @@ namespace MT
     while (true)
     {
       //Waiting for waking up...
-      pthread_mutex_lock(&trnProcMutex);
-      par->threadReady = true;
-      pthread_cond_wait(&trnProcRequest, &trnProcMutex);
-      par->threadReady = false;
-      pthread_mutex_unlock(&trnProcMutex);
+      safeWait(par->threadReady, trnProcMutex, trnProcRequest);
    
       if (par->finishThread)
       {
@@ -123,14 +129,13 @@ namespace MT
         const REAL *input = &(par->inData[i]);
         const REAL *target = &(par->outData[i]);
         pthread_mutex_unlock(&dataMutex);
-//        par->error += par->net->applySupervisedInput(input, target, output);
+        par->error += par->net->applySupervisedInput(input, target, output);
 
         //Calculating the weight and bias update values
-//        par->net->calculateNewWeights(output, target);
+        par->net->calculateNewWeights(output, target);
       }
       MTDB(DEBUG2("Training process on thread " << par->id << " finished. Waiting for a new epoch..."));
-      waitCond(par->analysisReady, trnGetResMutex);
-      pthread_cond_signal(&trnGetResRequest);
+      safeSignal(par->analysisReady, trnGetResMutex, trnGetResRequest);
     }
   }
   
@@ -241,11 +246,8 @@ public:
     {
       void *ret;
       DEBUG2("Waiting for validating thread " << i << " to finish...");
-      pthread_mutex_lock(&valGetResMutex);
-      valThPar[i].analysisReady = true;
-      pthread_cond_wait(&valGetResRequest, &valGetResMutex);
-      valThPar[i].analysisReady = false;
-      pthread_mutex_unlock(&valGetResMutex);
+      safeWait(valThPar[i].analysisReady, valGetResMutex, valGetResRequest);
+      DEBUG2("Starting analysis for validating thread " << i << "...");
       gbError += valThPar[i].error;
     }
     return (gbError / static_cast<REAL>(valThPar[0].numEvents));
@@ -267,11 +269,8 @@ public:
     {
       void *ret;
       DEBUG2("Waiting for training thread " << i << " to finish...");
-      pthread_mutex_lock(&trnGetResMutex);
-      trnThPar[i].analysisReady = true;
-      pthread_cond_wait(&trnGetResRequest, &trnGetResMutex);
-      trnThPar[i].analysisReady = false;
-      pthread_mutex_unlock(&trnGetResMutex);
+      safeWait(trnThPar[i].analysisReady, trnGetResMutex, trnGetResRequest);
+      DEBUG2("Starting analysis for training thread " << i << "...");
       gbError += trnThPar[i].error;
       if (i) mainNet->addToGradient(*netVec[i]);
     }

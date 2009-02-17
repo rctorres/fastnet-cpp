@@ -13,16 +13,7 @@ namespace MT
   pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
   pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t dataMutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-#ifdef DEBUG
-//  pthread_mutex_t dbMutex = PTHREAD_MUTEX_INITIALIZER;
-//  #define MTDB(dbmsg){pthread_mutex_lock(&dbMutex); {dbmsg}; pthread_mutex_unlock(&dbMutex);}
-  #define MTDB(dbmsg)
-#else
-  #define MTDB(dbmsg)
-#endif
 
   struct ThreadParams
   {
@@ -74,29 +65,25 @@ namespace MT
     ThreadParams *par = static_cast<ThreadParams*>(param);
     const unsigned initPos = par->id * par->inputSize;
     const unsigned incVal = (par->id + 1) * par->inputSize;
+    const REAL *inputData = par->inData;
+    const REAL *targetData = par->outData;
+
     while (true)
     {
       //Waiting for waking up...
       safeWait(par->threadReady, valProcMutex, valProcRequest);
    
-      if (par->finishThread)
-      {
-        MTDB(DEBUG1("Exiting validating thread " << par->id));
-        pthread_exit(NULL);
-      }
+      if (par->finishThread) pthread_exit(NULL);
 
-      MTDB(DEBUG2("Starting validating process for thread " << par->id));      
       par->error = 0.;
       for (unsigned i=initPos; i<par->numEvents; i+=incVal)
       {
         // Getting the next input and target pair.
-        pthread_mutex_lock(&dataMutex);
-        const REAL *input = &(par->inData[i]);
-        const REAL *target = &(par->outData[i]);
-        pthread_mutex_unlock(&dataMutex);
+        const REAL *input = &inputData[i];
+        const REAL *target = &targetData[i];
         par->error += par->net->applySupervisedInput(input, target, output);
       }
-      MTDB(DEBUG2("Validation process on thread " << par->id << " finished. Waiting for a new epoch..."));
+
       safeSignal(par->analysisReady, valGetResMutex, valGetResRequest);
     }
   };
@@ -107,6 +94,8 @@ namespace MT
     ThreadParams *par = static_cast<ThreadParams*>(param);
     const unsigned initPos = par->id * par->inputSize;
     const unsigned incVal = (par->id + 1) * par->inputSize;
+    const REAL *inputData = par->inData;
+    const REAL *targetData = par->outData;
     const REAL *output;
 
     while (true)
@@ -114,27 +103,19 @@ namespace MT
       //Waiting for waking up...
       safeWait(par->threadReady, trnProcMutex, trnProcRequest);
    
-      if (par->finishThread)
-      {
-        MTDB(DEBUG1("Exiting training thread " << par->id));
-        pthread_exit(NULL);
-      }
+      if (par->finishThread) pthread_exit(NULL);
 
-      MTDB(DEBUG2("Starting training process for thread " << par->id));
       par->error = 0.;
       for (unsigned i=initPos; i<par->numEvents; i+=incVal)
       {
         // Getting the next input and target pair.
-        pthread_mutex_lock(&dataMutex);
-        const REAL *input = &(par->inData[i]);
-        const REAL *target = &(par->outData[i]);
-        pthread_mutex_unlock(&dataMutex);
+        const REAL *input = &inputData[i];
+        const REAL *target = &targetData[i];
         par->error += par->net->applySupervisedInput(input, target, output);
 
         //Calculating the weight and bias update values
         par->net->calculateNewWeights(output, target);
       }
-      MTDB(DEBUG2("Training process on thread " << par->id << " finished. Waiting for a new epoch..."));
       safeSignal(par->analysisReady, trnGetResMutex, trnGetResRequest);
     }
   }
@@ -218,7 +199,6 @@ public:
       pthread_join(valThreads[i], &ret);
     }
 
-    pthread_mutex_destroy(&dataMutex);
     pthread_cond_destroy(&trnProcRequest);
     pthread_cond_destroy(&valProcRequest);
     pthread_mutex_destroy(&trnProcMutex);

@@ -24,6 +24,7 @@ namespace MT
     unsigned numEvents;
     unsigned inputSize;
     unsigned outputSize;
+    unsigned nThreads;
     REAL error;
     bool finishThread;
     bool threadReady;
@@ -61,12 +62,10 @@ namespace MT
   
   void *MTValNetwork(void *param)
   {
-    const REAL *output;
     ThreadParams *par = static_cast<ThreadParams*>(param);
-    const unsigned initPos = par->id * par->inputSize;
-    const unsigned incVal = (par->id + 1) * par->inputSize;
-    const REAL *inputData = par->inData;
-    const REAL *targetData = par->outData;
+    const unsigned inputStep = par->nThreads * par->inputSize;
+    const unsigned outputStep = par->nThreads * par->outputSize;
+    const REAL *output;
 
     while (true)
     {
@@ -76,14 +75,14 @@ namespace MT
       if (par->finishThread) pthread_exit(NULL);
 
       par->error = 0.;
-      for (unsigned i=initPos; i<par->numEvents; i+=incVal)
+      const REAL *input = par->inData + (par->id * par->inputSize);
+      const REAL *target = par->outData + (par->id * par->outputSize);
+      for (unsigned i=0; i<par->numEvents; i+=par->nThreads)
       {
-        // Getting the next input and target pair.
-        const REAL *input = &inputData[i];
-        const REAL *target = &targetData[i];
         par->error += par->net->applySupervisedInput(input, target, output);
+        input += inputStep;
+        target += outputStep;
       }
-
       safeSignal(par->analysisReady, valGetResMutex, valGetResRequest);
     }
   };
@@ -92,10 +91,8 @@ namespace MT
   void *MTTrainNetwork(void *param)
   {
     ThreadParams *par = static_cast<ThreadParams*>(param);
-    const unsigned initPos = par->id * par->inputSize;
-    const unsigned incVal = (par->id + 1) * par->inputSize;
-    const REAL *inputData = par->inData;
-    const REAL *targetData = par->outData;
+    const unsigned inputStep = par->nThreads * par->inputSize;
+    const unsigned outputStep = par->nThreads * par->outputSize;
     const REAL *output;
 
     while (true)
@@ -106,15 +103,14 @@ namespace MT
       if (par->finishThread) pthread_exit(NULL);
 
       par->error = 0.;
-      for (unsigned i=initPos; i<par->numEvents; i+=incVal)
+      const REAL *input = par->inData + (par->id * par->inputSize);
+      const REAL *target = par->outData + (par->id * par->outputSize);
+      for (unsigned i=0; i<par->numEvents; i+=par->nThreads)
       {
-        // Getting the next input and target pair.
-        const REAL *input = &inputData[i];
-        const REAL *target = &targetData[i];
         par->error += par->net->applySupervisedInput(input, target, output);
-
-        //Calculating the weight and bias update values
         par->net->calculateNewWeights(output, target);
+        input += inputStep;
+        target += outputStep;
       }
       safeSignal(par->analysisReady, trnGetResMutex, trnGetResRequest);
     }
@@ -145,6 +141,7 @@ private:
     DEBUG2("Setting the parameters for each thread.");
     for (unsigned i=0; i<nThreads; i++)
     {
+      thp[i].nThreads = nThreads;
       thp[i].id = i;
       thp[i].net = netVec[i];
       thp[i].inData = inData;
@@ -164,10 +161,14 @@ private:
 public:
   MTHelper(Backpropagation *net, const REAL *inTrn, const REAL *outTrn, const unsigned numTrnEvents,
             const REAL *inVal, const REAL *outVal, const unsigned numValEvents,
-            const unsigned inputSize, const unsigned outputSize, const unsigned numThreads = 2)
+            const unsigned inputSize, const unsigned outputSize, const unsigned numThreads = 1)
   {
     nThreads = numThreads;
     DEBUG1("Creating MTHelper object for " << nThreads << " threads.");
+    DEBUG1("Number of training input events: " << numTrnEvents);
+    DEBUG1("Number of validation input events: " << numValEvents);
+    DEBUG1("Input events dimension: " << inputSize);
+    DEBUG1("Output events dimension: " << outputSize);
 
     //Setting threads for being joinable.
     pthread_attr_init(&threadAttr);

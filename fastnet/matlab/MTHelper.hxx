@@ -161,7 +161,7 @@ private:
 public:
   MTHelper(Backpropagation *net, const REAL *inTrn, const REAL *outTrn, const unsigned numTrnEvents,
             const REAL *inVal, const REAL *outVal, const unsigned numValEvents,
-            const unsigned inputSize, const unsigned outputSize, const unsigned numThreads = 1)
+            const unsigned inputSize, const unsigned outputSize, const unsigned numThreads = 2)
   {
     nThreads = numThreads;
     DEBUG1("Creating MTHelper object for " << nThreads << " threads.");

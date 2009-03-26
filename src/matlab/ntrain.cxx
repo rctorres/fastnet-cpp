@@ -22,6 +22,7 @@
 #include "fastnet/matlab/Standard.hxx"
 #include "fastnet/matlab/StandardMT.hxx"
 #include "fastnet/matlab/PatternRec.hxx"
+#include "fastnet/matlab/PatternRecMT.hxx"
 
 using namespace std;
 using namespace FastNet;
@@ -140,7 +141,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+      train = new PatternRecognitionMT(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
     }
     
     //Reading the showing period, epochs and max_fail.

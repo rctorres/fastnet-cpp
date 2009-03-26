@@ -1,22 +1,22 @@
-#ifndef STANDARDMT_H
-#define STANDARDMT_H
+#ifndef PATRECMT_H
+#define PATRECMT_H
 
-#include "fastnet/matlab/Standard.hxx"
+#include "fastnet/matlab/PatternRec.hxx"
 #include "fastnet/matlab/MTHelper.hxx"
 
 using namespace FastNet;
 
-namespace MTStandard
+namespace MTPatRec
 {
   struct ThreadParams
   {
     Backpropagation *net;
-    const REAL *inData;
-    const REAL *outData;
+    const REAL **inData;
+    const REAL **outData;
     unsigned id;
-    unsigned numEvents;
+    unsigned numPatterns;
+    unsigned *numEvents;
     unsigned inputSize;
-    unsigned outputSize;
     unsigned nThreads;
     REAL error;
     bool finishThread;
@@ -26,9 +26,8 @@ namespace MTStandard
 
   void *valNetwork(void *param)
   {
-    MTStandard::ThreadParams *par = static_cast<MTStandard::ThreadParams*>(param);
+    MTPatRec::ThreadParams *par = static_cast<MTPatRec::ThreadParams*>(param);
     const unsigned inputStep = par->nThreads * par->inputSize;
-    const unsigned outputStep = par->nThreads * par->outputSize;
     const REAL *output;
 
     while (true)
@@ -39,13 +38,19 @@ namespace MTStandard
       if (par->finishThread) pthread_exit(NULL);
 
       par->error = 0.;
-      const REAL *input = par->inData + (par->id * par->inputSize);
-      const REAL *target = par->outData + (par->id * par->outputSize);
-      for (unsigned i=0; i<par->numEvents; i+=par->nThreads)
+      
+      for (unsigned pat=0; pat<par->numPatterns; pat++)
       {
-        par->error += par->net->applySupervisedInput(input, target, output);
-        input += inputStep;
-        target += outputStep;
+        //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
+        const REAL wFactor = 1. / static_cast<REAL>(par->numPatterns * par->numEvents[pat]);
+        const REAL *target = par->outData[pat];
+        const REAL *input = par->inData[pat] + (par->id * par->inputSize);
+
+        for (unsigned i=0; i<par->numEvents[pat]; i+=par->nThreads)
+        {
+          par->error += ( wFactor * par->net->applySupervisedInput(input, target, output) );
+          input += inputStep;
+        }
       }
       MT::safeSignal(par->analysisReady, MT::valGetResMutex, MT::valGetResRequest);
     }
@@ -53,9 +58,8 @@ namespace MTStandard
 
   void *trainNetwork(void *param)
   {
-    MTStandard::ThreadParams *par = static_cast<MTStandard::ThreadParams*>(param);
+    MTPatRec::ThreadParams *par = static_cast<MTPatRec::ThreadParams*>(param);
     const unsigned inputStep = par->nThreads * par->inputSize;
-    const unsigned outputStep = par->nThreads * par->outputSize;
     const REAL *output;
 
     while (true)
@@ -66,53 +70,60 @@ namespace MTStandard
       if (par->finishThread) pthread_exit(NULL);
 
       par->error = 0.;
-      const REAL *input = par->inData + (par->id * par->inputSize);
-      const REAL *target = par->outData + (par->id * par->outputSize);
-      for (unsigned i=0; i<par->numEvents; i+=par->nThreads)
+      
+      for (unsigned pat=0; pat<par->numPatterns; pat++)
       {
-        par->error += par->net->applySupervisedInput(input, target, output);
-        par->net->calculateNewWeights(output, target);
-        input += inputStep;
-        target += outputStep;
+        //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
+        const REAL wFactor = 1. / static_cast<REAL>(par->numPatterns * par->numEvents[pat]);
+        const REAL *target = par->outData[pat];
+        const REAL *input = par->inData[pat] + (par->id * par->inputSize);
+
+        for (unsigned i=0; i<par->numEvents[pat]; i+=par->nThreads)
+        {
+          par->error += ( wFactor * par->net->applySupervisedInput(input, target, output));
+          //Calculating the weight and bias update values.
+          par->net->calculateNewWeights(output, target, pat);
+          input += inputStep;
+        }
       }
+      
       MT::safeSignal(par->analysisReady, MT::trnGetResMutex, MT::trnGetResRequest);
     }
   }
 };
 
 
-class StandardTrainingMT : public StandardTraining
+class PatternRecognitionMT : public PatternRecognition
 {
 private:
   unsigned nThreads;
   pthread_t *trnThreads;
   pthread_t *valThreads;
-  MTStandard::ThreadParams *trnThPar;
-  MTStandard::ThreadParams *valThPar;
+  MTPatRec::ThreadParams *trnThPar;
+  MTPatRec::ThreadParams *valThPar;
   pthread_attr_t threadAttr;
   Backpropagation **netVec;
 
 
-  void createThreads(const REAL *inData, const REAL *outData, const unsigned numEvents, 
-                      const unsigned inputSize, const unsigned outputSize, pthread_t *&th, 
-                      MTStandard::ThreadParams *&thp, void *(*funcPtr)(void*))
+  void createThreads(const REAL **inData, unsigned *numEvents, pthread_t *&th, 
+                      MTPatRec::ThreadParams *&thp, void *(*funcPtr)(void*))
   {
-    DEBUG1("Starting Multi-Thread Standard Training Object.");
+    DEBUG1("Starting Multi-Thread PatternRecognition Training Object.");
     th = new pthread_t[nThreads];
-    thp = new MTStandard::ThreadParams[nThreads];
+    thp = new MTPatRec::ThreadParams[nThreads];
     
     DEBUG2("Setting the parameters for each thread.");
     for (unsigned i=0; i<nThreads; i++)
     {
       thp[i].nThreads = nThreads;
+      thp[i].numPatterns = numPatterns;
       thp[i].id = i;
       thp[i].net = netVec[i];
       thp[i].inData = inData;
-      thp[i].outData = outData;
-      thp[i].numEvents = numEvents;
       thp[i].inputSize = inputSize;
-      thp[i].outputSize = outputSize;
       thp[i].finishThread = thp[i].threadReady = thp[i].analysisReady = false;
+      thp[i].outData = targList;
+      thp[i].numEvents = numEvents;
       
       const int rc = pthread_create(&th[i], &threadAttr, funcPtr, static_cast<void*>(&thp[i]));
       if (rc) throw "Impossible to create thread! Aborting...";
@@ -121,9 +132,8 @@ private:
 
 
 public:
-  StandardTrainingMT(Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, 
-                      const mxArray *inVal, const mxArray *outVal, const unsigned numThreads = 2) 
-                      : StandardTraining(inTrn, outTrn, inVal, outVal)
+  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads = 2) 
+                      : PatternRecognition(inTrn, inVal, usingSP)
   {
     DEBUG2("Creating StandardTrainingMT object.");
 
@@ -139,12 +149,12 @@ public:
     for (unsigned i=1; i<nThreads; i++) netVec[i] = dynamic_cast<Backpropagation*>(net->clone());
 
     DEBUG1("Creating training threads.");
-    createThreads(inTrnData, outTrnData, numTrnEvents, inputSize, outputSize, trnThreads, trnThPar, &MTStandard::trainNetwork);
+    createThreads(inTrnList, numTrnEvents, trnThreads, trnThPar, &MTPatRec::trainNetwork);
     DEBUG1("Creating validating threads.");
-    createThreads(inValData, outValData, numValEvents, inputSize, outputSize, valThreads, valThPar, &MTStandard::valNetwork);
+    createThreads(inValList, numValEvents, valThreads, valThPar, &MTPatRec::valNetwork);
   };
 
-  virtual ~StandardTrainingMT()
+  virtual ~PatternRecognitionMT()
   {    
     //Ending the threads.
     for (unsigned i=0; i<nThreads; i++)
@@ -201,7 +211,7 @@ public:
       DEBUG2("Starting analysis for validating thread " << i << "...");
       gbError += valThPar[i].error;
     }
-    return (gbError / static_cast<REAL>(valThPar[0].numEvents));
+    return gbError;
   };
 
 
@@ -237,7 +247,7 @@ public:
       gbError += trnThPar[i].error;
       if (i) mainNet->addToGradient(*netVec[i]);
     }
-    return (gbError / static_cast<REAL>(trnThPar[0].numEvents));
+    return gbError;
   }  
 };
 

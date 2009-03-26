@@ -14,23 +14,6 @@ namespace MT
   pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-  struct ThreadParams
-  {
-    Backpropagation *net;
-    const REAL *inData;
-    const REAL *outData;
-    unsigned id;
-    unsigned numEvents;
-    unsigned inputSize;
-    unsigned outputSize;
-    unsigned nThreads;
-    REAL error;
-    bool finishThread;
-    bool threadReady;
-    bool analysisReady;
-  };
-
   inline void waitCond(bool &cond, pthread_mutex_t &mutex)
   {
     while (true)

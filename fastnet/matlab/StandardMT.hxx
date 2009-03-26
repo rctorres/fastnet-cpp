@@ -6,9 +6,27 @@
 
 using namespace FastNet;
 
-  void *MTValNetwork(void *param)
+namespace MTStandard
+{
+  struct ThreadParams
   {
-    MT::ThreadParams *par = static_cast<MT::ThreadParams*>(param);
+    Backpropagation *net;
+    const REAL *inData;
+    const REAL *outData;
+    unsigned id;
+    unsigned numEvents;
+    unsigned inputSize;
+    unsigned outputSize;
+    unsigned nThreads;
+    REAL error;
+    bool finishThread;
+    bool threadReady;
+    bool analysisReady;
+  };
+
+  void *valNetwork(void *param)
+  {
+    MTStandard::ThreadParams *par = static_cast<MTStandard::ThreadParams*>(param);
     const unsigned inputStep = par->nThreads * par->inputSize;
     const unsigned outputStep = par->nThreads * par->outputSize;
     const REAL *output;
@@ -33,10 +51,9 @@ using namespace FastNet;
     }
   };
 
-
-  void *MTTrainNetwork(void *param)
+  void *trainNetwork(void *param)
   {
-    MT::ThreadParams *par = static_cast<MT::ThreadParams*>(param);
+    MTStandard::ThreadParams *par = static_cast<MTStandard::ThreadParams*>(param);
     const unsigned inputStep = par->nThreads * par->inputSize;
     const unsigned outputStep = par->nThreads * par->outputSize;
     const REAL *output;
@@ -61,6 +78,7 @@ using namespace FastNet;
       MT::safeSignal(par->analysisReady, MT::trnGetResMutex, MT::trnGetResRequest);
     }
   }
+};
 
 
 class StandardTrainingMT : public StandardTraining
@@ -69,19 +87,19 @@ private:
   unsigned nThreads;
   pthread_t *trnThreads;
   pthread_t *valThreads;
-  MT::ThreadParams *trnThPar;
-  MT::ThreadParams *valThPar;
+  MTStandard::ThreadParams *trnThPar;
+  MTStandard::ThreadParams *valThPar;
   pthread_attr_t threadAttr;
   Backpropagation **netVec;
 
 
   void createThreads(const REAL *inData, const REAL *outData, const unsigned numEvents, 
                       const unsigned inputSize, const unsigned outputSize, pthread_t *&th, 
-                      MT::ThreadParams *&thp, void *(*funcPtr)(void*))
+                      MTStandard::ThreadParams *&thp, void *(*funcPtr)(void*))
   {
     DEBUG1("Starting Multi-Thread Helper Object.");
     th = new pthread_t[nThreads];
-    thp = new MT::ThreadParams[nThreads];
+    thp = new MTStandard::ThreadParams[nThreads];
     
     DEBUG2("Setting the parameters for each thread.");
     for (unsigned i=0; i<nThreads; i++)
@@ -121,9 +139,9 @@ public:
     for (unsigned i=1; i<nThreads; i++) netVec[i] = dynamic_cast<Backpropagation*>(net->clone());
 
     DEBUG1("Creating training threads.");
-    createThreads(inTrnData, outTrnData, numTrnEvents, inputSize, outputSize, trnThreads, trnThPar, &MTTrainNetwork);
+    createThreads(inTrnData, outTrnData, numTrnEvents, inputSize, outputSize, trnThreads, trnThPar, &MTStandard::trainNetwork);
     DEBUG1("Creating validating threads.");
-    createThreads(inValData, outValData, numValEvents, inputSize, outputSize, valThreads, valThPar, &MTValNetwork);
+    createThreads(inValData, outValData, numValEvents, inputSize, outputSize, valThreads, valThPar, &MTStandard::valNetwork);
   };
 
   virtual ~StandardTrainingMT()

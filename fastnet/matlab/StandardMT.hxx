@@ -122,7 +122,7 @@ private:
 
 public:
   StandardTrainingMT(Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, 
-                      const mxArray *inVal, const mxArray *outVal, const unsigned numThreads = 2) 
+                      const mxArray *inVal, const mxArray *outVal, const unsigned numThreads) 
                       : StandardTraining(inTrn, outTrn, inVal, outVal)
   {
     DEBUG2("Creating StandardTrainingMT object.");

@@ -132,7 +132,7 @@ private:
 
 
 public:
-  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads = 2) 
+  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads) 
                       : PatternRecognition(inTrn, inVal, usingSP)
   {
     DEBUG2("Creating StandardTrainingMT object.");

@@ -27,20 +27,8 @@
 using namespace std;
 using namespace FastNet;
 
-/// Specifies the correct number of arguments for the standart training case.
-/**
-This constant holds the number of parameters to be supplied when training a standart
-neural network. That means supplying the input and target training and validating sets.
-*/
-const unsigned NUM_INPUT_ARGS_STD_CASE = 5;
-
-/// Specifies the correct number of arguments for the Pattern Recognition training case.
-/**
-This constant holds the number of parameters to be supplied when training a pattern recognition
-optimized neural network. That means supplying only input training and validating sets, organized
-as a cell vector, where each cells contains the events for a given pattern class.
-*/
-const unsigned NUM_INPUT_ARGS_PAT_CASE = 3;
+//Maximum number of allowed training threads.
+const unsigned MAX_NUM_THREADS = 16;
 
 /// Index, in the arguments list, of the neural network structure.
 const unsigned NET_STR_IDX = 0;
@@ -62,8 +50,12 @@ unsigned IN_VAL_IDX = 3;
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
 
-/// Index, in the arguments list, of the training epoch size.
-const unsigned TRN_EPOCH_SIZE_IDX = 5;
+/// Number of threads to use.
+/**
+This value might have to be changed during execution, if using standart training or pattern 
+recognition case.
+*/
+unsigned NUM_THREADS_IDX = 5;
 
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
@@ -77,7 +69,6 @@ const unsigned OUT_TRN_ERROR_IDX = 2;
 //Index, in the return vector, of the vector containing the validating error obtained in each epoch.
 const unsigned OUT_VAL_ERROR_IDX = 3;
 
-const unsigned NUM_THREADS = 2;
 
 vector<unsigned> getNumEvents(const mxArray *dataStr)
 {
@@ -108,10 +99,23 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   Training *train = NULL;
   
   try
-  {  
+  {
+    bool stdTrainingType, getNumThreads;
     //Verifying if the number of input parameters is ok.
-    if (nargin == NUM_INPUT_ARGS_STD_CASE) IN_VAL_IDX = 3;
-    else if (nargin == NUM_INPUT_ARGS_PAT_CASE) IN_VAL_IDX = 2;
+    if ( (nargin == 6) || (nargin == 5) ) // Standart training (ST ou MT case)
+    {
+      IN_VAL_IDX = 3;
+      NUM_THREADS_IDX = 5;
+      stdTrainingType = true;
+      getNumThreads = (nargin == 6);
+    }
+    else if ( (nargin == 4) || (nargin == 3) )
+    {
+      IN_VAL_IDX = 2;
+      NUM_THREADS_IDX = 3;
+      stdTrainingType = false;
+      getNumThreads = (nargin == 4);
+    }
     else throw "Incorrect number of arguments! See help for information!";
 
     //Reading the configuration structure
@@ -131,17 +135,24 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else throw "Invalid training algorithm option!";
 
+    //Getting the number of working threads.
+    const unsigned numThreads = (getNumThreads) ? static_cast<unsigned>(mxGetScalar(args[NUM_THREADS_IDX])) : 1;
+    if ( (!numThreads) || (numThreads > MAX_NUM_THREADS) ) throw "Invalid number of threads.";
+    REPORT("Number of working threads is " << numThreads);
+
     //Creating the object for the desired training type.
-    if ( nargin == NUM_INPUT_ARGS_STD_CASE )
+    if (stdTrainingType)
     {
-      train = new StandardTrainingMT(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+      if (numThreads == 1) train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+      else train = new StandardTrainingMT(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], numThreads);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognitionMT(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+      if (numThreads == 1) train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+      else train = new PatternRecognitionMT(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, numThreads);
     }
     
     //Reading the showing period, epochs and max_fail.

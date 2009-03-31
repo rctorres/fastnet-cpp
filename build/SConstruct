@@ -29,7 +29,7 @@ if debug > 0:
 #Am I using a MAC computer? Then I apply some optimizations for it
 if 'Darwin' in platform.system():
   if debug == 0: libCPPFlags += ['-fast']
-  matlabPath = '/Applications/MATLAB_R2008b'
+  matlabPath = '/Applications/MATLAB_R2008b.app'
   matlabArch = 'maci'
 else:
   if debug == 0: libCPPFlags += ['-O3', '-m64']

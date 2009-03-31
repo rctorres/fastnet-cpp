@@ -1,4 +1,4 @@
-/** 
+﻿/**  
 @file  backpropagation.cpp
 @brief The BackPropagation class definition.
 */

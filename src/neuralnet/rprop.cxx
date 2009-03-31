@@ -1,4 +1,4 @@
-/** 
+﻿/**  
 @file  rprop.cpp
 @brief The Resilient BackPropagation (RProp) class definition.
 */

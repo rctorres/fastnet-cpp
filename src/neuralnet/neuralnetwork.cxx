@@ -1,4 +1,4 @@
-/** 
+﻿/**  
 @file  neuralnetwork.cpp
 @brief NeuralNetwork class implementation file.
 */

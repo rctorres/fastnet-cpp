@@ -1,10 +1,11 @@
-﻿/**  
+/**  
 @file  rprop.cpp
 @brief The Resilient BackPropagation (RProp) class definition.
 */
 
 #include <vector>
 #include <string>
+#include <typeinfo>
 
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/reporter/Reporter.h"
@@ -47,7 +48,7 @@ namespace FastNet
         }
       }
     }
-    catch (bad_cast xa) {throw;}
+    catch (std::bad_cast xa) {throw;}
   }
 
 

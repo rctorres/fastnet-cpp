@@ -1,4 +1,4 @@
-﻿/**  
+/**
 @file  backpropagation.cpp
 @brief The BackPropagation class definition.
 */
@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <typeinfo>
 
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/reporter/Reporter.h"
@@ -48,7 +49,7 @@ namespace FastNet
         }
       }
     }
-    catch (bad_cast xa) {throw;}
+    catch (std::bad_cast xa) {throw;}
   }
   
 

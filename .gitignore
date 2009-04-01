@@ -8,6 +8,7 @@
 *.pyc
 *.dylib
 *.mexmaci
+*.mexa64
 build/*.pyc
 build/*.a
 build/*.so

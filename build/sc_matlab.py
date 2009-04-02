@@ -23,5 +23,8 @@ matlab = {}
 matlab['ntrain'] = {}
 matlab['ntrain']['LIBS'] = ['neuralnet']
 
+matlab['npcd'] = {}
+matlab['npcd']['LIBS'] = ['neuralnet']
+
 matlab['nsim'] = {}
 matlab['nsim']['LIBS'] = ['neuralnet', 'pthread']

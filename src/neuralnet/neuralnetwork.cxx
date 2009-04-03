@@ -28,11 +28,9 @@ namespace FastNet
   void NeuralNetwork::operator=(const NeuralNetwork &net)
   {
     nNodes.clear();
-    activeNodes.clear();
     usingBias.clear();
     trfFunc.clear();
     nNodes.assign(net.nNodes.begin(), net.nNodes.end());
-    activeNodes.assign(net.activeNodes.begin(), net.activeNodes.end());
     usingBias.assign(net.usingBias.begin(), net.usingBias.end());
     trfFunc.assign(net.trfFunc.begin(), net.trfFunc.end());
       
@@ -85,30 +83,10 @@ namespace FastNet
     //Taking the weights and values info.
     readWeights(netStr);
     
-    //Getting the active nodes of the input layer.
-    const mxArray *userData = mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "userdata");
-    NodesRange aux;
-    aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
-    aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
-    if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[0]) ) this->activeNodes.push_back(aux);
-    else throw "Invalid nodes init or end values!";
-    DEBUG2("Active nodes in layer 0 goes from " << this->activeNodes[0].init << " to " << this->activeNodes[0].end);
-    
-    //Verifying if there are frozen nodes and seting them, if so.
-    // This loop also set if a given layer is not using bias and the start and end
-    //nodes of each layer.
+    //Getting the using bias information.
     for (unsigned i=0; i<mxGetM(layers); i++)
     {
-      //Getting the nodes range information.
       const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-      NodesRange aux;
-      aux.init = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "initNode"))) - 1;
-      aux.end = static_cast<unsigned>(mxGetScalar(mxGetField(userData, 0, "endNode")));
-      if ( (aux.init <= aux.end) && (aux.end <= this->nNodes[(i+1)]) ) this->activeNodes.push_back(aux);
-      else throw "Invalid nodes init or end values!";
-      DEBUG2("Active nodes in layer " << (i+1) << " goes from " << this->activeNodes[(i+1)].init << " to " << this->activeNodes[(i+1)].end);
-      
-      //Getting the using bias information.
       this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
       DEBUG2("Layer " << (i+1) << " is using bias? " << this->usingBias[i]);
     }
@@ -221,7 +199,6 @@ namespace FastNet
     {
       str << "Layer " << i << " Configuration:" << endl;
       str << "Number of Nodes   : " << nNodes[i] << endl;
-      str << "Active Nodes      : from " << activeNodes[i].init << " to " << (activeNodes[i].end-1) << endl;
       
       if (i)
       {
@@ -250,11 +227,11 @@ namespace FastNet
     //Propagating the input through the network.
     for (unsigned i=0; i<size; i++)
     {
-      for (unsigned j=activeNodes[i+1].init; j<activeNodes[i+1].end; j++)
+      for (unsigned j=0; j<nNodes[i+1]; j++)
       {
         layerOutputs[i+1][j] = bias[i][j];
         
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
           layerOutputs[i+1][j] += layerOutputs[i][k] * weights[i][j][k];
         }
@@ -311,7 +288,7 @@ namespace FastNet
     //in the layer to 0.
     if(!usingBias[layer])
     {
-      for (unsigned i=activeNodes[(layer+1)].init; i<activeNodes[(layer+1)].end; i++)
+      for (unsigned i=0; i<nNodes[(layer+1)]; i++)
       {
         bias[layer][i] = 0;
       }

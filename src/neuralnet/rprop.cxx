@@ -135,19 +135,19 @@ namespace FastNet
   {
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
-      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
         //If the node is frozen, we just reset the accumulators,
         //otherwise, we actually train the weights connected to it.
         if (frozenNode[i][j])
         {
-          for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++) dw[i][j][k] = 0;
+          for (unsigned k=0; k<nNodes[i]; k++) dw[i][j][k] = 0;
           db[i][j] = 0;
           if (!usingBias[i]) bias[i][j] = 0;
         }
         else
         {
-          for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+          for (unsigned k=0; k<nNodes[i]; k++)
           {
             updateW(delta_w[i][j][k], dw[i][j][k], prev_dw[i][j][k], weights[i][j][k]);
           }

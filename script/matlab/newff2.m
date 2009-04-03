@@ -32,14 +32,8 @@ if (strcmp(net.trainFcn, 'traingd') == 1),
 	net.trainParam.decFactor = 1;
 end
 
-%Adding the layer start and end values for the input layer.
-net.inputs{1}.userdata.initNode = 1;
-net.inputs{1}.userdata.endNode = net.inputs{1}.size;
-
-%Adding the usingBias, frozen nodes and layer start and end values.
+%Adding the usingBias and frozen nodes.
 for i=1:net.numLayers,
-	net.layers{i}.userdata.initNode = 1;
-	net.layers{i}.userdata.endNode = net.layers{i}.size;
 	net.layers{i}.userdata.usingBias = true;
 	net.layers{i}.userdata.frozenNodes = [];
 end

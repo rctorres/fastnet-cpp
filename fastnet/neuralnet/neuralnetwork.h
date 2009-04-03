@@ -60,19 +60,6 @@ namespace FastNet
       typedef  REAL (NeuralNetwork::*TRF_FUNC_PTR)(REAL val, bool deriv) const; 
 
 
-      /// Holds the range of active nodes in a layer.
-      /**
-       This struct is used to hold the range (ini and end) of active nodes in 
-       a layer. So, ia a layer has 4 nodes, and the init and end values are,
-       respectively 0 and 2), only the first 3 nodes will be considered. The
-       last one will be ignored by all functions (propagateInput, updateWeights, etc).
-      */
-      struct NodesRange
-      {
-        unsigned init;
-        unsigned end;
-      };
-
       //Class attributes.
 
       /// The weights matrix.
@@ -111,22 +98,6 @@ namespace FastNet
       being used.
       */
       vector<unsigned> nNodes;
-
-
-      /// Stores the nodes activation range in each layer.
-      /**
-       This vector will hold the range of active neurons in each layer.
-       For instance, if activeNodes[1].init = 2 and activeNodes[1].end = 4, 
-       and nNodes[1] = 8, it means that the nodes 0,1,5,6 and 7 of layer 1 (starting in 0)
-       will be completed ignored by the class and any other subclass (as they not even exist).
-       Caution must be taken when a new method is created either in this
-       class or in any other derived class, in order to correctly implement this
-       functionality. By default, all nodes are active. If the user wants to
-       set an specific range of active nodes for a layer, he must do so by calling
-       the specific methods for that end.
-       @see FastNet::NeuralNetwork#setActiveNodes
-      */
-      vector<NodesRange> activeNodes;
 
 
       /// Specifies if a layer is using bias.
@@ -212,28 +183,6 @@ namespace FastNet
 
     public:
       //Virtual methods.      
-      
-      /// Specifies the range of active nodes in a specific layer.
-      /**
-       This function is used to specify the range of active nodes in a specific layer.
-       For instance, if activeNodes[1].init = 2 and activeNodes[1].end = 4, 
-       and nNodes[1] = 8, it means that only the nodes 2,3 and 4 will be active 
-       (nodes 0,1,5,6 and 7 of layer 1 will be ignored)
-       @param[in] layer The layer in which the nodes will be activated (0 is the input layer).
-       @param[in] initNode The first node in the range of active nodes (where 0 is the first node).
-       @param[in] endNode The last node in the range of active nodes (where 0 is the first node).
-      */
-      void setActiveNodes(unsigned layer, unsigned initNode, unsigned endNode) {activeNodes[layer].init = initNode; activeNodes[layer].end = (endNode+1);}
-      
-      
-      //Set all nodes as active.
-      /**
-       This method is used to activate all the nodes in the network. It sets
-       the range of active nodes to init=0 and end = nNodes[i] (where i is the current layer)
-       for all layers.
-      */
-      void resetActiveNodes(){for (unsigned i=0; i<nNodes.size(); i++) setActiveNodes(i, 0, (nNodes[i]-1));};
-      
       
       /// Propagates the input through the network.
       /**

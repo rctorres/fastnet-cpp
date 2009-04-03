@@ -157,16 +157,16 @@ namespace FastNet
   {
     const unsigned size = nNodes.size() - 1;
 
-    for (unsigned i=activeNodes[size].init; i<activeNodes[size].end; i++) sigma[size-1][i] = (target[i] - output[i]) * CALL_TRF_FUNC(trfFunc[size-1])(output[i], true);
+    for (unsigned i=0; i<nNodes[size]; i++) sigma[size-1][i] = (target[i] - output[i]) * CALL_TRF_FUNC(trfFunc[size-1])(output[i], true);
 
     //Retropropagating the error.
     for (int i=(size-2); i>=0; i--)
     {
-      for (unsigned j=activeNodes[i+1].init; j<activeNodes[i+1].end; j++)
+      for (unsigned j=0; j<nNodes[i+1]; j++)
       {
         sigma[i][j] = 0;
 
-        for (unsigned k=activeNodes[i+2].init; k<activeNodes[i+2].end; k++)
+        for (unsigned k=0; k<nNodes[i+2]; k++)
         {
           sigma[i][j] += sigma[i+1][k] * weights[(i+1)][k][j];
         }
@@ -187,9 +187,9 @@ namespace FastNet
     //Accumulating the deltas.
     for (unsigned i=0; i<size; i++)
     {
-      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
           dw[i][j][k] += (val * sigma[i][j] * layerOutputs[i][k]);
         }
@@ -210,9 +210,9 @@ namespace FastNet
     //Accumulating the deltas.
     for (unsigned i=0; i<size; i++)
     {
-      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
           dw[i][j][k] += (val * sigma[i][j] * layerOutputs[i][k]);
         }
@@ -228,9 +228,9 @@ namespace FastNet
     //Accumulating the deltas.
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
-      for (unsigned j=activeNodes[(i+1)].init; j<activeNodes[(i+1)].end; j++)
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
           dw[i][j][k] += net.dw[i][j][k];
         }
@@ -243,19 +243,19 @@ namespace FastNet
   {    
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
-      for (unsigned j=activeNodes[i+1].init; j<activeNodes[(i+1)].end; j++)
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
         //If the node is frozen, we just reset the accumulators,
         //otherwise, we actually train the weights connected to it.
         if (frozenNode[i][j])
         {
-          for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++) dw[i][j][k] = 0;
+          for (unsigned k=0; k<nNodes[i]; k++) dw[i][j][k] = 0;
           db[i][j] = 0;
           if (!usingBias[i]) bias[i][j] = 0;
         }
         else
         {
-          for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+          for (unsigned k=0; k<nNodes[i]; k++)
           {
             weights[i][j][k] += (learningRate * dw[i][j][k]);
             dw[i][j][k] = 0;
@@ -327,13 +327,13 @@ namespace FastNet
 
     for (unsigned i=0; i<(nNodes.size() - 1); i++)
     {
-      for (unsigned j=activeNodes[i+1].init; j<activeNodes[i+1].end; j++)
+      for (unsigned j=0; j<nNodes[i+1]; j++)
       {
         //Initializing the bias (if the layer is not using bias, the value is set to zero).
         bias[i][j] = (usingBias[i]) ? (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange : 0;
 
         //Initializing the weights.
-        for (unsigned k=activeNodes[i].init; k<activeNodes[i].end; k++)
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
           weights[i][j][k] = (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange;
         }
@@ -344,7 +344,7 @@ namespace FastNet
 
   bool Backpropagation::isFrozen(unsigned layer) const
   {
-    for (int i=activeNodes[layer+1].init; i<activeNodes[layer+1].end; i++)
+    for (int i=0; i<nNodes[layer+1]; i++)
     {
       if (!frozenNode[layer][i]) return false;
     }
@@ -362,7 +362,7 @@ namespace FastNet
     output = propagateInput(input);
       
     //Calculating the error.
-    for (int i=activeNodes[size].init; i<activeNodes[size].end; i++) error += SQR(target[i] - output[i]);
+    for (int i=0; i<nNodes[size]; i++) error += SQR(target[i] - output[i]);
 
     //Returning the MSE
     return (error / nNodes[size]);

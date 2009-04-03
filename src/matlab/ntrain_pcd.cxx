@@ -176,12 +176,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       //Setting the network for PCD training by activating only the first node.
       net->setActiveNodes(pcdLayer, 0, pcd);
       DEBUG1("Active nodes goes from 0 to " << pcd);
-      if (pcd) net->setFrozen(pcdLayer, pcd-1, true); // Freezing the last trained node.
-      
-#ifdef DEBUG
-      for (unsigned i=0; i<numPCDs; i++)
-        DEBUG1("Node " << i << " in layer " << pcdLayer << " is frozen? " << net->isFrozen(pcdLayer), i); 
-#endif
 
       // Performing the training.
       unsigned numFails = 0;
@@ -222,6 +216,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
         }
       }
 
+      net->setFrozen(pcdLayer, pcd, true); // Freezing the trained node for the next cycle.
+#ifdef DEBUG
+      for (unsigned i=0; i<numPCDs; i++)
+        DEBUG1("Node " << i << " in layer " << pcdLayer << " is frozen? " << net->isFrozen(pcdLayer), i); 
+#endif
+    }
+
       // Generating a copy of the network structure passed as input.
       ret[OUT_NET_IDX] = mxDuplicateArray(netStr);
   
@@ -230,7 +231,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
       //Returning the training evolution info.
       train->flushTrainInfo(ret[OUT_EPOCH_IDX], ret[OUT_TRN_ERROR_IDX], ret[OUT_VAL_ERROR_IDX]);
-    }
     
     //Deleting the allocated memory.
     delete net;

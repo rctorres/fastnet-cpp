@@ -23,8 +23,5 @@ matlab = {}
 matlab['ntrain'] = {}
 matlab['ntrain']['LIBS'] = ['neuralnet']
 
-matlab['ntrain_pcd'] = {}
-matlab['ntrain_pcd']['LIBS'] = ['neuralnet']
-
 matlab['nsim'] = {}
 matlab['nsim']['LIBS'] = ['neuralnet', 'pthread']

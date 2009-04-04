@@ -21,7 +21,7 @@ def getMatlabSuffix():
 matlab = {}
 
 matlab['ntrain'] = {}
-matlab['ntrain']['LIBS'] = ['neuralnet']
+matlab['ntrain']['LIBS'] = ['neuralnet', 'training']
 
 matlab['nsim'] = {}
 matlab['nsim']['LIBS'] = ['neuralnet', 'pthread']

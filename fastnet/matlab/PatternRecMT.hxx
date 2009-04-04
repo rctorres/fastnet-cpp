@@ -4,22 +4,12 @@
 #include "fastnet/matlab/PatternRec.hxx"
 #include "fastnet/matlab/MTHelper.hxx"
 
-using namespace FastNet;
-
-namespace MTPatRec
+class PatternRecognitionMT : public PatternRecognition
 {
-  pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-
+public:
   struct ThreadParams
   {
-    Backpropagation *net;
+    FastNet::Backpropagation *net;
     const REAL **inData;
     const REAL **outData;
     unsigned id;
@@ -33,168 +23,26 @@ namespace MTPatRec
     bool analysisReady;
   };
 
-  void *valNetwork(void *param)
-  {
-    MTPatRec::ThreadParams *par = static_cast<MTPatRec::ThreadParams*>(param);
-    const unsigned inputStep = par->nThreads * par->inputSize;
-    const REAL *output;
+protected:
 
-    while (true)
-    {
-      //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTPatRec::valProcMutex, MTPatRec::valProcRequest);
-   
-      if (par->finishThread) pthread_exit(NULL);
-
-      par->error = 0.;
-      
-      for (unsigned pat=0; pat<par->numPatterns; pat++)
-      {
-        //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-        const REAL wFactor = 1. / static_cast<REAL>(par->numPatterns * par->numEvents[pat]);
-        const REAL *target = par->outData[pat];
-        const REAL *input = par->inData[pat] + (par->id * par->inputSize);
-
-        for (unsigned i=0; i<par->numEvents[pat]; i+=par->nThreads)
-        {
-          par->error += ( wFactor * par->net->applySupervisedInput(input, target, output) );
-          input += inputStep;
-        }
-      }
-      MT::safeSignal(par->analysisReady, MTPatRec::valGetResMutex, MTPatRec::valGetResRequest);
-    }
-  };
-
-  void *trainNetwork(void *param)
-  {
-    MTPatRec::ThreadParams *par = static_cast<MTPatRec::ThreadParams*>(param);
-    const unsigned inputStep = par->nThreads * par->inputSize;
-    const REAL *output;
-
-    while (true)
-    {
-      //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTPatRec::trnProcMutex, MTPatRec::trnProcRequest);
-   
-      if (par->finishThread) pthread_exit(NULL);
-
-      par->error = 0.;
-      
-      for (unsigned pat=0; pat<par->numPatterns; pat++)
-      {
-        //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-        const REAL wFactor = 1. / static_cast<REAL>(par->numPatterns * par->numEvents[pat]);
-        const REAL *target = par->outData[pat];
-        const REAL *input = par->inData[pat] + (par->id * par->inputSize);
-
-        for (unsigned i=0; i<par->numEvents[pat]; i+=par->nThreads)
-        {
-          par->error += ( wFactor * par->net->applySupervisedInput(input, target, output));
-          //Calculating the weight and bias update values.
-          par->net->calculateNewWeights(output, target, pat);
-          input += inputStep;
-        }
-      }
-      
-      MT::safeSignal(par->analysisReady, MTPatRec::trnGetResMutex, MTPatRec::trnGetResRequest);
-    }
-  }
-};
-
-
-class PatternRecognitionMT : public PatternRecognition
-{
-private:
   unsigned nThreads;
   pthread_t *trnThreads;
   pthread_t *valThreads;
-  MTPatRec::ThreadParams *trnThPar;
-  MTPatRec::ThreadParams *valThPar;
+  ThreadParams *trnThPar;
+  ThreadParams *valThPar;
   pthread_attr_t threadAttr;
-  Backpropagation **netVec;
+  FastNet::Backpropagation **netVec;
 
 
   void createThreads(const REAL **inData, unsigned *numEvents, pthread_t *&th, 
-                      MTPatRec::ThreadParams *&thp, void *(*funcPtr)(void*))
-  {
-    DEBUG1("Starting Multi-Thread PatternRecognition Training Object.");
-    th = new pthread_t[nThreads];
-    thp = new MTPatRec::ThreadParams[nThreads];
-    
-    DEBUG2("Setting the parameters for each thread.");
-    for (unsigned i=0; i<nThreads; i++)
-    {
-      thp[i].nThreads = nThreads;
-      thp[i].numPatterns = numPatterns;
-      thp[i].id = i;
-      thp[i].net = netVec[i];
-      thp[i].inData = inData;
-      thp[i].inputSize = inputSize;
-      thp[i].finishThread = thp[i].threadReady = thp[i].analysisReady = false;
-      thp[i].outData = targList;
-      thp[i].numEvents = numEvents;
-      
-      const int rc = pthread_create(&th[i], &threadAttr, funcPtr, static_cast<void*>(&thp[i]));
-      if (rc) throw "Impossible to create thread! Aborting...";
-    }
-  }
+                      ThreadParams *&thp, void *(*funcPtr)(void*));
 
 
 public:
-  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads) 
-                      : PatternRecognition(inTrn, inVal, usingSP)
-  {
-    DEBUG2("Creating StandardTrainingMT object.");
 
-    nThreads = numThreads;
+  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads);
 
-    //Setting threads for being joinable.
-    pthread_attr_init(&threadAttr);
-    pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_JOINABLE);
-
-    //Generating copies of the neural network to be used.
-    netVec = new Backpropagation* [nThreads];
-    netVec[0] = net;
-    for (unsigned i=1; i<nThreads; i++) netVec[i] = dynamic_cast<Backpropagation*>(net->clone());
-
-    DEBUG1("Creating training threads.");
-    createThreads(inTrnList, numTrnEvents, trnThreads, trnThPar, &MTPatRec::trainNetwork);
-    DEBUG1("Creating validating threads.");
-    createThreads(inValList, numValEvents, valThreads, valThPar, &MTPatRec::valNetwork);
-  };
-
-  virtual ~PatternRecognitionMT()
-  {    
-    //Ending the threads.
-    for (unsigned i=0; i<nThreads; i++)
-    {
-      void *ret;
-      trnThPar[i].finishThread = valThPar[i].finishThread = true;
-      MT::waitCond(trnThPar[i].threadReady, MTPatRec::trnProcMutex);
-      MT::waitCond(valThPar[i].threadReady, MTPatRec::valProcMutex);
-      pthread_cond_broadcast(&MTPatRec::trnProcRequest);
-      pthread_cond_broadcast(&MTPatRec::valProcRequest);    
-      pthread_join(trnThreads[i], &ret);
-      pthread_join(valThreads[i], &ret);
-    }
-
-    pthread_cond_destroy(&MTPatRec::trnProcRequest);
-    pthread_cond_destroy(&MTPatRec::valProcRequest);
-    pthread_mutex_destroy(&MTPatRec::trnProcMutex);
-    pthread_mutex_destroy(&MTPatRec::valProcMutex);
-    pthread_cond_destroy(&MTPatRec::trnGetResRequest);
-    pthread_cond_destroy(&MTPatRec::valGetResRequest);
-    pthread_mutex_destroy(&MTPatRec::trnGetResMutex);
-    pthread_mutex_destroy(&MTPatRec::valGetResMutex);
-    pthread_attr_destroy(&threadAttr);
-
-    delete trnThreads;
-    delete valThreads;
-    delete trnThPar;
-    delete valThPar;
-    delete netVec;
-  };
-
+  virtual ~PatternRecognitionMT();
 
   /// Applies the validating set for the network's validation.
   /**
@@ -206,23 +54,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(Backpropagation *net)
-  {
-    REAL gbError = 0.;
-    for (unsigned i=0; i<nThreads; i++) MT::waitCond(valThPar[i].threadReady, MTPatRec::valProcMutex);
-    pthread_cond_broadcast(&MTPatRec::valProcRequest);
-
-    for (unsigned i=0; i<nThreads; i++)
-    {
-      void *ret;
-      DEBUG2("Waiting for validating thread " << i << " to finish...");
-      MT::safeWait(valThPar[i].analysisReady, MTPatRec::valGetResMutex, MTPatRec::valGetResRequest);
-      DEBUG2("Starting analysis for validating thread " << i << "...");
-      gbError += valThPar[i].error;
-    }
-    return gbError;
-  };
-
+  REAL valNetwork(Backpropagation *net);
 
   /// Applies the training set for the network's training.
   /**
@@ -236,28 +68,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(Backpropagation *net)
-  {
-    Backpropagation *mainNet = netVec[0];
-    REAL gbError = 0.;
-    
-    //First we make all the networks having the same training status.
-    for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
-
-    for (unsigned i=0; i<nThreads; i++) MT::waitCond(trnThPar[i].threadReady, MTPatRec::trnProcMutex);
-    pthread_cond_broadcast(&MTPatRec::trnProcRequest);
-    
-    for (unsigned i=0; i<nThreads; i++)
-    {
-      void *ret;
-      DEBUG2("Waiting for training thread " << i << " to finish...");
-      MT::safeWait(trnThPar[i].analysisReady, MTPatRec::trnGetResMutex, MTPatRec::trnGetResRequest);
-      DEBUG2("Starting analysis for training thread " << i << "...");
-      gbError += trnThPar[i].error;
-      if (i) mainNet->addToGradient(*netVec[i]);
-    }
-    return gbError;
-  }  
+  REAL trainNetwork(Backpropagation *net);
 };
 
 #endif

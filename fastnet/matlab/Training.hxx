@@ -1,13 +1,14 @@
 #ifndef TRAINING_H
 #define TRAINING_H
 
+#include <list>
+#include <iomanip>
+
 #include <mex.h>
 
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/reporter/Reporter.h"
 #include "fastnet/defines.h"
-
-using namespace FastNet;
 
 
 //This struct will hold the training info to be ruterned to the user.
@@ -22,7 +23,7 @@ struct TrainData
 class Training
 {
 protected:
-  list<TrainData> trnEvolution;
+  std::list<TrainData> trnEvolution;
   REAL bestGoal;
 
 public:
@@ -80,7 +81,7 @@ public:
     }
   };
   
-  virtual void checkSizeMismatch(const Backpropagation *net) const = 0;
+  virtual void checkSizeMismatch(const FastNet::Backpropagation *net) const = 0;
   
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
@@ -99,9 +100,9 @@ public:
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << "mse (val) = " << valError);
   };
   
-  virtual REAL valNetwork(Backpropagation *net) = 0;
+  virtual REAL valNetwork(FastNet::Backpropagation *net) = 0;
 
-  virtual REAL trainNetwork(Backpropagation *net) = 0;  
+  virtual REAL trainNetwork(FastNet::Backpropagation *net) = 0;  
 };
 
 #endif

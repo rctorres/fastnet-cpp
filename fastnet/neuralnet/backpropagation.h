@@ -12,7 +12,7 @@
 
 #include <mex.h>
 
-#include "fastnet/defines.h"
+#include "fastnet/sys/defines.h"
 #include "fastnet/neuralnet/neuralnetwork.h"
 
 using namespace std;

@@ -7,8 +7,8 @@
 #include <mex.h>
 
 #include "fastnet/neuralnet/backpropagation.h"
-#include "fastnet/reporter/Reporter.h"
-#include "fastnet/defines.h"
+#include "fastnet/sys/Reporter.h"
+#include "fastnet/sys/defines.h"
 
 
 //This struct will hold the training info to be ruterned to the user.

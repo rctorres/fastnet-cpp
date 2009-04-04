@@ -1,21 +1,21 @@
-#ifndef STANDARDMT_H
-#define STANDARDMT_H
+#ifndef PATRECMT_H
+#define PATRECMT_H
 
-#include "fastnet/matlab/Standard.hxx"
-#include "fastnet/matlab/MTHelper.hxx"
+#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/MTHelper.hxx"
 
-class StandardTrainingMT : public StandardTraining
+class PatternRecognitionMT : public PatternRecognition
 {
 public:
   struct ThreadParams
   {
     FastNet::Backpropagation *net;
-    const REAL *inData;
-    const REAL *outData;
+    const REAL **inData;
+    const REAL **outData;
     unsigned id;
-    unsigned numEvents;
+    unsigned numPatterns;
+    unsigned *numEvents;
     unsigned inputSize;
-    unsigned outputSize;
     unsigned nThreads;
     REAL error;
     bool finishThread;
@@ -24,24 +24,25 @@ public:
   };
 
 protected:
+
   unsigned nThreads;
   pthread_t *trnThreads;
   pthread_t *valThreads;
   ThreadParams *trnThPar;
   ThreadParams *valThPar;
   pthread_attr_t threadAttr;
-  Backpropagation **netVec;
+  FastNet::Backpropagation **netVec;
 
 
-  void createThreads(const REAL *inData, const REAL *outData, const unsigned numEvents, 
-                      const unsigned inputSize, const unsigned outputSize, pthread_t *&th, 
+  void createThreads(const REAL **inData, unsigned *numEvents, pthread_t *&th, 
                       ThreadParams *&thp, void *(*funcPtr)(void*));
 
-public:
-  StandardTrainingMT(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, 
-                      const mxArray *inVal, const mxArray *outVal, const unsigned numThreads);
 
-  virtual ~StandardTrainingMT();
+public:
+
+  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads);
+
+  virtual ~PatternRecognitionMT();
 
   /// Applies the validating set for the network's validation.
   /**
@@ -53,7 +54,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(FastNet::Backpropagation *net);
+  REAL valNetwork(Backpropagation *net);
 
   /// Applies the training set for the network's training.
   /**
@@ -67,7 +68,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(FastNet::Backpropagation *net);
+  REAL trainNetwork(Backpropagation *net);
 };
 
 #endif

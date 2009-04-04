@@ -8,7 +8,7 @@
 #include <typeinfo>
 
 #include "fastnet/neuralnet/rprop.h"
-#include "fastnet/reporter/Reporter.h"
+#include "fastnet/sys/Reporter.h"
 
 
 using namespace std;

@@ -1,7 +1,7 @@
 #ifndef STANDARD_H
 #define STANDARD_H
 
-#include "fastnet/matlab/Training.hxx"
+#include "fastnet/training/Training.hxx"
 
 using namespace FastNet;
 

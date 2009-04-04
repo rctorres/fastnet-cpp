@@ -13,8 +13,8 @@
 
 #include <mex.h>
 
-#include "fastnet/defines.h"
-#include "fastnet/reporter/Reporter.h"
+#include "fastnet/sys/defines.h"
+#include "fastnet/sys/Reporter.h"
 
 using namespace std;
 

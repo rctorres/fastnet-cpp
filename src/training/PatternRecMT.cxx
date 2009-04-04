@@ -1,6 +1,6 @@
-#include "fastnet/matlab/PatternRec.hxx"
-#include "fastnet/matlab/MTHelper.hxx"
-#include "fastnet/matlab/PatternRecMT.hxx"
+#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/MTHelper.hxx"
+#include "fastnet/training/PatternRecMT.h"
 
 namespace MTPatRec
 {

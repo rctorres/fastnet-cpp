@@ -13,9 +13,9 @@
 #include <iomanip>
 #include <mex.h>
 
-#include "fastnet/reporter/Reporter.h"
+#include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/feedforward.h"
-#include "fastnet/defines.h"
+#include "fastnet/sys/defines.h"
 
 using namespace std;
 using namespace FastNet;

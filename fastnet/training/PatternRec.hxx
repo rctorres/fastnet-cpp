@@ -1,7 +1,7 @@
 #ifndef PATREC_H
 #define PATREC_H
 
-#include "fastnet/matlab/Training.hxx"
+#include "fastnet/training/Training.hxx"
 
 using namespace FastNet;
 

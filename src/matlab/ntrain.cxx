@@ -16,13 +16,13 @@
 #include <iomanip>
 #include <mex.h>
 
-#include "fastnet/reporter/Reporter.h"
+#include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
-#include "fastnet/matlab/Standard.hxx"
-#include "fastnet/matlab/StandardMT.hxx"
-#include "fastnet/matlab/PatternRec.hxx"
-#include "fastnet/matlab/PatternRecMT.hxx"
+#include "fastnet/training/Standard.hxx"
+#include "fastnet/training/StandardMT.h"
+#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/PatternRecMT.h"
 
 using namespace std;
 using namespace FastNet;

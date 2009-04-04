@@ -11,7 +11,7 @@
 #include <mex.h>
 
 #include "fastnet/neuralnet/backpropagation.h"
-#include "fastnet/defines.h"
+#include "fastnet/sys/defines.h"
 
 using namespace std;
 

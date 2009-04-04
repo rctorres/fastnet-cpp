@@ -1,6 +1,6 @@
-#include "fastnet/matlab/Standard.hxx"
-#include "fastnet/matlab/MTHelper.hxx"
-#include "fastnet/matlab/StandardMT.hxx"
+#include "fastnet/training/Standard.hxx"
+#include "fastnet/training/MTHelper.hxx"
+#include "fastnet/training/StandardMT.h"
 
 namespace MTStandard
 {

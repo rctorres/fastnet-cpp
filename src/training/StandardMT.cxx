@@ -2,17 +2,17 @@
 #include "fastnet/training/MTHelper.hxx"
 #include "fastnet/training/StandardMT.h"
 
+static pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
+
 namespace MTStandard
 {
-  pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-
   void *valNetwork(void *param)
   {
     StandardTrainingMT::ThreadParams *par = static_cast<StandardTrainingMT::ThreadParams*>(param);
@@ -23,7 +23,7 @@ namespace MTStandard
     while (true)
     {
       //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTStandard::valProcMutex, MTStandard::valProcRequest);
+      MT::safeWait(par->threadReady, valProcMutex, valProcRequest);
    
       if (par->finishThread) pthread_exit(NULL);
 
@@ -36,7 +36,7 @@ namespace MTStandard
         input += inputStep;
         target += outputStep;
       }
-      MT::safeSignal(par->analysisReady, MTStandard::valGetResMutex, MTStandard::valGetResRequest);
+      MT::safeSignal(par->analysisReady, valGetResMutex, valGetResRequest);
     }
   };
 
@@ -50,7 +50,7 @@ namespace MTStandard
     while (true)
     {
       //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTStandard::trnProcMutex, MTStandard::trnProcRequest);
+      MT::safeWait(par->threadReady, trnProcMutex, trnProcRequest);
    
       if (par->finishThread) pthread_exit(NULL);
 
@@ -64,7 +64,7 @@ namespace MTStandard
         input += inputStep;
         target += outputStep;
       }
-      MT::safeSignal(par->analysisReady, MTStandard::trnGetResMutex, MTStandard::trnGetResRequest);
+      MT::safeSignal(par->analysisReady, trnGetResMutex, trnGetResRequest);
     }
   }
 };
@@ -127,22 +127,22 @@ StandardTrainingMT::~StandardTrainingMT()
   {
     void *ret;
     trnThPar[i].finishThread = valThPar[i].finishThread = true;
-    MT::waitCond(trnThPar[i].threadReady, MTStandard::trnProcMutex);
-    MT::waitCond(valThPar[i].threadReady, MTStandard::valProcMutex);
-    pthread_cond_broadcast(&MTStandard::trnProcRequest);
-    pthread_cond_broadcast(&MTStandard::valProcRequest);    
+    MT::waitCond(trnThPar[i].threadReady, trnProcMutex);
+    MT::waitCond(valThPar[i].threadReady, valProcMutex);
+    pthread_cond_broadcast(&trnProcRequest);
+    pthread_cond_broadcast(&valProcRequest);    
     pthread_join(trnThreads[i], &ret);
     pthread_join(valThreads[i], &ret);
   }
 
-  pthread_cond_destroy(&MTStandard::trnProcRequest);
-  pthread_cond_destroy(&MTStandard::valProcRequest);
-  pthread_mutex_destroy(&MTStandard::trnProcMutex);
-  pthread_mutex_destroy(&MTStandard::valProcMutex);
-  pthread_cond_destroy(&MTStandard::trnGetResRequest);
-  pthread_cond_destroy(&MTStandard::valGetResRequest);
-  pthread_mutex_destroy(&MTStandard::trnGetResMutex);
-  pthread_mutex_destroy(&MTStandard::valGetResMutex);
+  pthread_cond_destroy(&trnProcRequest);
+  pthread_cond_destroy(&valProcRequest);
+  pthread_mutex_destroy(&trnProcMutex);
+  pthread_mutex_destroy(&valProcMutex);
+  pthread_cond_destroy(&trnGetResRequest);
+  pthread_cond_destroy(&valGetResRequest);
+  pthread_mutex_destroy(&trnGetResMutex);
+  pthread_mutex_destroy(&valGetResMutex);
   pthread_attr_destroy(&threadAttr);
 
   delete trnThreads;
@@ -156,14 +156,14 @@ StandardTrainingMT::~StandardTrainingMT()
 REAL StandardTrainingMT::valNetwork(Backpropagation *net)
 {
   REAL gbError = 0.;
-  for (unsigned i=0; i<nThreads; i++) MT::waitCond(valThPar[i].threadReady, MTStandard::valProcMutex);
-  pthread_cond_broadcast(&MTStandard::valProcRequest);
+  for (unsigned i=0; i<nThreads; i++) MT::waitCond(valThPar[i].threadReady, valProcMutex);
+  pthread_cond_broadcast(&valProcRequest);
 
   for (unsigned i=0; i<nThreads; i++)
   {
     void *ret;
     DEBUG2("Waiting for validating thread " << i << " to finish...");
-    MT::safeWait(valThPar[i].analysisReady, MTStandard::valGetResMutex, MTStandard::valGetResRequest);
+    MT::safeWait(valThPar[i].analysisReady, valGetResMutex, valGetResRequest);
     DEBUG2("Starting analysis for validating thread " << i << "...");
     gbError += valThPar[i].error;
   }
@@ -179,14 +179,14 @@ REAL StandardTrainingMT::trainNetwork(Backpropagation *net)
   //First we make all the networks having the same training status.
   for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
 
-  for (unsigned i=0; i<nThreads; i++) MT::waitCond(trnThPar[i].threadReady, MTStandard::trnProcMutex);
-  pthread_cond_broadcast(&MTStandard::trnProcRequest);
+  for (unsigned i=0; i<nThreads; i++) MT::waitCond(trnThPar[i].threadReady, trnProcMutex);
+  pthread_cond_broadcast(&trnProcRequest);
     
   for (unsigned i=0; i<nThreads; i++)
   {
     void *ret;
     DEBUG2("Waiting for training thread " << i << " to finish...");
-    MT::safeWait(trnThPar[i].analysisReady, MTStandard::trnGetResMutex, MTStandard::trnGetResRequest);
+    MT::safeWait(trnThPar[i].analysisReady, trnGetResMutex, trnGetResRequest);
     DEBUG2("Starting analysis for training thread " << i << "...");
     gbError += trnThPar[i].error;
     if (i) mainNet->addToGradient(*netVec[i]);

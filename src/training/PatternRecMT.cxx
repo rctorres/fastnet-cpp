@@ -2,17 +2,18 @@
 #include "fastnet/training/MTHelper.hxx"
 #include "fastnet/training/PatternRecMT.h"
 
+static pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
+
+
 namespace MTPatRec
 {
-  pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
-  pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-
   void *valNetwork(void *param)
   {
     PatternRecognitionMT::ThreadParams *par = static_cast<PatternRecognitionMT::ThreadParams*>(param);
@@ -22,7 +23,7 @@ namespace MTPatRec
     while (true)
     {
       //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTPatRec::valProcMutex, MTPatRec::valProcRequest);
+      MT::safeWait(par->threadReady, valProcMutex, valProcRequest);
    
       if (par->finishThread) pthread_exit(NULL);
 
@@ -41,7 +42,7 @@ namespace MTPatRec
           input += inputStep;
         }
       }
-      MT::safeSignal(par->analysisReady, MTPatRec::valGetResMutex, MTPatRec::valGetResRequest);
+      MT::safeSignal(par->analysisReady, valGetResMutex, valGetResRequest);
     }
   };
 
@@ -54,7 +55,7 @@ namespace MTPatRec
     while (true)
     {
       //Waiting for waking up...
-      MT::safeWait(par->threadReady, MTPatRec::trnProcMutex, MTPatRec::trnProcRequest);
+      MT::safeWait(par->threadReady, trnProcMutex, trnProcRequest);
    
       if (par->finishThread) pthread_exit(NULL);
 
@@ -76,7 +77,7 @@ namespace MTPatRec
         }
       }
       
-      MT::safeSignal(par->analysisReady, MTPatRec::trnGetResMutex, MTPatRec::trnGetResRequest);
+      MT::safeSignal(par->analysisReady, trnGetResMutex, trnGetResRequest);
     }
   }
 };
@@ -137,22 +138,22 @@ PatternRecognitionMT::~PatternRecognitionMT()
   {
     void *ret;
     trnThPar[i].finishThread = valThPar[i].finishThread = true;
-    MT::waitCond(trnThPar[i].threadReady, MTPatRec::trnProcMutex);
-    MT::waitCond(valThPar[i].threadReady, MTPatRec::valProcMutex);
-    pthread_cond_broadcast(&MTPatRec::trnProcRequest);
-    pthread_cond_broadcast(&MTPatRec::valProcRequest);    
+    MT::waitCond(trnThPar[i].threadReady, trnProcMutex);
+    MT::waitCond(valThPar[i].threadReady, valProcMutex);
+    pthread_cond_broadcast(&trnProcRequest);
+    pthread_cond_broadcast(&valProcRequest);    
     pthread_join(trnThreads[i], &ret);
     pthread_join(valThreads[i], &ret);
   }
 
-  pthread_cond_destroy(&MTPatRec::trnProcRequest);
-  pthread_cond_destroy(&MTPatRec::valProcRequest);
-  pthread_mutex_destroy(&MTPatRec::trnProcMutex);
-  pthread_mutex_destroy(&MTPatRec::valProcMutex);
-  pthread_cond_destroy(&MTPatRec::trnGetResRequest);
-  pthread_cond_destroy(&MTPatRec::valGetResRequest);
-  pthread_mutex_destroy(&MTPatRec::trnGetResMutex);
-  pthread_mutex_destroy(&MTPatRec::valGetResMutex);
+  pthread_cond_destroy(&trnProcRequest);
+  pthread_cond_destroy(&valProcRequest);
+  pthread_mutex_destroy(&trnProcMutex);
+  pthread_mutex_destroy(&valProcMutex);
+  pthread_cond_destroy(&trnGetResRequest);
+  pthread_cond_destroy(&valGetResRequest);
+  pthread_mutex_destroy(&trnGetResMutex);
+  pthread_mutex_destroy(&valGetResMutex);
   pthread_attr_destroy(&threadAttr);
 
   delete trnThreads;
@@ -166,14 +167,14 @@ PatternRecognitionMT::~PatternRecognitionMT()
 REAL PatternRecognitionMT::valNetwork(Backpropagation *net)
 {
   REAL gbError = 0.;
-  for (unsigned i=0; i<nThreads; i++) MT::waitCond(valThPar[i].threadReady, MTPatRec::valProcMutex);
-  pthread_cond_broadcast(&MTPatRec::valProcRequest);
+  for (unsigned i=0; i<nThreads; i++) MT::waitCond(valThPar[i].threadReady, valProcMutex);
+  pthread_cond_broadcast(&valProcRequest);
 
   for (unsigned i=0; i<nThreads; i++)
   {
     void *ret;
     DEBUG2("Waiting for validating thread " << i << " to finish...");
-    MT::safeWait(valThPar[i].analysisReady, MTPatRec::valGetResMutex, MTPatRec::valGetResRequest);
+    MT::safeWait(valThPar[i].analysisReady, valGetResMutex, valGetResRequest);
     DEBUG2("Starting analysis for validating thread " << i << "...");
     gbError += valThPar[i].error;
   }
@@ -189,14 +190,14 @@ REAL PatternRecognitionMT::trainNetwork(Backpropagation *net)
   //First we make all the networks having the same training status.
   for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
 
-  for (unsigned i=0; i<nThreads; i++) MT::waitCond(trnThPar[i].threadReady, MTPatRec::trnProcMutex);
-  pthread_cond_broadcast(&MTPatRec::trnProcRequest);
+  for (unsigned i=0; i<nThreads; i++) MT::waitCond(trnThPar[i].threadReady, trnProcMutex);
+  pthread_cond_broadcast(&trnProcRequest);
     
   for (unsigned i=0; i<nThreads; i++)
   {
     void *ret;
     DEBUG2("Waiting for training thread " << i << " to finish...");
-    MT::safeWait(trnThPar[i].analysisReady, MTPatRec::trnGetResMutex, MTPatRec::trnGetResRequest);
+    MT::safeWait(trnThPar[i].analysisReady, trnGetResMutex, trnGetResRequest);
     DEBUG2("Starting analysis for training thread " << i << "...");
     gbError += trnThPar[i].error;
     if (i) mainNet->addToGradient(*netVec[i]);

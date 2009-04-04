@@ -26,7 +26,7 @@ useSP = net.userdata.useSP;
 
 %The number of PCDs to extract will be defined by the number of nodes in
 %the first hidden layer.
-numPCD = net.layers{1}.size
+numPCD = net.layers{1}.size;
 
 %Taking the other layer's size and training function.
 numNodes = [net.inputs{1}.size];

@@ -2,14 +2,14 @@
 #include "fastnet/training/MTHelper.hxx"
 #include "fastnet/training/PatternRecMT.h"
 
-static pthread_cond_t trnProcRequest = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t valProcRequest = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t trnProcMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t valProcMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t trnGetResRequest = PTHREAD_COND_INITIALIZER;
-static pthread_cond_t valGetResRequest = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t trnGetResMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t valGetResMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t trnProcRequest;
+static pthread_cond_t valProcRequest;
+static pthread_mutex_t trnProcMutex;
+static pthread_mutex_t valProcMutex;
+static pthread_cond_t trnGetResRequest;
+static pthread_cond_t valGetResRequest;
+static pthread_mutex_t trnGetResMutex;
+static pthread_mutex_t valGetResMutex;
 
 
 namespace MTPatRec
@@ -113,6 +113,15 @@ PatternRecognitionMT::PatternRecognitionMT(Backpropagation *net, const mxArray *
                       : PatternRecognition(inTrn, inVal, usingSP)
 {
   DEBUG2("Creating StandardTrainingMT object.");
+
+  pthread_cond_init(&trnProcRequest, NULL);
+  pthread_cond_init(&valProcRequest, NULL);
+  pthread_mutex_init(&trnProcMutex, NULL);
+  pthread_mutex_init(&valProcMutex, NULL);
+  pthread_cond_init(&trnGetResRequest, NULL);
+  pthread_cond_init(&valGetResRequest, NULL);
+  pthread_mutex_init(&trnGetResMutex, NULL);
+  pthread_mutex_init(&valGetResMutex, NULL);
 
   nThreads = numThreads;
 

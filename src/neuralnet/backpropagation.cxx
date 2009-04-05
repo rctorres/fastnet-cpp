@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdlib>
 #include <typeinfo>
+#include <sstream>
 
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/sys/Reporter.h"
@@ -294,30 +295,29 @@ namespace FastNet
     }
   }
 
-  void Backpropagation::showInfo(ostream &str) const
+  void Backpropagation::showInfo() const
   {
-    NeuralNetwork::showInfo(str);
-    str << "TRAINING ALGORITHM INFORMATION:" << endl;
-    str << "Training algorithm : Gradient Descent" << endl;
-    str << "Learning rate      : " << learningRate << endl;
-    str << "Decreasing factor  : " << decFactor << endl;
+    NeuralNetwork::showInfo();
+    REPORT("TRAINING ALGORITHM INFORMATION:");
+    REPORT("Training algorithm : Gradient Descent");
+    REPORT("Learning rate      : " << learningRate);
+    REPORT("Decreasing factor  : " << decFactor);
         
-    for (unsigned i=1; i<nNodes.size(); i++)
+    for (unsigned i=0; i<nNodes.size()-1; i++) 
     {
-      str << "Layer " << i << " Frozen Nodes Configuration:" << endl;
-      str << "Frozen Nodes      :";
+      std::ostringstream aux;
+      aux << "Frozen Nodes in hidden layer " << i << ":";
       bool frozen = false;
-      for (int j=0; j<nNodes[i]; j++)
+      for (unsigned j=0; j<nNodes[i+1]; j++)
       {
-        if (frozenNode[(i-1)][j])
+        if (frozenNode[i][j])
         {
-          str << " " << j;
+          aux << " " << j;
           frozen = true;
         }
       }
-      if (frozen) str << endl;
-      else  str << " NONE" << endl;
-      str << endl;
+      if (!frozen) aux << " NONE";
+      REPORT(aux.str());
     }
   }
 

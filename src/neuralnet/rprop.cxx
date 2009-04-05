@@ -180,15 +180,15 @@ namespace FastNet
   }
   
   
-  void RProp::showInfo(ostream &str) const
+  void RProp::showInfo() const
   {
-    NeuralNetwork::showInfo(str);
-    str << "TRAINING ALGORITHM INFORMATION" << endl;
-    str << "Training algorithm: Resilient Backpropagation" << endl;
-    str << "Maximum allowed learning rate value (deltaMax) = " << deltaMax << endl;
-    str << "Minimum allowed learning rate value (deltaMin) = " << deltaMin << endl;
-    str << "Learning rate increasing factor (incEta) = " << incEta << endl;
-    str << "Learning rate decreasing factor (decEta) = " << decEta << endl;
-    str << "Initial learning rate value (initEta) = " << initEta << endl;
+    Backpropagation::showInfo();
+    REPORT("TRAINING ALGORITHM INFORMATION");
+    REPORT("Training algorithm: Resilient Backpropagation");
+    REPORT("Maximum allowed learning rate value (deltaMax) = " << deltaMax);
+    REPORT("Minimum allowed learning rate value (deltaMin) = " << deltaMin);
+    REPORT("Learning rate increasing factor (incEta) = " << incEta);
+    REPORT("Learning rate decreasing factor (decEta) = " << decEta);
+    REPORT("Initial learning rate value (initEta) = " << initEta);
   }
 }

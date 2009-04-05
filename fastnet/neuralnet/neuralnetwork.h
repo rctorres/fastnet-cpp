@@ -230,13 +230,12 @@ namespace FastNet
       
       /// Gives the neural network information.
       /**
-       This method sends to a stream text information about the neural
+       This method prints information about the neural
        network. This method sould be inherited by derived classes from
        this class, in order to give additional information about the
        neural network.
-       @param[in] str The stream where the information will be written to.
       */
-      virtual void showInfo(ostream &str) const;
+      virtual void showInfo() const;
 
       //Copy the status from the passing network.
       /**

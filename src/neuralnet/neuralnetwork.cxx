@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <sstream>
 
 #include "fastnet/neuralnet/neuralnetwork.h"
 #include "fastnet/sys/mxhandler.hxx"
@@ -190,29 +191,29 @@ namespace FastNet
   }
   
   
-  void NeuralNetwork::showInfo(ostream &str) const
+  void NeuralNetwork::showInfo() const
   {
-    str << "NEURAL NETWORK CONFIGURATION INFO" << endl << endl;
-    str << "Number of Layers (including the input): " << nNodes.size() << endl << endl;
+    REPORT("NEURAL NETWORK CONFIGURATION INFO");
+    REPORT("Number of Layers (including the input): " << nNodes.size());
     
     for (unsigned i=0; i<nNodes.size(); i++)
     {
-      str << "Layer " << i << " Configuration:" << endl;
-      str << "Number of Nodes   : " << nNodes[i] << endl;
+      REPORT("\nLayer " << i << " Configuration:");
+      REPORT("Number of Nodes   : " << nNodes[i]);
       
       if (i)
       {
-        str << "Transfer function : ";
-        if (trfFunc[(i-1)] == (&NeuralNetwork::hyperbolicTangent)) str << "tanh" << endl;
-        else if (trfFunc[(i-1)] == (&NeuralNetwork::linear)) str << "purelin" << endl;
-        else str << "UNKNOWN!" << endl;
-        
-        str << "Using bias        : ";
-        if (usingBias[(i-1)]) str << "true" << endl;
-        else  str << "false" << endl;
-      }
-      
-      str << endl;
+        std::ostringstream aux;
+        aux << "Transfer function : ";
+        if (trfFunc[(i-1)] == (&NeuralNetwork::hyperbolicTangent)) aux << "tanh";
+        else if (trfFunc[(i-1)] == (&NeuralNetwork::linear)) aux << "purelin";
+        else aux << "UNKNOWN!";
+
+        aux << "\nUsing bias        : ";
+        if (usingBias[(i-1)]) aux << "true";
+        else  aux << "false";
+        REPORT(aux.str());
+      }      
     }
   }
 

@@ -164,10 +164,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Checking if the training and validating input data sizes match the network's input layer.
     train->checkSizeMismatch(net);
 
+#ifdef DEBUG
     //Displaying the training info before starting.
+    net->showInfo();
     train->showInfo(nEpochs);
+#endif
     
-    REPORT("Network Training Status:");
+    if (show) REPORT("Network Training Status:");
     
     // Performing the training.
     unsigned numFails = 0;

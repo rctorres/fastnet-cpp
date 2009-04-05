@@ -187,7 +187,6 @@ namespace FastNet
       void setFrozen(unsigned layer, unsigned node, bool frozen)
       {
         frozenNode[layer][node] = frozen;
-        DEBUG2("frozenNode["<< layer << "]["<< node << "] = "<< frozen);
       };
 
       
@@ -365,13 +364,12 @@ namespace FastNet
       
       /// Gives the neural network information.
       /**
-       This method sends to a stream text information about the neural
+       This method prints information about the neural
        network. This method sould complement the information given by the
        base class.
-       @param[in] str The stream where the information will be written to.
        @see FastNet::NeuralNetwork#showInfo 
       */
-      virtual void showInfo(ostream &str) const;
+      virtual void showInfo() const;
 
       //Copy the status from the passing network.
       /**

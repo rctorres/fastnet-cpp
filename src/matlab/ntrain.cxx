@@ -121,24 +121,30 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
 
+    //Reading the showing period, epochs and max_fail.
+    const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
+    const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
+    const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
+    const unsigned maxFail = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
+
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
       net = new RProp(netStr, getNumEvents(args[IN_TRN_IDX]));
-      REPORT("Starting Resilient Backpropagation training...");
+      if (show) REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
       net = new Backpropagation(netStr, getNumEvents(args[IN_TRN_IDX]));
-      REPORT("Starting Gradient Descendent training...");
+      if (show) REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";
 
     //Getting the number of working threads.
     const unsigned numThreads = (getNumThreads) ? static_cast<unsigned>(mxGetScalar(args[NUM_THREADS_IDX])) : 1;
     if ( (!numThreads) || (numThreads > MAX_NUM_THREADS) ) throw "Invalid number of threads.";
-    REPORT("Number of working threads is " << numThreads);
+    if (show) REPORT("Number of working threads is " << numThreads);
 
     //Creating the object for the desired training type.
     if (stdTrainingType)
@@ -154,12 +160,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       if (numThreads == 1) train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
       else train = new PatternRecognitionMT(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, numThreads);
     }
-    
-    //Reading the showing period, epochs and max_fail.
-    const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
-    const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
-    const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
-    const unsigned maxFail = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
 
     //Checking if the training and validating input data sizes match the network's input layer.
     train->checkSizeMismatch(net);
@@ -206,7 +206,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       
       if (numFails == maxFail)
       {
-        REPORT("Maximum number of failures reached. Finishing training...");
+        if (show) REPORT("Maximum number of failures reached. Finishing training...");
         break;
       }
     }
@@ -223,7 +223,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Deleting the allocated memory.
     delete net;
     delete train;
-    REPORT("Training process finished!");
+    if (show) REPORT("Training process finished!");
   }
   catch(bad_alloc xa)
   {

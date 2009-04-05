@@ -113,10 +113,10 @@ namespace FastNet
       for (unsigned j=0; j<nNodes[0]; j++)
       {
         weights[0][i][j] = static_cast<REAL>(iw(i,j));
-        DEBUG2("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
+        DEBUG3("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
       }
       bias[0][i] = static_cast<REAL>(ib(i));
-      DEBUG2("Bias[0][" << i << "] = " << bias[0][i]);
+      DEBUG3("Bias[0][" << i << "] = " << bias[0][i]);
     }
     
     //Processing the other layers.
@@ -133,10 +133,10 @@ namespace FastNet
         for (unsigned k=0; k<nNodes[i]; k++)
         {
           weights[i][j][k] = static_cast<REAL>(iw(j,k));
-          DEBUG2("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+          DEBUG3("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
         }
         bias[i][j] = static_cast<REAL>(ib(j));
-        DEBUG2("Bias[" << i << "][" << j << "] = " << bias[i][j]);
+        DEBUG3("Bias[" << i << "][" << j << "] = " << bias[i][j]);
       }
     }
   }

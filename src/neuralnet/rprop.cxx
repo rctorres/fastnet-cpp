@@ -141,7 +141,7 @@ namespace FastNet
         //otherwise, we actually train the weights connected to it.
         if (frozenNode[i][j])
         {
-          DEBUG2("Skipping updating node " << j << " from layer " << i << ", since it is frozen!");
+          DEBUG2("Skipping updating node " << j << " from hidden layer " << i << ", since it is frozen!");
           for (unsigned k=0; k<nNodes[i]; k++) dw[i][j][k] = 0;
           if (usingBias[i]) db[i][j] = 0;
           else bias[i][j] = 0;

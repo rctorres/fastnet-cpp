@@ -111,10 +111,10 @@ namespace FastNet
        its input will not be changed. Otherwise, the node works normally.
        By default, the class automatically makes all nodes unfrozen. If the
        user wants to freeze an specific node he must do that by means
-       of calling the specific method for this purpuse.
+       of calling the specific method for this purpose.
        The dimensions of this matrix are (frozenNode[x][y]):
-        - x: the layer index (where 0 is the input layer).
-        - y: The node in layer x.
+        - x: the layer index (where 0 is the first hidden layer).
+        - y: The node within layer x.
        @see FastNet::NeuralNetwork#setFreeze
       */
       bool **frozenNode;

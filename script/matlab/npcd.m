@@ -30,20 +30,14 @@ for i=1:numPCD,
   
   %Creating the neural network based on the PCD extraction method.
   if deflation,
-    [net, inTrn, inVal] = defPCD(inTrn, inVal, pcd(), trnAlgo, useSP, numNodes, trfFunc, trnParam);
+    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam);
   else
     trnNet = stdPCD(pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam);
   end
   
   %Doing the training.
-  [trnNet, e, trnE, valE] = getBestTrain(trnNet, inTrn, inVal, numIterations, numThreads);
-  
-  %Saving the results.
-  pcd = [pcd; trnNet.IW{1}(i,:)];
-  outNet{i} = trnNet;
-  epoch{i} = e;
-  trnError{i} = trnE;
-  valError{i} = valE;  
+  [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations, numThreads);
+  pcd = outNet{i}.IW{1};
 end
 
 
@@ -67,8 +61,9 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   
   %Projecting the dataset on the PCD previously extracted.
   if ~isempty(pcd),
-    inTrn = in_trn - in_trn * pcd * pcd;
-    inVal = in_val - in_val * pcd * pcd;
+    vec = pcd(end,:);
+    inTrn = in_trn - in_trn * vec * vec;
+    inVal = in_val - in_val * vec * vec;
   end
   
   
@@ -80,11 +75,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
   effVec = zeros(1,numIterations);
 
   for i=1:numIterations,
-    [auxNet, auxE, auxTrnE, auxValE] = ntrain(net, inTrn, inVal, numThreads);
-    netVec{i} = auxNet;
-    eVec{i} = auxE;
-    trnEVec{i} = auxTrnE;
-    valEVec{i} = auxValE;
+    [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal, numThreads);
     effVec(i) = mean(diag(genConfMatrix(nsim(net, inVal))));
   end
   

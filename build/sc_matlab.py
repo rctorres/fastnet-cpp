@@ -23,5 +23,5 @@ matlab = {}
 matlab['ntrain'] = {}
 matlab['ntrain']['LIBS'] = ['neuralnet', 'training']
 
-matlab['nsim'] = {}
-matlab['nsim']['LIBS'] = ['neuralnet', 'pthread']
+matlab['sim_c'] = {}
+matlab['sim_c']['LIBS'] = ['neuralnet', 'pthread']

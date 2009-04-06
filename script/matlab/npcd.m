@@ -45,7 +45,7 @@ function net = stdPCD(pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam)
   nPCD = size(pcd,1);
   numNodes(2) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
-  trnNet.trainParam = trnParam;
+  net.trainParam = trnParam;
   
   %Getting the PCDs extracted so far, and freezing them
   if (nPCD>=1),
@@ -57,7 +57,7 @@ function net = stdPCD(pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam)
 function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam)
   numNodes(2) = 1;
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
-  trnNet.trainParam = trnParam;
+  net.trainParam = trnParam;
   
   %Projecting the dataset on the PCD previously extracted.
   if ~isempty(pcd),
@@ -74,7 +74,19 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
   valEVec = cell(1,numIterations);
   effVec = zeros(1,numIterations);
 
+  %Saving the already extracted PCDs.
+  npcd = size(net.IW{1},1) - 1;
+  if npcd > 0,
+    pcd = net.IW{1}(1:npcd,:);
+  end
+  
   for i=1:numIterations,
+    %Scrambling the weights, and inserting the already extracted PCDs.
+    net = scrambleWeights(net);
+    if npcd > 0,
+      net.IW{1}(1:npcd,:) = pcd;
+    end
+  
     [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal, numThreads);
     effVec(i) = mean(diag(genConfMatrix(nsim(net, inVal))));
   end

@@ -1,5 +1,35 @@
 function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations, numThreads)
-%HELP DA NPCD
+%function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations, numThreads)
+%Extracts the Principal Components of Discrimination (PCD).
+%Input parameters are:
+% net - The template neural netork to use. The number of PCDs to be
+% extracted will be the same as the number of nodes in the first hidden
+% layer.
+% inTrn - The training data set, organized as a cell vector.
+% inVal - The validating data set, organized as a cell vector.
+% deflation - if true, the PCDs will be extracted by the deflation method.
+% In this case, the returned neural network MUST NOT be used as a
+% discriminator. Deflation should be used ONLY if you want just to extract
+% the PCDs, and not develop the classifier at the same time. Default is
+% false.
+% numIterations - The number of times a neural network should be trained
+% for extracting a given PCD. This is used to avoid local minima. For each
+% PCD, the iteration which generated the best mean detection efficiency will
+% provide the extracted PCD. Default is 10.
+% numThreads - The number of threads to use during training. Default is 1.
+%
+%The function returns:
+% pcd - A matrix with the extracted PCDs.
+% outNet - A cell vector containing the trained network structure obtained after
+% each PCD extraction.
+% epoch - A cell vector containing the epochs evolution obtained during
+% each PCD extraction.
+% trnError - A cell vector containing the training error evolution obtained
+% during each PCD extraction.
+% valError - A cell vector containing the validation error evolution
+% obtained during each PCD extraction.
+%
+
 
 if (nargin == 3),
   deflation = false;
@@ -38,7 +68,7 @@ for i=1:numPCD,
   
   %Doing the training.
   [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations, numThreads);
-  pcd = outNet{i}.IW{1};
+  pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
 end
 
@@ -64,9 +94,17 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   
   %Projecting the dataset on the PCD previously extracted.
   if ~isempty(pcd),
-    vec = pcd(end,:);
-    inTrn = in_trn - in_trn * vec * vec;
-    inVal = in_val - in_val * vec * vec;
+    W = pcd(end,:);
+    nClasses = length(in_trn);
+    inTrn = cell(1,nClasses);
+    inVal = cell(1,nClasses);
+    for i=1:nClasses,
+      inTrn{i} = in_trn{i} - ((W*in_trn{i})'*W)';
+      inVal{i} = in_val{i} - ((W*in_val{i})'*W)';
+    end
+  else
+    inTrn = in_trn;
+    inVal = in_val;
   end
   
   

@@ -78,17 +78,17 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
   effVec = zeros(1,numIterations);
 
   %Saving the already extracted PCDs.
-  npcd = size(net.IW{1},1) - 1;
-  if npcd > 0,
-    pcd = net.IW{1}(1:npcd,:);
+  nPCD = size(net.IW{1},1) - 1;
+  if nPCD > 0,
+    pcd = net.IW{1}(1:nPCD,:);
     bias = net.b{1}(1:nPCD);
   end
   
   for i=1:numIterations,
     %Scrambling the weights, and inserting the already extracted PCDs.
     net = scrambleWeights(net);
-    if npcd > 0,
-      net.IW{1}(1:npcd,:) = pcd;
+    if nPCD > 0,
+      net.IW{1}(1:nPCD,:) = pcd;
       net.b{1}(1:nPCD) = bias;
     end
   

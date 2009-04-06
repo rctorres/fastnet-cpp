@@ -5,6 +5,8 @@ function ret = genConfMatrix(out, target)
 %(target) values, which one event per column. The resulting matrix places
 %each class in a row, so if ret(2,3) = 5 means that the five events from class 2 
 %where classified as being from class 3.
+%If only 'out' is provided, then, it must be organized as a cell vector, 
+%where the output of each class will be in a cell.
 %
 
 if (nargin == 2),

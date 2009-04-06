@@ -1,19 +1,17 @@
-function [outNet, epoch, trnError, valError] = npcd(net, in_trn, out_trn, in_val, out_val, numThreads)
+function [pcd, outNet, epoch, trnError, valError] = npcd(net, in_trn, in_val, deflation, numIterations, numThreads)
 %HELP DA NPCD
 
-if (nargin == 3) || (nargin == 5),
+if (nargin == 3),
+  deflation = false;
+  numIterations = 10;
   numThreads = 1;
-  in_val = out_trn;
 elseif (nargin == 4),
-  numThreads = in_val;
-  in_val = out_trn;
+  numIterations = 10;
+  numThreads = 1;
+elseif (nargin == 5),
+  numThreads = 1;  
 elseif (nargin > 6) || (nargin < 3),
   error('Invalid number of input arguments. See help.');
-end
-
-stdTraining = true;
-if (nargin < 5),
-  stdTraining = false;
 end
 
 %Getting the network information regarding its topology
@@ -60,12 +58,8 @@ for i=1:numPCD,
   trnE = [];
   valE = [];
 
-  %Doing the training, based on the desired training. 
-  if stdTraining,
-    [trnNet, e, trnE, valE] = ntrain(trnNet, in_trn, out_trn, in_val, out_val, numThreads);
-  else
-    [trnNet, e, trnE, valE] = ntrain(trnNet, in_trn, in_val, numThreads);
-  end
+  %Doing the training.
+  [trnNet, e, trnE, valE] = ntrain(trnNet, in_trn, in_val, numThreads);
     
   %Saving the results.
   outNet = [outNet trnNet];
@@ -73,3 +67,6 @@ for i=1:numPCD,
   trnError = [trnError {trnE}];
   valError = [valError {valE}];  
 end
+
+pcd = outNet(end).IW{1};
+

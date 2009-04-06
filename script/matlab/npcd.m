@@ -19,6 +19,7 @@ end
 
 %Initializing the output vectors.
 pcd = [];
+bias = [];
 outNet = cell(1,numPCD);
 epoch = cell(1,numPCD);
 trnError = cell(1,numPCD);
@@ -32,24 +33,26 @@ for i=1:numPCD,
   if deflation,
     [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam);
   else
-    trnNet = stdPCD(pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam);
+    trnNet = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, trnParam);
   end
   
   %Doing the training.
   [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations, numThreads);
   pcd = outNet{i}.IW{1};
+  bias = outNet{i}.b{1};
 end
 
 
-function net = stdPCD(pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam)
+function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, trnParam)
   nPCD = size(pcd,1);
   numNodes(2) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
   net.trainParam = trnParam;
   
-  %Getting the PCDs extracted so far, and freezing them
+  %Getting the PCDs extracted so far, and freezing them.
   if (nPCD>=1),
     net.IW{1}(1:nPCD,:) = pcd;
+    net.b{1}(1:nPCD) = bias;
     net.layers{1}.userdata.frozenNodes = (1:nPCD);
   end
 
@@ -78,6 +81,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
   npcd = size(net.IW{1},1) - 1;
   if npcd > 0,
     pcd = net.IW{1}(1:npcd,:);
+    bias = net.b{1}(1:nPCD);
   end
   
   for i=1:numIterations,
@@ -85,6 +89,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
     net = scrambleWeights(net);
     if npcd > 0,
       net.IW{1}(1:npcd,:) = pcd;
+      net.b{1}(1:nPCD) = bias;
     end
   
     [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal, numThreads);

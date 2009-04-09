@@ -131,7 +131,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
     end
   
     [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal, numThreads);
-    effVec(i) = mean(diag(genConfMatrix(nsim(net, inVal))));
+    effVec(i) = sp_value(diag(genConfMatrix(nsim(net, inVal))));
   end
   
   %Getting the index where we achieve the highest mean efficiency.
@@ -165,4 +165,8 @@ function [trnAlgo, useSP, numPCD, numNodes, trfFunc, trnParam] = getNetworkInfo(
   end
   
   trnParam = net.trainParam;
+  
+
+function sp = sp_value(ef)
+   sp = sqrt( mean(ef) * geomean(ef) );
   

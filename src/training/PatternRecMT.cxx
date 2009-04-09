@@ -1,4 +1,4 @@
-#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/PatternRec.h"
 #include "fastnet/training/MTHelper.hxx"
 #include "fastnet/training/PatternRecMT.h"
 

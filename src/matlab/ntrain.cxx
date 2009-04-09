@@ -21,7 +21,7 @@
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/training/Standard.hxx"
 #include "fastnet/training/StandardMT.h"
-#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/PatternRec.h"
 #include "fastnet/training/PatternRecMT.h"
 
 using namespace std;

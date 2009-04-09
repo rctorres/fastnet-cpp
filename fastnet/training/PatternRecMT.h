@@ -1,7 +1,7 @@
 #ifndef PATRECMT_H
 #define PATRECMT_H
 
-#include "fastnet/training/PatternRec.hxx"
+#include "fastnet/training/PatternRec.h"
 #include "fastnet/training/MTHelper.hxx"
 
 class PatternRecognitionMT : public PatternRecognition

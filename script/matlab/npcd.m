@@ -45,7 +45,7 @@ elseif (nargin > 6) || (nargin < 3),
 end
 
 %Getting the desired network parameters.
-[trnAlgo, useSP, numPCD, numNodes, trfFunc, trnParam] = getNetworkInfo(net);
+[trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
 
 %Initializing the output vectors.
 pcd = [];
@@ -61,9 +61,9 @@ for i=1:numPCD,
   
   %Creating the neural network based on the PCD extraction method.
   if deflation,
-    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam);
+    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam);
   else
-    trnNet = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, trnParam);
+    trnNet = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam);
   end
   
   %Doing the training.
@@ -73,11 +73,15 @@ for i=1:numPCD,
 end
 
 
-function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, trnParam)
+function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
   nPCD = size(pcd,1);
   numNodes(2) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
   net.trainParam = trnParam;
+  
+  for i=1:length(net.layers),
+    net.layers{i}.userdata.usingBias = usingBias(i);
+  end
   
   %Getting the PCDs extracted so far, and freezing them.
   if (nPCD>=1),
@@ -87,10 +91,14 @@ function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, trnParam)
   end
 
   
-function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNodes, trfFunc, trnParam)
+function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
   numNodes(2) = 1;
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
   net.trainParam = trnParam;
+
+  for i=1:length(net.layers),
+    net.layers{i}.userdata.usingBias = usingBias(i);
+  end
   
   %Projecting the dataset on the PCD previously extracted.
   if ~isempty(pcd),
@@ -143,7 +151,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
   valE = valEVec{idx};
   
 
-function [trnAlgo, useSP, numPCD, numNodes, trfFunc, trnParam] = getNetworkInfo(net)
+function [trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
   %Getting the network information regarding its topology
 
   %Taking the training algo.
@@ -159,9 +167,11 @@ function [trnAlgo, useSP, numPCD, numNodes, trfFunc, trnParam] = getNetworkInfo(
   %Taking the other layer's size and training function.
   numNodes = [net.inputs{1}.size zeros(1,length(net.layers))];
   trfFunc = cell(1,length(net.layers));
+  usingBias = zeros(1,length(net.layers));
   for i=1:length(net.layers),
     numNodes(i+1) = net.layers{i}.size;
     trfFunc{i} = net.layers{i}.transferFcn;
+    usingBias(i) = net.layers{i}.userdata.usingBias;
   end
   
   trnParam = net.trainParam;

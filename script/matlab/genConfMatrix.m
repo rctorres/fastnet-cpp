@@ -40,7 +40,7 @@ else
 	
 	%If true, we have two classes with minimum sparsed outputs.
 	%So, we create a maximum sparsed output.
-	if ( (Nc == 2) & (size(out{1},1) == 1) ),
+	if ( (Nc == 2) && (size(out{1},1) == 1) ),
 		for i=1:Nc,
 			out{i} = [out{i}; -out{i}];
 		end

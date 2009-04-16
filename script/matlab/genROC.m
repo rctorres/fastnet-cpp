@@ -41,7 +41,7 @@ for i=1:length(cutVec),
     [detVec(i), faVec(i)] = getEff(out_signal, out_noise, cutVec(i));
 end
 
-spVec = calcSP(detVec, faVec);
+spVec = calcSP([detVec; (1-faVec)]);
 [sp, cutIdx] = max(spVec);
 cut = cutVec(cutIdx);
 

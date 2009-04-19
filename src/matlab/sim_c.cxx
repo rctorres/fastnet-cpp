@@ -32,7 +32,7 @@ const unsigned IN_DATA_IDX = 1;
 /// Index, in the return vector, of the network structure after training.
 const unsigned NET_OUT_IDX = 0;
 
-const unsigned NUM_THREADS = 2;
+const unsigned NUM_THREADS = 4;
 
 struct ThreadParams
 {

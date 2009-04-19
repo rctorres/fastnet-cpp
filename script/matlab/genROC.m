@@ -32,7 +32,7 @@ cut = cutVec(cutIdx);
 if nargout ~= 4,
     plot(100*faVec, 100*detVec);
     hold on
-    plot(faVec(cutIdx), detVec(cutIdx), 'rx');
+    plot(100*faVec(cutIdx), 100*detVec(cutIdx), 'rx');
     title('ROC Analysis');
     xlabel('False Alarm Probability (%)');
     ylabel('Signal Detection Efficiency (%)');

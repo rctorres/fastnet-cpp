@@ -32,7 +32,7 @@ if 'Darwin' in platform.system():
   matlabPath = '/Applications/MATLAB_R2008b.app'
   matlabArch = 'maci'
 else:
-  if debug == 0: libCPPFlags += ['-O3', '-m64']
+  if debug == 0: libCPPFlags += ['-O3', '-m64', '-fopenmp']
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
     

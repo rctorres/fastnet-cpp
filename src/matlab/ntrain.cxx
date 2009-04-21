@@ -19,16 +19,11 @@
 #include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/neuralnet/rprop.h"
-#include "fastnet/training/Standard.hxx"
-#include "fastnet/training/StandardMT.h"
+#include "fastnet/training/Standard.h"
 #include "fastnet/training/PatternRec.h"
-#include "fastnet/training/PatternRecMT.h"
 
 using namespace std;
 using namespace FastNet;
-
-//Maximum number of allowed training threads.
-const unsigned MAX_NUM_THREADS = 16;
 
 /// Index, in the arguments list, of the neural network structure.
 const unsigned NET_STR_IDX = 0;
@@ -49,13 +44,6 @@ unsigned IN_VAL_IDX = 3;
 
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
-
-/// Number of threads to use.
-/**
-This value might have to be changed during execution, if using standart training or pattern 
-recognition case.
-*/
-unsigned NUM_THREADS_IDX = 5;
 
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
@@ -100,21 +88,17 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   
   try
   {
-    bool stdTrainingType, getNumThreads;
+    bool stdTrainingType;
     //Verifying if the number of input parameters is ok.
-    if ( (nargin == 6) || (nargin == 5) ) // Standart training (ST ou MT case)
+    if (nargin == 5) // Standart training
     {
       IN_VAL_IDX = 3;
-      NUM_THREADS_IDX = 5;
       stdTrainingType = true;
-      getNumThreads = (nargin == 6);
     }
-    else if ( (nargin == 4) || (nargin == 3) )
+    else if (nargin == 3)
     {
       IN_VAL_IDX = 2;
-      NUM_THREADS_IDX = 3;
       stdTrainingType = false;
-      getNumThreads = (nargin == 4);
     }
     else throw "Incorrect number of arguments! See help for information!";
 
@@ -141,24 +125,17 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else throw "Invalid training algorithm option!";
 
-    //Getting the number of working threads.
-    const unsigned numThreads = (getNumThreads) ? static_cast<unsigned>(mxGetScalar(args[NUM_THREADS_IDX])) : 1;
-    if ( (!numThreads) || (numThreads > MAX_NUM_THREADS) ) throw "Invalid number of threads.";
-    if (show) REPORT("Number of working threads is " << numThreads);
-
     //Creating the object for the desired training type.
     if (stdTrainingType)
     {
-      if (numThreads == 1) train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
-      else train = new StandardTrainingMT(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], numThreads);
+      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      if (numThreads == 1) train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
-      else train = new PatternRecognitionMT(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, numThreads);
+      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
     }
 
     //Checking if the training and validating input data sizes match the network's input layer.

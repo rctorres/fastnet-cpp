@@ -1,48 +1,23 @@
-#ifndef PATRECMT_H
-#define PATRECMT_H
+#ifndef STANDARD_H
+#define STANDARD_H
 
-#include "fastnet/training/PatternRec.h"
-#include "fastnet/training/MTHelper.hxx"
+#include "fastnet/training/Training.h"
 
-class PatternRecognitionMT : public PatternRecognition
+class StandardTraining : public Training
 {
-public:
-  struct ThreadParams
-  {
-    FastNet::Backpropagation *net;
-    const REAL **inData;
-    const REAL **outData;
-    unsigned id;
-    unsigned numPatterns;
-    unsigned *numEvents;
-    unsigned inputSize;
-    unsigned nThreads;
-    REAL error;
-    bool finishThread;
-    bool threadReady;
-    bool analysisReady;
-  };
-
 protected:
-
-  unsigned nThreads;
-  pthread_t *trnThreads;
-  pthread_t *valThreads;
-  ThreadParams *trnThPar;
-  ThreadParams *valThPar;
-  pthread_attr_t threadAttr;
-  FastNet::Backpropagation **netVec;
-
-
-  void createThreads(const REAL **inData, unsigned *numEvents, pthread_t *&th, 
-                      ThreadParams *&thp, void *(*funcPtr)(void*));
-
+  const REAL *inTrnData;
+  const REAL *outTrnData;
+  const REAL *inValData;
+  const REAL *outValData;
+  unsigned numTrnEvents;
+  unsigned numValEvents;
+  unsigned inputSize;
+  unsigned outputSize;
 
 public:
+  StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal);
 
-  PatternRecognitionMT(Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned numThreads);
-
-  virtual ~PatternRecognitionMT();
 
   /// Applies the validating set for the network's validation.
   /**
@@ -54,7 +29,8 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  REAL valNetwork(Backpropagation *net);
+  virtual REAL valNetwork(FastNet::Backpropagation *net);
+
 
   /// Applies the training set for the network's training.
   /**
@@ -68,7 +44,11 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  REAL trainNetwork(Backpropagation *net);
+  virtual REAL trainNetwork(FastNet::Backpropagation *net);
+  
+  virtual void checkSizeMismatch(const FastNet::Backpropagation *net) const;
+  
+  virtual void showInfo(const unsigned nEpochs) const;
 };
 
 #endif

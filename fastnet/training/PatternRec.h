@@ -1,9 +1,7 @@
 #ifndef PATREC_H
 #define PATREC_H
 
-#include "fastnet/training/Training.hxx"
-
-using namespace FastNet;
+#include "fastnet/training/Training.h"
 
 class PatternRecognition : public Training
 {
@@ -45,7 +43,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  virtual REAL valNetwork(Backpropagation *net);
+  virtual REAL valNetwork(FastNet::Backpropagation *net);
 
 
   /// Applies the training set of each pattern for the network's training.
@@ -60,9 +58,9 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training of each pattern set is presented to the network.
   */
-  virtual REAL trainNetwork(Backpropagation *net);
+  virtual REAL trainNetwork(FastNet::Backpropagation *net);
 
-  virtual void checkSizeMismatch(const Backpropagation *net) const;
+  virtual void checkSizeMismatch(const FastNet::Backpropagation *net) const;
 
   virtual void showInfo(const unsigned nEpochs) const;
 

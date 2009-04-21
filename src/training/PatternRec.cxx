@@ -115,7 +115,7 @@ REAL PatternRecognition::sp()
   return maxSP;
 };
 
-REAL PatternRecognition::valNetwork(Backpropagation *net)
+REAL PatternRecognition::valNetwork(FastNet::Backpropagation *net)
 {
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0;
@@ -142,7 +142,7 @@ REAL PatternRecognition::valNetwork(Backpropagation *net)
 };
 
 
-REAL PatternRecognition::trainNetwork(Backpropagation *net)
+REAL PatternRecognition::trainNetwork(FastNet::Backpropagation *net)
 {
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
@@ -167,7 +167,7 @@ REAL PatternRecognition::trainNetwork(Backpropagation *net)
   return gbError;  
 };
   
-void PatternRecognition::checkSizeMismatch(const Backpropagation *net) const
+void PatternRecognition::checkSizeMismatch(const FastNet::Backpropagation *net) const
 {
   if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";
 };

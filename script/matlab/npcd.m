@@ -1,5 +1,5 @@
-function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations, numThreads)
-%function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations, numThreads)
+function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations)
+%function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -16,7 +16,6 @@ function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, defl
 % for extracting a given PCD. This is used to avoid local minima. For each
 % PCD, the iteration which generated the best mean detection efficiency will
 % provide the extracted PCD. Default is 10.
-% numThreads - The number of threads to use during training. Default is 1.
 %
 %The function returns:
 % pcd - A matrix with the extracted PCDs.
@@ -33,14 +32,10 @@ function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, defl
 
 if (nargin == 3),
   deflation = false;
-  numIterations = 10;
-  numThreads = 1;
+  numIterations = 5;
 elseif (nargin == 4),
-  numIterations = 10;
-  numThreads = 1;
-elseif (nargin == 5),
-  numThreads = 1;  
-elseif (nargin > 6) || (nargin < 3),
+  numIterations = 5;
+elseif (nargin > 5) || (nargin < 3),
   error('Invalid number of input arguments. See help.');
 end
 
@@ -67,7 +62,7 @@ for i=1:numPCD,
   end
   
   %Doing the training.
-  [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations, numThreads);
+  [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations);
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
 end
@@ -116,7 +111,7 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   end
   
   
-function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, numThreads)
+function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations)
   netVec = cell(1,numIterations);
   eVec = cell(1,numIterations);
   trnEVec = cell(1,numIterations);
@@ -138,7 +133,7 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations, n
       net.b{1}(1:nPCD) = bias;
     end
   
-    [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal, numThreads);
+    [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal);
     effVec(i) = sp_value(diag(genConfMatrix(nsim(net, inVal))));
   end
   

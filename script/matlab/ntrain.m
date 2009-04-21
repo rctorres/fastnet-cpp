@@ -6,7 +6,6 @@
 %	out_trn         -> The output training data.
 %	in_val          -> The input validating data.
 %	out_val         -> The output validating data.
-% nThreads        -> Number of training threads (default is 1)
 %
 %The data presented to the network must be organized so that each column is an event (either input or output),
 %and the number of rows specifies the number of events to be presented to the neural network. 
@@ -17,7 +16,6 @@
 %	net             -> The neural network structure created by "newff2".
 %	in_trn          -> A cell array containing the input training data of each pattern.
 %	in_val          -> A cell array containing the input validating data of each pattern.
-% nThreads        -> Number of training threads (default is 1)
 %
 %The desired outputs (target) are internally generated, so, there is no need to provide the training
 %and validating targets which can save a lot of memory. The input training and validating vectors are cell arrays with the

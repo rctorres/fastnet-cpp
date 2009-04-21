@@ -1,6 +1,6 @@
 #include "fastnet/training/Standard.h"
 
-StandardTraining::StandardTraining(const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal) : Training()
+StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal) : Training(net)
 {
   DEBUG2("Creating StandardTraining object.");
   
@@ -20,7 +20,7 @@ StandardTraining::StandardTraining(const mxArray *inTrn, const mxArray *outTrn, 
 };
 
 
-REAL StandardTraining::valNetwork(FastNet::Backpropagation *net)
+REAL StandardTraining::valNetwork()
 {
   REAL gbError = 0.;
   const REAL *out;
@@ -37,7 +37,7 @@ REAL StandardTraining::valNetwork(FastNet::Backpropagation *net)
 };
 
 
-REAL StandardTraining::trainNetwork(FastNet::Backpropagation *net)
+REAL StandardTraining::trainNetwork()
 {
   unsigned evIndex;
   REAL gbError = 0.;
@@ -55,7 +55,7 @@ REAL StandardTraining::trainNetwork(FastNet::Backpropagation *net)
   return (gbError / static_cast<REAL>(numTrnEvents));
 }
   
-void StandardTraining::checkSizeMismatch(const FastNet::Backpropagation *net) const
+void StandardTraining::checkSizeMismatch() const
 {
   if (inputSize != (*net)[0])
     throw "Input training or validating data do not match the network input layer size!";

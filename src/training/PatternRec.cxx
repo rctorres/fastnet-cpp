@@ -1,6 +1,6 @@
 #include "fastnet/training/PatternRec.h"
 
-PatternRecognition::PatternRecognition(const mxArray *inTrn, const mxArray *inVal, const bool usingSP) : Training()
+PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP) : Training(net)
 {
   DEBUG1("Starting a Pattern Recognition Training Object");
   if (mxGetN(inTrn) != mxGetN(inVal)) throw "Number of training and validating patterns are not equal";
@@ -115,7 +115,7 @@ REAL PatternRecognition::sp()
   return maxSP;
 };
 
-REAL PatternRecognition::valNetwork(FastNet::Backpropagation *net)
+REAL PatternRecognition::valNetwork()
 {
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0;
@@ -142,7 +142,7 @@ REAL PatternRecognition::valNetwork(FastNet::Backpropagation *net)
 };
 
 
-REAL PatternRecognition::trainNetwork(FastNet::Backpropagation *net)
+REAL PatternRecognition::trainNetwork()
 {
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
@@ -167,7 +167,7 @@ REAL PatternRecognition::trainNetwork(FastNet::Backpropagation *net)
   return gbError;  
 };
   
-void PatternRecognition::checkSizeMismatch(const FastNet::Backpropagation *net) const
+void PatternRecognition::checkSizeMismatch() const
 {
   if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";
 };

@@ -20,7 +20,7 @@ protected:
 
 public:
 
-  PatternRecognition(const mxArray *inTrn, const mxArray *inVal, const bool usingSP);
+  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP);
 
   virtual ~PatternRecognition();
 
@@ -43,7 +43,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  virtual REAL valNetwork(FastNet::Backpropagation *net);
+  virtual REAL valNetwork();
 
 
   /// Applies the training set of each pattern for the network's training.
@@ -58,9 +58,9 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training of each pattern set is presented to the network.
   */
-  virtual REAL trainNetwork(FastNet::Backpropagation *net);
+  virtual REAL trainNetwork();
 
-  virtual void checkSizeMismatch(const FastNet::Backpropagation *net) const;
+  virtual void checkSizeMismatch() const;
 
   virtual void showInfo(const unsigned nEpochs) const;
 

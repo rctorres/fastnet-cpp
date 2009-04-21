@@ -25,12 +25,14 @@ class Training
 protected:
   std::list<TrainData> trnEvolution;
   REAL bestGoal;
+  FastNet::Backpropagation *net;
 
 public:
 
-  Training()
+  Training(FastNet::Backpropagation *n)
   {
     bestGoal = 10000000000.;
+    net = n;
   };
 
  /// Writes the training information of a network in a linked list.
@@ -81,8 +83,8 @@ public:
     }
   };
   
-  virtual void checkSizeMismatch(const FastNet::Backpropagation *net) const = 0;
-  
+  virtual void checkSizeMismatch() const = 0;
+
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
   virtual bool isBestNetwork(const REAL currError)
@@ -100,9 +102,9 @@ public:
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << "mse (val) = " << valError);
   };
   
-  virtual REAL valNetwork(FastNet::Backpropagation *net) = 0;
+  virtual REAL valNetwork() = 0;
 
-  virtual REAL trainNetwork(FastNet::Backpropagation *net) = 0;  
+  virtual REAL trainNetwork() = 0;  
 };
 
 #endif

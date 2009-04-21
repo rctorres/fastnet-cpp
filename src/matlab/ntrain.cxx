@@ -128,18 +128,18 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     //Creating the object for the desired training type.
     if (stdTrainingType)
     {
-      train = new StandardTraining(args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+      train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
     }
 
     //Checking if the training and validating input data sizes match the network's input layer.
-    train->checkSizeMismatch(net);
+    train->checkSizeMismatch();
 
 #ifdef DEBUG
     //Displaying the training info before starting.
@@ -156,8 +156,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
-      trnError = train->trainNetwork(net);
-      valError = train->valNetwork(net);
+      trnError = train->trainNetwork();
+      valError = train->valNetwork();
 
       // Saving the best weight result.
       if (train->isBestNetwork(valError))

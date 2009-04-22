@@ -62,24 +62,23 @@ REAL StandardTraining::trainNetwork()
   const REAL *target = outTrnData;
 
   int chunk = 1000;
-  int i;
-  int thId = 0;
+  int i, thId;
   FastNet::Backpropagation **nv = netVec;
-  
+
   updateNetworks();
-//  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,output)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error)
   {
-//    thId = omp_get_thread_num(); 
+    thId = omp_get_thread_num(); 
     error = 0.;
 
-//    #pragma omp for schedule(dynamic,chunk) nowait
+    #pragma omp for schedule(dynamic,chunk) nowait
     for (unsigned i=0; i<numTrnEvents; i++)
     {
       error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
       nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
     }
 
-//    #pragma omp atomic
+    #pragma omp atomic
     gbError += error;    
   }
 

@@ -3,6 +3,7 @@
 
 #include <list>
 #include <iomanip>
+#include <omp.h>
 
 #include <mex.h>
 
@@ -26,14 +27,51 @@ protected:
   std::list<TrainData> trnEvolution;
   REAL bestGoal;
   FastNet::Backpropagation *net;
+  FastNet::Backpropagation **netVec;
+  REAL *errorVec;
+  unsigned nThreads;
+
+  void updateNetworks()
+  {
+    const FastNet::Backpropagation *mainNet = netVec[0];
+    for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
+  }
+
+  void updateGradients()
+  {
+    FastNet::Backpropagation *mainNet = netVec[0];
+    for (unsigned i=1; i<nThreads; i++) mainNet->addToGradient(*netVec[i]);
+  }
+
 
 public:
 
   Training(FastNet::Backpropagation *n)
   {
     bestGoal = 10000000000.;
-    net = n;
+    int nt;
+    
+    #pragma omp parallel shared(nt)
+    {
+      #pragma omp master
+      nt = omp_get_num_threads();
+    }
+
+    nThreads = static_cast<unsigned>(nt);
+    errorVec = new REAL [nThreads];
+    netVec = new FastNet::Backpropagation* [nThreads];
+    net = netVec[0] = n;
+    for (unsigned i=1; i<nThreads; i++) netVec[i] = new FastNet::Backpropagation(*n);
   };
+
+
+  ~Training()
+  {
+    for (unsigned i=1; i<nThreads; i++) delete netVec[i];
+    delete netVec;
+    delete errorVec;
+  };
+
 
  /// Writes the training information of a network in a linked list.
  /**

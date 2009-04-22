@@ -27,11 +27,25 @@ REAL StandardTraining::valNetwork()
 
   const REAL *input = inValData;
   const REAL *target = outValData;
-  for (unsigned i=0; i<numValEvents; i++)
+  
+  int chunk = 1000;
+  int i, thId;
+  FastNet::Backpropagation **nv = netVec;
+  REAL *ev = errorVec;
+
+  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,out)
   {
-    gbError += net->applySupervisedInput(input, target, out);
-    input += inputSize;
-    target += outputSize;
+    thId = omp_get_thread_num(); 
+    ev[thId] = 0.;
+
+    #pragma omp for schedule(dynamic,chunk) nowait
+    for (i=0; i<numValEvents; i++)
+    {
+      ev[thId] += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], out);
+    }
+
+    #pragma omp atomic
+    gbError += ev[thId];
   }
   return (gbError / static_cast<REAL>(numValEvents));
 };
@@ -45,13 +59,30 @@ REAL StandardTraining::trainNetwork()
 
   const REAL *input = inTrnData;
   const REAL *target = outTrnData;
-  for (unsigned i=0; i<numTrnEvents; i++)
+
+  int chunk = 1000;
+  int i, thId;
+  FastNet::Backpropagation **nv = netVec;
+  REAL *ev = errorVec;
+
+  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,output)
   {
-    gbError += net->applySupervisedInput(input, target, output);
-    net->calculateNewWeights(output, target);
-    input += inputSize;
-    target += outputSize;
+    thId = omp_get_thread_num(); 
+    ev[thId] = 0.;
+
+    #pragma omp for schedule(dynamic,chunk) nowait
+    for (unsigned i=0; i<numTrnEvents; i++)
+    {
+      ev[thId] += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
+      nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
+    }
+
+    #pragma omp atomic
+    gbError += ev[thId];    
   }
+  
+  updateGradients();
+  updateNetworks();
   return (gbError / static_cast<REAL>(numTrnEvents));
 }
   

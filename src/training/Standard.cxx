@@ -23,6 +23,7 @@ StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray 
 REAL StandardTraining::valNetwork()
 {
   REAL gbError = 0.;
+  REAL error = 0.;
   const REAL *out;
 
   const REAL *input = inValData;
@@ -31,21 +32,20 @@ REAL StandardTraining::valNetwork()
   int chunk = 1000;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
-  REAL *ev = errorVec;
 
-  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,out)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,out,error)
   {
-    thId = omp_get_thread_num(); 
-    ev[thId] = 0.;
+    thId = omp_get_thread_num();
+    error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
     for (i=0; i<numValEvents; i++)
     {
-      ev[thId] += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], out);
+      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], out);
     }
 
     #pragma omp atomic
-    gbError += ev[thId];
+    gbError += error;
   }
   return (gbError / static_cast<REAL>(numValEvents));
 };
@@ -55,34 +55,35 @@ REAL StandardTraining::trainNetwork()
 {
   unsigned evIndex;
   REAL gbError = 0.;
+  REAL error = 0.;
   const REAL *output;
 
   const REAL *input = inTrnData;
   const REAL *target = outTrnData;
 
   int chunk = 1000;
-  int i, thId;
+  int i;
+  int thId = 0;
   FastNet::Backpropagation **nv = netVec;
-  REAL *ev = errorVec;
-
-  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,output)
+  
+  updateNetworks();
+//  #pragma omp parallel shared(input,target,chunk,nv,ev,gbError) private(i,thId,output)
   {
-    thId = omp_get_thread_num(); 
-    ev[thId] = 0.;
+//    thId = omp_get_thread_num(); 
+    error = 0.;
 
-    #pragma omp for schedule(dynamic,chunk) nowait
+//    #pragma omp for schedule(dynamic,chunk) nowait
     for (unsigned i=0; i<numTrnEvents; i++)
     {
-      ev[thId] += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
+      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
       nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
     }
 
-    #pragma omp atomic
-    gbError += ev[thId];    
+//    #pragma omp atomic
+    gbError += error;    
   }
-  
+
   updateGradients();
-  updateNetworks();
   return (gbError / static_cast<REAL>(numTrnEvents));
 }
   

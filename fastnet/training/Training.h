@@ -28,7 +28,6 @@ protected:
   REAL bestGoal;
   FastNet::Backpropagation *net;
   FastNet::Backpropagation **netVec;
-  REAL *errorVec;
   unsigned nThreads;
 
   void updateNetworks()
@@ -58,7 +57,6 @@ public:
     }
 
     nThreads = static_cast<unsigned>(nt);
-    errorVec = new REAL [nThreads];
     netVec = new FastNet::Backpropagation* [nThreads];
     net = netVec[0] = n;
     for (unsigned i=1; i<nThreads; i++) netVec[i] = new FastNet::Backpropagation(*n);
@@ -69,7 +67,6 @@ public:
   {
     for (unsigned i=1; i<nThreads; i++) delete netVec[i];
     delete netVec;
-    delete errorVec;
   };
 
 

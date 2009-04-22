@@ -72,10 +72,9 @@ REAL StandardTraining::trainNetwork()
     error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
-    for (unsigned i=0; i<numTrnEvents; i++)
+    for (i=0; i<numTrnEvents; i++)
     {
         error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
-        #pragma omp critical
         nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
     }
 

@@ -234,7 +234,7 @@ namespace FastNet
         the calling object. The space for weights and bias info must have been previously created.
         @param[in] net The network from where to copy the data from.
       */
-      virtual void operator=(const NeuralNetwork &net);
+      virtual void operator=(const RProp &net);
   };
 }
 

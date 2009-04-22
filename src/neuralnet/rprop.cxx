@@ -22,33 +22,27 @@ namespace FastNet
     (*this) = net;
   }
 
-  void RProp::operator=(const NeuralNetwork &net)
+  void RProp::operator=(const RProp &net)
   {
     DEBUG1("Attributing all values using assignment operator for RProp class");
     Backpropagation::operator=(net);
 
-    try
+    deltaMax = net.deltaMax;
+    deltaMin = net.deltaMin;
+    incEta = net.incEta;
+    decEta = net.decEta;
+    initEta = net.initEta;
+
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
     {
-      const RProp *rNet = dynamic_cast<const RProp*>(&net);
-
-      deltaMax = rNet->deltaMax;
-      deltaMin = rNet->deltaMin;
-      incEta = rNet->incEta;
-      decEta = rNet->decEta;
-      initEta = rNet->initEta;
-
-      for (unsigned i=0; i<(nNodes.size() - 1); i++)
+      memcpy(prev_db[i], net.prev_db[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(delta_b[i], net.delta_b[i], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++) 
       {
-        memcpy(prev_db[i], rNet->prev_db[i], nNodes[i+1]*sizeof(REAL));
-        memcpy(delta_b[i], rNet->delta_b[i], nNodes[i+1]*sizeof(REAL));
-        for (unsigned j=0; j<nNodes[i+1]; j++) 
-        {
-          memcpy(prev_dw[i][j], rNet->prev_dw[i][j], nNodes[i]*sizeof(REAL));
-          memcpy(delta_w[i][j], rNet->delta_w[i][j], nNodes[i]*sizeof(REAL));
-        }
+        memcpy(prev_dw[i][j], net.prev_dw[i][j], nNodes[i]*sizeof(REAL));
+        memcpy(delta_w[i][j], net.delta_w[i][j], nNodes[i]*sizeof(REAL));
       }
     }
-    catch (std::bad_cast xa) {throw;}
   }
 
 

@@ -23,34 +23,28 @@ namespace FastNet
   }
 
 
-  void Backpropagation::operator=(const NeuralNetwork &net)
+  void Backpropagation::operator=(const Backpropagation &net)
   { 
     DEBUG1("Attributing all values using assignment operator for Backpropagation class");
     NeuralNetwork::operator=(net);
     
-    try
-    {
-      const Backpropagation *bNet = dynamic_cast<const Backpropagation*>(&net);
-    
-      wFactor.clear();
-      wFactor.assign(bNet->wFactor.begin(), bNet->wFactor.end());
-      learningRate = bNet->learningRate;
-      decFactor = bNet->decFactor;
+    wFactor.clear();
+    wFactor.assign(net.wFactor.begin(), net.wFactor.end());
+    learningRate = net.learningRate;
+    decFactor = net.decFactor;
 
-      for (unsigned i=0; i<(nNodes.size() - 1); i++)
+    for (unsigned i=0; i<(nNodes.size() - 1); i++)
+    {
+      memcpy(savedB[i], net.savedB[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(frozenNode[i], net.frozenNode[i], nNodes[i+1]*sizeof(bool));
+      memcpy(db[i], net.db[i], nNodes[i+1]*sizeof(REAL));
+      memcpy(sigma[i], net.sigma[i], nNodes[i+1]*sizeof(REAL));
+      for (unsigned j=0; j<nNodes[i+1]; j++)
       {
-        memcpy(savedB[i], bNet->savedB[i], nNodes[i+1]*sizeof(REAL));
-        memcpy(frozenNode[i], bNet->frozenNode[i], nNodes[i+1]*sizeof(bool));
-        memcpy(db[i], bNet->db[i], nNodes[i+1]*sizeof(REAL));
-        memcpy(sigma[i], bNet->sigma[i], nNodes[i+1]*sizeof(REAL));
-        for (unsigned j=0; j<nNodes[i+1]; j++)
-        {
-          memcpy(dw[i][j], bNet->dw[i][j], nNodes[i]*sizeof(REAL));
-          memcpy(savedW[i][j], bNet->savedW[i][j], nNodes[i]*sizeof(REAL));
-        }
+        memcpy(dw[i][j], net.dw[i][j], nNodes[i]*sizeof(REAL));
+        memcpy(savedW[i][j], net.savedW[i][j], nNodes[i]*sizeof(REAL));
       }
     }
-    catch (std::bad_cast xa) {throw;}
   }
   
 

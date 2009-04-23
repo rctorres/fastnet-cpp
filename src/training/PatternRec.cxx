@@ -96,18 +96,32 @@ REAL PatternRecognition::sp()
   const REAL noiseTarget = targList[TARG_NOISE][0];
   const REAL RESOLUTION = 0.001;
   REAL maxSP = -1.;
+  int i;
+  int chunk = 1000;
 
   for (REAL pos = noiseTarget; pos < signalTarget; pos += RESOLUTION)
   {
     REAL sigEffic = 0.;
-    
-    for (unsigned i=0; i<numSignalEvents; i++) if (signal[i] >= pos) sigEffic++;
-    sigEffic /= static_cast<REAL>(numSignalEvents);
-
     REAL noiseEffic = 0.;
-    for (unsigned i=0; i<numNoiseEvents; i++) if (noise[i] < pos) noiseEffic++;
-    noiseEffic /= static_cast<REAL>(numNoiseEvents);
+    unsigned se, ne;
+    
+    #pragma omp parallel shared(signal, noise, sigEffic, noiseEffic) private(i,se,ne)
+    {
+      se = ne = 0;
+      
+      #pragma omp for schedule(dynamic,chunk) nowait
+      for (i=0; i<numSignalEvents; i++) if (signal[i] >= pos) se++;
+      
+      #pragma omp atomic
+      sigEffic += ( static_cast<REAL>(se) / static_cast<REAL>(numSignalEvents) );
 
+      #pragma omp for schedule(dynamic,chunk) nowait
+      for (i=0; i<numNoiseEvents; i++) if (noise[i] < pos) ne++;
+      
+      #pragma omp atomic
+      noiseEffic += ( static_cast<REAL>(ne) / static_cast<REAL>(numNoiseEvents) );
+    }
+    
     //Using normalized SP calculation.
     const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
     if (sp > maxSP) maxSP = sp;

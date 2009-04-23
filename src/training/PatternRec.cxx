@@ -224,8 +224,8 @@ bool PatternRecognition::isBestNetwork(const REAL currError)
   {
     if (currError > bestGoal)
     {
-    bestGoal = currError;
-    return true;
+      bestGoal = currError;
+      return true;
     }
     return false;
   }

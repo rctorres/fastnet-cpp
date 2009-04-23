@@ -118,7 +118,9 @@ REAL PatternRecognition::sp()
 REAL PatternRecognition::valNetwork()
 {
   DEBUG2("Starting validation process for an epoch.");
-  REAL gbError = 0;
+  REAL gbError = 0.;
+  FastNet::Backpropagation **nv = netVec;
+  updateNetworks();
   
   for (unsigned pat=0; pat<numPatterns; pat++)
   {
@@ -127,14 +129,28 @@ REAL PatternRecognition::valNetwork()
     const REAL *target = targList[pat];
     const REAL *input = inValList[pat];
     const REAL *output;
+    REAL error = 0.;
+    int i, thId;
+    int chunk = 1000;
+
     REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
     
     DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
-    for (unsigned i=0; i<numValEvents[pat]; i++)
+    
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {
-    gbError += ( wFactor * net->applySupervisedInput(input, target, output) );
-    if (useSP) outList[i] = output[0];
-    input += inputSize;
+      thId = omp_get_thread_num();
+      error = 0.;
+
+      #pragma omp for schedule(dynamic,chunk) nowait
+      for (i=0; i<numValEvents[pat]; i++)
+      {
+        error += ( wFactor * nv[thId]->applySupervisedInput(&input[i*inputSize], target, output) );
+        if (useSP) outList[i] = output[0];
+      }
+      
+      #pragma omp atomic
+      gbError += error;
     }
   }
 

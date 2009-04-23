@@ -24,7 +24,7 @@ REAL StandardTraining::valNetwork()
 {
   REAL gbError = 0.;
   REAL error = 0.;
-  const REAL *out;
+  const REAL *output;
 
   const REAL *input = inValData;
   const REAL *target = outValData;
@@ -33,7 +33,7 @@ REAL StandardTraining::valNetwork()
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
 
-  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,out,error)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error)
   {
     thId = omp_get_thread_num();
     error = 0.;
@@ -41,7 +41,7 @@ REAL StandardTraining::valNetwork()
     #pragma omp for schedule(dynamic,chunk) nowait
     for (i=0; i<numValEvents; i++)
     {
-      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], out);
+      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
     }
 
     #pragma omp atomic

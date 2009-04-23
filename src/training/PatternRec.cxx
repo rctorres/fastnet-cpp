@@ -120,7 +120,6 @@ REAL PatternRecognition::valNetwork()
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0.;
   FastNet::Backpropagation **nv = netVec;
-  updateNetworks();
   
   for (unsigned pat=0; pat<numPatterns; pat++)
   {
@@ -162,6 +161,9 @@ REAL PatternRecognition::trainNetwork()
 {
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
+  FastNet::Backpropagation **nv = netVec;
+  updateNetworks();
+
   for(unsigned pat=0; pat<numPatterns; pat++)
   {
     //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
@@ -169,17 +171,31 @@ REAL PatternRecognition::trainNetwork()
     const REAL *target = targList[pat];
     const REAL *input = inTrnList[pat];
     const REAL *output;
+    REAL error = 0.;
+    int i, thId;
+    int chunk = 1000;
 
     DEBUG3("Applying training set for pattern " << pat << ". Weighting factor to use: " << wFactor);
-    for (unsigned i=0; i<numTrnEvents[pat]; i++)
+
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {
-    gbError += ( wFactor * net->applySupervisedInput(input, target, output));
-    //Calculating the weight and bias update values.
-    net->calculateNewWeights(output, target, pat);
-    input += inputSize;
+      thId = omp_get_thread_num();
+      error = 0.;
+
+      #pragma omp for schedule(dynamic,chunk) nowait
+      for (i=0; i<numTrnEvents[pat]; i++)
+      {
+        error += ( wFactor * nv[thId]->applySupervisedInput(&input[i*inputSize], target, output));
+        //Calculating the weight and bias update values.
+        nv[thId]->calculateNewWeights(output, target, pat);
+      }
+
+      #pragma omp atomic
+      gbError += error;
     }
   }
 
+  updateGradients();
   return gbError;  
 };
   

@@ -236,6 +236,6 @@ bool PatternRecognition::isBestNetwork(const REAL currError)
 
 void PatternRecognition::showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)
 {
-  if (useSP) {REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << "SP (val) = " << valError)}
+  if (useSP) {REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " SP (val) = " << valError)}
   else Training::showTrainingStatus(epoch, trnError, valError);
 };

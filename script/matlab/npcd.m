@@ -1,5 +1,5 @@
-function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations)
-%function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, deflation, numIterations)
+function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, deflation, numIterations)
+%function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, deflation, numIterations)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -27,6 +27,8 @@ function [pcd, outNet, epoch, trnError, valError] = npcd(net, inTrn, inVal, defl
 % during each PCD extraction.
 % valError - A cell vector containing the validation error evolution
 % obtained during each PCD extraction.
+% efficVec - a struct vector containing the mean and std of the SP efficiency obtained
+% for each PCD extraction, considering the number of iterations performed.
 %
 
 
@@ -49,6 +51,8 @@ outNet = cell(1,numPCD);
 epoch = cell(1,numPCD);
 trnError = cell(1,numPCD);
 valError = cell(1,numPCD);
+meanEfic = zeros(1,numPCD);
+stdEfic = zeros(1,numPCD);
 
 %Extracting one PCD per iteration.
 for i=1:numPCD,
@@ -62,10 +66,14 @@ for i=1:numPCD,
   end
   
   %Doing the training.
-  [outNet{i}, epoch{i}, trnError{i}, valError{i}] = getBestTrain(trnNet, inTrn, inVal, numIterations);
+  [outNet{i}, epoch{i}, trnError{i}, valError{i}, meanEfic(i), stdEfic(i)] = getBestTrain(trnNet, inTrn, inVal, numIterations);
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
 end
+
+efficVec.mean = meanEfic;
+efficVec.std = stdEfic;
+
 
 
 function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
@@ -111,7 +119,7 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   end
   
   
-function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations)
+function [net, e, trnE, valE, meanEf, stdEf] = getBestTrain(net, inTrn, inVal, numIterations)
   netVec = cell(1,numIterations);
   eVec = cell(1,numIterations);
   trnEVec = cell(1,numIterations);
@@ -134,11 +142,13 @@ function [net, e, trnE, valE] = getBestTrain(net, inTrn, inVal, numIterations)
     end
   
     [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal);
-    effVec(i) = sp_value(diag(genConfMatrix(nsim(net, inVal))));
+    effVec(i) = calcSP(diag(genConfMatrix(nsim(net, inVal))));
   end
   
   %Getting the index where we achieve the highest mean efficiency.
   [val, idx] = max(effVec);
+  meanEf = mean(effVec);
+  stdEf = std(effVec);
 
   net = netVec{idx};
   e = eVec{idx};
@@ -170,8 +180,3 @@ function [trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getN
   end
   
   trnParam = net.trainParam;
-  
-
-function sp = sp_value(ef)
-   sp = sqrt( mean(ef) * geomean(ef) );
-  

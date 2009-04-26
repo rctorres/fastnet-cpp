@@ -3,7 +3,10 @@
 
 #include <list>
 #include <iomanip>
+
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 
 #include <mex.h>
 
@@ -42,6 +45,10 @@ protected:
     for (unsigned i=1; i<nThreads; i++) mainNet->addToGradient(*netVec[i]);
   }
 
+#ifdef NO_OMP
+int omp_get_num_threads() {return 1;}
+int omp_get_thread_num() {return 0;}
+#endif
 
 public:
 

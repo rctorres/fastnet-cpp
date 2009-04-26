@@ -8,7 +8,10 @@
 */
 
 #include <mex.h>
+
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 
 #include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/feedforward.h"

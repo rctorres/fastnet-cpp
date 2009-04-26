@@ -18,6 +18,7 @@ if nargin == 2,
 end
 
 cutVec = -1 : (2/numPts) : 1;
+cutVec = cutVec(1:numPts);
 detVec = zeros(1,length(cutVec));
 faVec = zeros(1,length(cutVec));
 

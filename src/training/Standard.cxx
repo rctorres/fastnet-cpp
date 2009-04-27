@@ -44,7 +44,7 @@ REAL StandardTraining::valNetwork()
       error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
     }
 
-    #pragma omp atomic
+    #pragma omp critical
     gbError += error;
   }
   return (gbError / static_cast<REAL>(numValEvents));
@@ -78,7 +78,7 @@ REAL StandardTraining::trainNetwork()
         nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
     }
 
-    #pragma omp atomic
+    #pragma omp critical
     gbError += error;    
   }
 

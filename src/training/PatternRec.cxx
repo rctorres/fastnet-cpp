@@ -112,13 +112,13 @@ REAL PatternRecognition::sp()
       #pragma omp for schedule(dynamic,chunk) nowait
       for (i=0; i<numSignalEvents; i++) if (signal[i] >= pos) se++;
       
-      #pragma omp atomic
+      #pragma omp critical
       sigEffic += ( static_cast<REAL>(se) / static_cast<REAL>(numSignalEvents) );
 
       #pragma omp for schedule(dynamic,chunk) nowait
       for (i=0; i<numNoiseEvents; i++) if (noise[i] < pos) ne++;
       
-      #pragma omp atomic
+      #pragma omp critical
       noiseEffic += ( static_cast<REAL>(ne) / static_cast<REAL>(numNoiseEvents) );
     }
     
@@ -162,7 +162,7 @@ REAL PatternRecognition::valNetwork()
         if (useSP) outList[i] = output[0];
       }
       
-      #pragma omp atomic
+      #pragma omp critical
       gbError += error;
     }
   }
@@ -204,7 +204,7 @@ REAL PatternRecognition::trainNetwork()
         nv[thId]->calculateNewWeights(output, target, pat);
       }
 
-      #pragma omp atomic
+      #pragma omp critical
       gbError += error;
     }
   }

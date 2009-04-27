@@ -11,11 +11,23 @@ wInit = -0.2;
 wEnd = 0.2;
 
 %Doing the input layer.
-outNet.IW{1} = unifrnd(wInit, wEnd, size(outNet.IW{1}));
-outNet.b{1} = unifrnd(wInit, wEnd, size(outNet.b{1}));
+
+%This will make nodesIdx contain only the index of the nodes which are NOT frozen.
+[nextLayer, currLayer] = size(outNet.IW{1});
+nodesIdx = [1:nextLayer];
+nodesIdx[net.layers{1}.userdata.frozenNodes] = []; 
+nNodes = length(nodesIdx);
+
+outNet.IW{1}(nodesIdx,:) = unifrnd(wInit, wEnd, nNodes, currLayer);
+outNet.b{1}(nodesIdx) = unifrnd(wInit, wEnd, nNodes);
 
 %Doing the other layers.
 for i=2:outNet.numLayers,
-	outNet.LW{i,(i-1)} = unifrnd(wInit, wEnd, size(outNet.LW{i,(i-1)}));
-	outNet.b{i} = unifrnd(wInit, wEnd, size(outNet.b{i}));
+  [nextLayer, currLayer] = size(outNet.LW{i,(i-1)});
+  nodesIdx = [1:nextLayer];
+  nodesIdx[net.layers{i}.userdata.frozenNodes] = []; 
+  nNodes = length(nodesIdx);
+
+	outNet.LW{i,(i-1)}(nodesIdx,:) = unifrnd(wInit, wEnd, nNodes, currLayer);
+	outNet.b{i}(nodesIdx) = unifrnd(wInit, wEnd, nNodes);
 end

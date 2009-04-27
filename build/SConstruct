@@ -33,7 +33,7 @@ if 'Darwin' in platform.system():
   matlabArch = 'maci'
   globalCPPFlags += ['-DNO_OMP']
 else:
-  if debug == 0: libCPPFlags += ['-O3', '-m64', '-fopenmp']
+  if debug == 0: libCPPFlags += ['-O3', '-m64', '-fopenmp', '-march=core2']
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
     

@@ -1,5 +1,5 @@
-function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, deflation, numIterations)
-%function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, deflation, numIterations)
+function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
+%function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -7,6 +7,7 @@ function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, i
 % layer.
 % inTrn - The training data set, organized as a cell vector.
 % inVal - The validating data set, organized as a cell vector.
+% inTst - The testing data set, organized as a cell vector.
 % deflation - if true, the PCDs will be extracted by the deflation method.
 % In this case, the returned neural network MUST NOT be used as a
 % discriminator. Deflation should be used ONLY if you want just to extract
@@ -32,12 +33,12 @@ function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, i
 %
 
 
-if (nargin == 3),
+if (nargin == 4),
   deflation = false;
   numIterations = 5;
-elseif (nargin == 4),
+elseif (nargin == 5),
   numIterations = 5;
-elseif (nargin > 5) || (nargin < 3),
+elseif (nargin > 6) || (nargin < 4),
   error('Invalid number of input arguments. See help.');
 end
 
@@ -66,7 +67,20 @@ for i=1:numPCD,
   end
   
   %Doing the training.
-  [outNet{i}, epoch{i}, trnError{i}, valError{i}, meanEfic(i), stdEfic(i)] = getBestTrain(trnNet, inTrn, inVal, numIterations);
+  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
+  outNet{i} = nVec{idx}.net;
+  epoch{i} = nVec{idx}.epoch;
+  trnError{i} = nVec{idx}.trnError;
+  valError{i} = nVec{idx}.valError;
+
+  %Getting the mean and std val of the SP efficiencies obtained through the iterations.
+  ef = zeros(1,numIterations);
+  for j=1:numIterations,
+    ef(j) = nVec{j}.sp;
+  end
+  meanEfic(i) = mean(ef);
+  stdEfic(i) = std(ef);
+  
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
 end
@@ -94,6 +108,7 @@ function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, t
   end
 
   
+  
 function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
   numNodes(2) = 1;
   net = newff2(numNodes, trfFunc, useSP, trnAlgo);
@@ -118,42 +133,6 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
     inVal = in_val;
   end
   
-  
-function [net, e, trnE, valE, meanEf, stdEf] = getBestTrain(net, inTrn, inVal, numIterations)
-  netVec = cell(1,numIterations);
-  eVec = cell(1,numIterations);
-  trnEVec = cell(1,numIterations);
-  valEVec = cell(1,numIterations);
-  effVec = zeros(1,numIterations);
-
-  %Saving the already extracted PCDs.
-  nPCD = size(net.IW{1},1) - 1;
-  if nPCD > 0,
-    pcd = net.IW{1}(1:nPCD,:);
-    bias = net.b{1}(1:nPCD);
-  end
-  
-  for i=1:numIterations,
-    %Scrambling the weights, and inserting the already extracted PCDs.
-    net = scrambleWeights(net);
-    if nPCD > 0,
-      net.IW{1}(1:nPCD,:) = pcd;
-      net.b{1}(1:nPCD) = bias;
-    end
-  
-    [netVec{i}, eVec{i}, trnEVec{i}, valEVec{i}] = ntrain(net, inTrn, inVal);
-    effVec(i) = calcSP(diag(genConfMatrix(nsim(net, inVal))));
-  end
-  
-  %Getting the index where we achieve the highest mean efficiency.
-  [val, idx] = max(effVec);
-  meanEf = mean(effVec);
-  stdEf = std(effVec);
-
-  net = netVec{idx};
-  e = eVec{idx};
-  trnE = trnEVec{idx};
-  valE = valEVec{idx};
   
 
 function [trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)

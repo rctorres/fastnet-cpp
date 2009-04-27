@@ -16,10 +16,8 @@ spVec = zeros(1, numTrains);
 for i=1:numTrains,
   net = scrambleWeights(net);
   [aux.net, aux.epoch, aux.trnError, aux.valError] = ntrain(net, inTrn, inVal);
-  out = nsim(aux.net, inTst);
-  [sv, cutVec, detVec, faVec] = genROC(out{1}, out{2}, 1000);
-  spVec(i) = max(sv);
-  aux.sp = spVec(i);
+  aux.sp = calcSP(diag(genConfMatrix(nsim(aux.net, inTst))));
+  spVec(i) = aux.sp;
   oNet{i} = aux;
 end
 

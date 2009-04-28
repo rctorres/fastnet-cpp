@@ -1,3 +1,4 @@
+function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_val, out_val)
 %function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_val, out_val)
 %Trains a neural network using the network structure created by "newff2".
 %Parameters are:
@@ -30,3 +31,31 @@
 %	trnError -> The training errors obtained for each epoch.
 %	valError -> The validating errors obtained for each epoch.
 %
+
+%Case pat rec net.
+if nargin == 3,
+  nClasses = length(in_trn);
+  for i=1:nClasses,
+    if ~isa(in_trn{i}, 'single'),
+      error(sprintf('in_trn{%d} is not a single precision matrix! Data must be of type "single"!', i));
+    end
+    if ~isa(out_trn{i}, 'single'), %out_trn is out in_val.
+      error(sprintf('in_val{%d} is not a single precision matrix! Data must be of type "single"!', i));
+    end  
+  end
+  [outNet, epoch, trnError, valError] = train_c(net, in_trn, out_trn);
+elseif nargin == 5,
+  if ~isa(in_trn, 'single'),
+    error('in_trn is not a single precision matrix! Data must be of type "single"!');
+  end
+  if ~isa(out_trn, 'single'),
+    error('out_trn is not a single precision matrix! Data must be of type "single"!');
+  end
+  if ~isa(in_val, 'single'),
+    error('in_val is not a single precision matrix! Data must be of type "single"!');
+  end
+  if ~isa(out_val, 'single'),
+    error('out_val is not a single precision matrix! Data must be of type "single"!');
+  end
+  [outNet, epoch, trnError, valError] = train_c(net, in_trn, out_trn, in_val, out_val);
+end

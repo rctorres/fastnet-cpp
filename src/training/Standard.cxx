@@ -29,7 +29,7 @@ REAL StandardTraining::valNetwork()
   const REAL *input = inValData;
   const REAL *target = outValData;
   
-  int chunk = 1000;
+  int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
 
@@ -61,7 +61,7 @@ REAL StandardTraining::trainNetwork()
   const REAL *input = inTrnData;
   const REAL *target = outTrnData;
 
-  int chunk = 1000;
+  int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
 

@@ -97,7 +97,8 @@ REAL PatternRecognition::sp()
   const REAL RESOLUTION = 0.001;
   REAL maxSP = -1.;
   int i;
-  int chunk = 1000;
+  int chunk = 600;
+
 
   for (REAL pos = noiseTarget; pos < signalTarget; pos += RESOLUTION)
   {
@@ -144,7 +145,7 @@ REAL PatternRecognition::valNetwork()
     const REAL *output;
     REAL error = 0.;
     int i, thId;
-    int chunk = 1000;
+    int chunk = chunkSize;
 
     REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
     
@@ -187,7 +188,7 @@ REAL PatternRecognition::trainNetwork()
     const REAL *output;
     REAL error = 0.;
     int i, thId;
-    int chunk = 1000;
+    int chunk = chunkSize;
 
     DEBUG3("Applying training set for pattern " << pat << ". Weighting factor to use: " << wFactor);
 

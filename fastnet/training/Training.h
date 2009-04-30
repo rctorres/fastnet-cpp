@@ -3,6 +3,7 @@
 
 #include <list>
 #include <iomanip>
+#include <cmath>
 
 #ifndef NO_OMP
 #include <omp.h>
@@ -33,6 +34,7 @@ protected:
   FastNet::Backpropagation **netVec;
   unsigned nThreads;
   unsigned batchSize;
+  int chunkSize;
 
   void updateNetworks()
   {
@@ -66,6 +68,8 @@ public:
     }
 
     nThreads = static_cast<unsigned>(nt);
+    chunkSize = static_cast<int>(std::ceil(static_cast<float>(batchSize) / static_cast<float>(nThreads)));
+    
     netVec = new FastNet::Backpropagation* [nThreads];
     net = netVec[0] = n;
     for (unsigned i=1; i<nThreads; i++) netVec[i] = new FastNet::Backpropagation(*n);

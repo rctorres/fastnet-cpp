@@ -4,6 +4,8 @@
 #include <list>
 #include <iomanip>
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 #ifndef NO_OMP
 #include <omp.h>
@@ -22,6 +24,32 @@ struct TrainData
   REAL epoch;
   REAL trnError;
   REAL tstError;
+};
+
+
+class DataManager
+{
+private:
+  vector<unsigned>::const_iterator pos;
+  vector<unsigned> vec;
+  
+public:
+  DataManager(const unsigned numEvents)
+  {
+    for (unsigned i=0; i<numEvents; i++) vec.push_back(i);
+    random_shuffle(vec.begin(), vec.end());
+    pos = vec.begin();
+  }
+  
+  unsigned get()
+  {
+    if (pos == vec.end())
+    {
+      random_shuffle(vec.begin(), vec.end());
+      pos = vec.begin();
+    }
+    return *pos++;
+  }
 };
 
 

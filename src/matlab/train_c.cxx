@@ -105,7 +105,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     else throw "Invalid training algorithm option!";
 
     //Creating the object for the desired training type.
-    const unsigned batchSize = 10000; 
+    const unsigned batchSize = 500; 
     if (stdTrainingType)
     {
       train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], batchSize);

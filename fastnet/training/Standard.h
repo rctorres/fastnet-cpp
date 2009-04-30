@@ -14,10 +14,13 @@ protected:
   unsigned numValEvents;
   unsigned inputSize;
   unsigned outputSize;
+  DataManager *dmTrn;
+  DataManager *dmVal;
 
 public:
   StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);
 
+  ~StandardTraining();
 
   /// Applies the validating set for the network's validation.
   /**

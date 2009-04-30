@@ -17,13 +17,22 @@ StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray 
   numValEvents = static_cast<unsigned>(mxGetN(inVal));
   inputSize = static_cast<unsigned>(mxGetM(inTrn));
   outputSize = static_cast<unsigned>(mxGetM(outTrn));
+  
+  dmTrn = new DataManager(numTrnEvents);
+  dmVal = new DataManager(numValEvents);
 };
 
+StandardTraining::~StandardTraining()
+{
+  delete dmTrn;
+  delete dmVal;
+}
 
 REAL StandardTraining::valNetwork()
 {
   REAL gbError = 0.;
   REAL error = 0.;
+  unsigned pos;
   const REAL *output;
 
   const REAL *input = inValData;
@@ -32,28 +41,32 @@ REAL StandardTraining::valNetwork()
   int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
+  DataManager *dm = dmVal;
 
-  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
   {
     thId = omp_get_thread_num();
     error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
-    for (i=0; i<numValEvents; i++)
+    for (i=0; i<batchSize; i++)
     {
-      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
+      #pragma omp critical
+      pos = dm->get();
+      
+      error += nv[thId]->applySupervisedInput(&input[pos*inputSize], &target[pos*outputSize], output);
     }
 
     #pragma omp critical
     gbError += error;
   }
-  return (gbError / static_cast<REAL>(numValEvents));
+  return (gbError / static_cast<REAL>(batchSize));
 };
 
 
 REAL StandardTraining::trainNetwork()
 {
-  unsigned evIndex;
+  unsigned pos;
   REAL gbError = 0.;
   REAL error = 0.;
   const REAL *output;
@@ -64,18 +77,22 @@ REAL StandardTraining::trainNetwork()
   int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
+  DataManager *dm = dmTrn;
 
   updateNetworks();
-  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
   {
     thId = omp_get_thread_num(); 
     error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
-    for (i=0; i<numTrnEvents; i++)
+    for (i=0; i<batchSize; i++)
     {
-        error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
-        nv[thId]->calculateNewWeights(output, &target[i*outputSize]);
+        #pragma omp critical
+        pos = dm->get();
+        
+        error += nv[thId]->applySupervisedInput(&input[pos*inputSize], &target[pos*outputSize], output);
+        nv[thId]->calculateNewWeights(output, &target[pos*outputSize]);
     }
 
     #pragma omp critical
@@ -83,7 +100,7 @@ REAL StandardTraining::trainNetwork()
   }
 
   updateGradients();
-  return (gbError / static_cast<REAL>(numTrnEvents));
+  return (gbError / static_cast<REAL>(batchSize));
 }
   
 void StandardTraining::checkSizeMismatch() const

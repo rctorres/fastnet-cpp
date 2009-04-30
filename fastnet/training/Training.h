@@ -41,7 +41,7 @@ public:
     pos = vec.begin();
   }
   
-  unsigned get()
+  inline unsigned get()
   {
     if (pos == vec.end())
     {

@@ -10,8 +10,6 @@ protected:
   const REAL *outTrnData;
   const REAL *inValData;
   const REAL *outValData;
-  unsigned numTrnEvents;
-  unsigned numValEvents;
   unsigned inputSize;
   unsigned outputSize;
   DataManager *dmTrn;

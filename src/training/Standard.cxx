@@ -13,13 +13,11 @@ StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray 
   outTrnData = static_cast<REAL*>(mxGetData(outTrn));
   inValData = static_cast<REAL*>(mxGetData(inVal));
   outValData = static_cast<REAL*>(mxGetData(outVal));
-  numTrnEvents = static_cast<unsigned>(mxGetN(inTrn));
-  numValEvents = static_cast<unsigned>(mxGetN(inVal));
   inputSize = static_cast<unsigned>(mxGetM(inTrn));
   outputSize = static_cast<unsigned>(mxGetM(outTrn));
   
-  dmTrn = new DataManager(numTrnEvents);
-  dmVal = new DataManager(numValEvents);
+  dmTrn = new DataManager(static_cast<unsigned>(mxGetN(inTrn)));
+  dmVal = new DataManager(static_cast<unsigned>(mxGetN(inVal)));
 };
 
 StandardTraining::~StandardTraining()
@@ -116,6 +114,4 @@ void StandardTraining::showInfo(const unsigned nEpochs) const
 {
   REPORT("TRAINING DATA INFORMATION (Standard Network)");
   REPORT("Number of Epochs          : " << nEpochs);
-  REPORT("Total number of training events   : " << numTrnEvents);
-  REPORT("Total number of validating events    : " << numValEvents);
 };

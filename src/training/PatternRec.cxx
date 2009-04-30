@@ -20,8 +20,6 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   inValList = new const REAL* [numPatterns];
   targList = new const REAL* [numPatterns];
   if (useSP) epochValOutputs = new REAL* [numPatterns];
-  numTrnEvents = new unsigned [numPatterns];
-  numValEvents = new unsigned [numPatterns];
   
   for (unsigned i=0; i<numPatterns; i++)
   {
@@ -36,11 +34,11 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
     //Getting the desired values.    
     inTrnList[i] = static_cast<REAL*>(mxGetData(patTrnData));
     inValList[i] = static_cast<REAL*>(mxGetData(patValData));
-    numTrnEvents[i] = mxGetN(patTrnData);
-    numValEvents[i] = mxGetN(patValData);
-    if (useSP) epochValOutputs[i] = new REAL [outputSize*numValEvents[i]];
-    DEBUG2("Number of training events for pattern " << i << ": " << numTrnEvents[i]);
-    DEBUG2("Number of validating events for pattern " << i << ": " << numValEvents[i]);
+    dmTrn.push_back(new DataManager(mxGetN(patTrnData)));
+    dmVal.push_back(new DataManager(mxGetN(patValData)));
+    if (useSP) epochValOutputs[i] = new REAL [outputSize*batchSize];
+    DEBUG2("Number of training events for pattern " << i << ": " << mxGetN(patTrnData));
+    DEBUG2("Number of validating events for pattern " << i << ": " << mxGetN(patValData));
     
     //Generating the desired output for each pattern for maximum sparsed outputs.
     REAL *target = new REAL [outputSize];
@@ -56,10 +54,10 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
 
 PatternRecognition::~PatternRecognition()
 {
-  delete [] numTrnEvents;
-  delete [] numValEvents;
   for (unsigned i=0; i<numPatterns; i++)
   {
+    delete dmTrn[i];
+    delete dmVal[i];
     delete [] inTrnList[i];
     delete [] inValList[i];
     delete [] targList[i];
@@ -89,15 +87,13 @@ REAL PatternRecognition::sp()
   }
 
   const REAL *signal = epochValOutputs[TARG_SIGNAL];
-  const unsigned numSignalEvents = numValEvents[TARG_SIGNAL];
   const REAL *noise = epochValOutputs[TARG_NOISE];
-  const unsigned numNoiseEvents = numValEvents[TARG_NOISE];
   const REAL signalTarget = targList[TARG_SIGNAL][0];
   const REAL noiseTarget = targList[TARG_NOISE][0];
   const REAL RESOLUTION = 0.001;
   REAL maxSP = -1.;
   int i;
-  int chunk = 600;
+  int chunk = chunkSize;
 
 
   for (REAL pos = noiseTarget; pos < signalTarget; pos += RESOLUTION)
@@ -111,22 +107,26 @@ REAL PatternRecognition::sp()
       se = ne = 0;
       
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<numSignalEvents; i++) if (signal[i] >= pos) se++;
+      for (i=0; i<batchSize; i++) if (signal[i] >= pos) se++;
       
       #pragma omp critical
-      sigEffic += ( static_cast<REAL>(se) / static_cast<REAL>(numSignalEvents) );
+      sigEffic += static_cast<REAL>(se);
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<numNoiseEvents; i++) if (noise[i] < pos) ne++;
+      for (i=0; i<batchSize; i++) if (noise[i] < pos) ne++;
       
       #pragma omp critical
-      noiseEffic += ( static_cast<REAL>(ne) / static_cast<REAL>(numNoiseEvents) );
+      noiseEffic += static_cast<REAL>(ne);
     }
+    
+    sigEffic /= static_cast<REAL>(batchSize);
+    noiseEffic /= static_cast<REAL>(batchSize);
     
     //Using normalized SP calculation.
     const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
     if (sp > maxSP) maxSP = sp;
   }
+  
   return maxSP;
 };
 
@@ -138,28 +138,31 @@ REAL PatternRecognition::valNetwork()
   
   for (unsigned pat=0; pat<numPatterns; pat++)
   {
-    //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-    const REAL wFactor = 1. / static_cast<REAL>(numPatterns * numValEvents[pat]);
     const REAL *target = targList[pat];
     const REAL *input = inValList[pat];
     const REAL *output;
+    unsigned pos = 0;
     REAL error = 0.;
     int i, thId;
     int chunk = chunkSize;
+    DataManager *dm = dmVal[pat];
 
     REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
     
     DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
     
-    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {
       thId = omp_get_thread_num();
       error = 0.;
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<numValEvents[pat]; i++)
+      for (i=0; i<batchSize; i++)
       {
-        error += ( wFactor * nv[thId]->applySupervisedInput(&input[i*inputSize], target, output) );
+        #pragma omp critical
+        pos = dm->get();
+
+        error += nv[thId]->applySupervisedInput(&input[pos*inputSize], target, output);
         if (useSP) outList[i] = output[0];
       }
       
@@ -168,7 +171,7 @@ REAL PatternRecognition::valNetwork()
     }
   }
 
-  return (useSP) ? sp() : gbError;
+  return (useSP) ? sp() : (gbError / static_cast<REAL>(numPatterns*batchSize));
 };
 
 
@@ -182,25 +185,29 @@ REAL PatternRecognition::trainNetwork()
   for(unsigned pat=0; pat<numPatterns; pat++)
   {
     //wFactor will allow each pattern to have the same relevance, despite the number of events it contains.
-    const REAL wFactor = 1. / static_cast<REAL>(numPatterns * numTrnEvents[pat]);
     const REAL *target = targList[pat];
     const REAL *input = inTrnList[pat];
     const REAL *output;
     REAL error = 0.;
     int i, thId;
     int chunk = chunkSize;
+    unsigned pos = 0;
+    DataManager *dm = dmTrn[pat];
 
     DEBUG3("Applying training set for pattern " << pat << ". Weighting factor to use: " << wFactor);
 
-    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {
       thId = omp_get_thread_num();
       error = 0.;
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<numTrnEvents[pat]; i++)
+      for (i=0; i<batchSize; i++)
       {
-        error += ( wFactor * nv[thId]->applySupervisedInput(&input[i*inputSize], target, output));
+        #pragma omp critical
+        pos = dm->get();
+
+        error += nv[thId]->applySupervisedInput(&input[pos*inputSize], target, output);
         //Calculating the weight and bias update values.
         nv[thId]->calculateNewWeights(output, target);
       }
@@ -211,7 +218,7 @@ REAL PatternRecognition::trainNetwork()
   }
 
   updateGradients();
-  return gbError;  
+  return (gbError / static_cast<REAL>(numPatterns*batchSize));  
 };
   
 void PatternRecognition::checkSizeMismatch() const
@@ -225,12 +232,6 @@ void PatternRecognition::showInfo(const unsigned nEpochs) const
   REPORT("TRAINING DATA INFORMATION (Pattern Recognition Optimized Network)");
   REPORT("Number of Epochs          : " << nEpochs);
   REPORT("Using SP Stopping Criteria      : " << (useSP) ? "true" : "false");
-  for (unsigned i=0; i<numPatterns; i++)
-  {
-    REPORT("Information for pattern " << (i+1) << ":");
-    REPORT("Total number of training events   : " << numTrnEvents[i]);
-    REPORT("Total number of validating events    : " << numValEvents[i]);
-  }
 };
 
 bool PatternRecognition::isBestNetwork(const REAL currError)

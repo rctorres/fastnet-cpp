@@ -1,6 +1,8 @@
 #ifndef PATREC_H
 #define PATREC_H
 
+#include <vector>
+
 #include "fastnet/training/Training.h"
 
 class PatternRecognition : public Training
@@ -10,12 +12,12 @@ protected:
   const REAL **inValList;
   const REAL **targList;
   REAL **epochValOutputs;
-  unsigned *numTrnEvents;
-  unsigned *numValEvents;
   unsigned numPatterns;
   unsigned inputSize;
   unsigned outputSize;
   bool useSP;
+  std::vector<DataManager*> dmTrn;
+  std::vector<DataManager*> dmVal;
 
 
 public:

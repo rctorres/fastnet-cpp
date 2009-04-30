@@ -41,6 +41,11 @@ public:
     pos = vec.begin();
   }
   
+  inline unsigned size() const
+  {
+    return vec.size();
+  }
+  
   inline unsigned get()
   {
     if (pos == vec.end())

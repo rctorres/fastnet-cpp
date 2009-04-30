@@ -20,7 +20,7 @@ protected:
 
 public:
 
-  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP);
+  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned bSize);
 
   virtual ~PatternRecognition();
 

@@ -1,6 +1,6 @@
 #include "fastnet/training/PatternRec.h"
 
-PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP) : Training(net)
+PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned bSize) : Training(net, bSize)
 {
   DEBUG1("Starting a Pattern Recognition Training Object");
   if (mxGetN(inTrn) != mxGetN(inVal)) throw "Number of training and validating patterns are not equal";

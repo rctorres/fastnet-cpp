@@ -1,6 +1,6 @@
 #include "fastnet/training/Standard.h"
 
-StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal) : Training(net)
+StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize) : Training(net, bSize)
 {
   DEBUG2("Creating StandardTraining object.");
   

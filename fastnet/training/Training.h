@@ -32,6 +32,7 @@ protected:
   FastNet::Backpropagation *net;
   FastNet::Backpropagation **netVec;
   unsigned nThreads;
+  unsigned batchSize;
 
   void updateNetworks()
   {
@@ -52,11 +53,12 @@ int omp_get_thread_num() {return 0;}
 
 public:
 
-  Training(FastNet::Backpropagation *n)
+  Training(FastNet::Backpropagation *n, const unsigned bSize)
   {
     bestGoal = 10000000000.;
-    int nt;
+    batchSize = bSize;
     
+    int nt;
     #pragma omp parallel shared(nt)
     {
       #pragma omp master

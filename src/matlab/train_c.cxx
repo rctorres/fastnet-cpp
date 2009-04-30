@@ -126,16 +126,17 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     else throw "Invalid training algorithm option!";
 
     //Creating the object for the desired training type.
+    const unsigned batchSize = 1; 
     if (stdTrainingType)
     {
-      train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX]);
+      train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], batchSize);
     }
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
       const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
       const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
-      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP);
+      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, batchSize);
     }
 
     //Checking if the training and validating input data sizes match the network's input layer.

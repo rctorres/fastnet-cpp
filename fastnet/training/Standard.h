@@ -16,7 +16,7 @@ protected:
   unsigned outputSize;
 
 public:
-  StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal);
+  StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);
 
 
   /// Applies the validating set for the network's validation.

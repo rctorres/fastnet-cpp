@@ -177,9 +177,10 @@ namespace FastNet
        Update the bias and weight matrices. It uses the mean
        gradient sign. It is also prepared to work with nodes activation
        and frozen nodes.
-       @see FastNet::NeuralNetwork#updateWeights()
+       @param[in] numEvents The number of events applied to the network during the training phase.
+       @see FastNet::Backpropagation#updateWeights()
       */
-      void updateWeights();
+      void updateWeights(const unsigned numEvents);
       
 
       //Standart methods.
@@ -196,11 +197,8 @@ namespace FastNet
       This constructor should be called when the network parameters are stored in a matlab
       network structure.
       @param[in] netStr The Matlab network structure as returned by newff.
-      @param[in] nEvPat A vector containing the number of events to be used for each pattern.
-      If you are not using a pattern recognition optimized network, the vector must contain only
-      one value, corresponding to the total number of events to be presented for each epoch.
       */
-      RProp(const mxArray *netStr, const vector<unsigned> &nEvPat);  
+      RProp(const mxArray *netStr);  
 
       /// Returns a clone of the object.
       /**

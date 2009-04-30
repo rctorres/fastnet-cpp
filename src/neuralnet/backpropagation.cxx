@@ -28,8 +28,6 @@ namespace FastNet
     DEBUG1("Attributing all values using assignment operator for Backpropagation class");
     NeuralNetwork::operator=(net);
     
-    wFactor.clear();
-    wFactor.assign(net.wFactor.begin(), net.wFactor.end());
     learningRate = net.learningRate;
     decFactor = net.decFactor;
 
@@ -48,14 +46,9 @@ namespace FastNet
   }
   
 
-  Backpropagation::Backpropagation(const mxArray *netStr, const vector<unsigned> &nEvPat) : NeuralNetwork(netStr)
+  Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
   {
     DEBUG1("Initializing the Backpropagation class from a Matlab Network structure.");
-
-    //Calculating the weightening factors.
-    if (nEvPat.size() == 1) createWeighteningValues(nEvPat[0]);
-    else if (nEvPat.size() > 1) createWeighteningValues(nEvPat);
-    else throw "You must provide the number of events to be used for each epoch!.";
 
     //We first test whether the values exists, otherwise, we use default ones.
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
@@ -175,7 +168,6 @@ namespace FastNet
   void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target)
   {
     const unsigned size = nNodes.size() - 1;
-    const REAL val = wFactor[0];
 
     retropropagateError(output, target);
 
@@ -186,33 +178,10 @@ namespace FastNet
       {
         for (unsigned k=0; k<nNodes[i]; k++)
         {
-          dw[i][j][k] += (val * sigma[i][j] * layerOutputs[i][k]);
+          dw[i][j][k] += (sigma[i][j] * layerOutputs[i][k]);
         }
 
-        db[i][j] += (val * sigma[i][j]);
-      }
-    }
-  }
-
-
-  void Backpropagation::calculateNewWeights(const REAL *output, const REAL *target, const unsigned patIdx)
-  {
-    const unsigned size = nNodes.size() - 1;
-    const REAL val = wFactor[patIdx];
-
-    retropropagateError(output, target);
-
-    //Accumulating the deltas.
-    for (unsigned i=0; i<size; i++)
-    {
-      for (unsigned j=0; j<nNodes[(i+1)]; j++)
-      {
-        for (unsigned k=0; k<nNodes[i]; k++)
-        {
-          dw[i][j][k] += (val * sigma[i][j] * layerOutputs[i][k]);
-        }
-
-        db[i][j] += (val * sigma[i][j]);
+        db[i][j] += (sigma[i][j]);
       }
     }
   }
@@ -234,8 +203,10 @@ namespace FastNet
     }
   }
 
-  void Backpropagation::updateWeights()
-  {    
+  void Backpropagation::updateWeights(const unsigned numEvents)
+  {
+    const REAL val = 1. / static_cast<REAL>(numEvents);
+    
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       for (unsigned j=0; j<nNodes[(i+1)]; j++)
@@ -253,13 +224,13 @@ namespace FastNet
         {
           for (unsigned k=0; k<nNodes[i]; k++)
           {
-            weights[i][j][k] += (learningRate * dw[i][j][k]);
+            weights[i][j][k] += (learningRate * val * dw[i][j][k]);
             dw[i][j][k] = 0;
           }
 
           if (usingBias[i])
           {
-            bias[i][j] += (learningRate * db[i][j]);
+            bias[i][j] += (learningRate * val * db[i][j]);
             db[i][j] = 0;
           }
           else
@@ -271,23 +242,6 @@ namespace FastNet
     }
   }
 
-  void Backpropagation::createWeighteningValues(const unsigned nPat)
-  {
-    wFactor.clear();
-    wFactor.push_back( 1. / static_cast<REAL>(nPat) );
-    DEBUG2("Number of events = " << nPat << ". Weightening value = " << wFactor[0]);
-  }
-
-  void Backpropagation::createWeighteningValues(const vector<unsigned> &nPat)
-  {
-    wFactor.clear();
-    for (vector<unsigned>::const_iterator itr = nPat.begin(); itr != nPat.end(); itr++)
-    {
-      const REAL val = 1. / (static_cast<REAL>( nPat.size() * (*itr) ));
-      wFactor.push_back(val);
-      DEBUG2("Number of events = " << *itr << ". Weightening value = " << val);
-    }
-  }
 
   void Backpropagation::showInfo() const
   {

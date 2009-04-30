@@ -202,7 +202,7 @@ REAL PatternRecognition::trainNetwork()
       {
         error += ( wFactor * nv[thId]->applySupervisedInput(&input[i*inputSize], target, output));
         //Calculating the weight and bias update values.
-        nv[thId]->calculateNewWeights(output, target, pat);
+        nv[thId]->calculateNewWeights(output, target);
       }
 
       #pragma omp critical

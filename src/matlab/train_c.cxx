@@ -35,15 +35,13 @@ const unsigned IN_TRN_IDX = 1;
 const unsigned OUT_TRN_IDX = 2;
 
 /// Index, in the arguments list, of the input validating events.
-/**
-This value might have to be changed during execution, because the index of the
-validating input events is 3 for the standart training case, but it is 2 for the
-Pattern recognition network case.
-*/
-unsigned IN_VAL_IDX = 3;
+const unsigned IN_VAL_IDX = 3;
 
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
+
+/// Index, in the arguments list, of the batch size.
+const unsigned BATCH_SIZE_IDX = 5;
 
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
@@ -58,6 +56,11 @@ const unsigned OUT_TRN_ERROR_IDX = 2;
 const unsigned OUT_VAL_ERROR_IDX = 3;
 
 
+bool isEmpty(const mxArray *mat)
+{
+  return ( (!mxGetM(mat)) && (!mxGetN(mat)) );
+}
+
 
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
@@ -67,19 +70,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   
   try
   {
-    bool stdTrainingType;
-    //Verifying if the number of input parameters is ok.
-    if (nargin == 5) // Standart training
-    {
-      IN_VAL_IDX = 3;
-      stdTrainingType = true;
-    }
-    else if (nargin == 3)
-    {
-      IN_VAL_IDX = 2;
-      stdTrainingType = false;
-    }
-    else throw "Incorrect number of arguments! See help for information!";
+    //If the out_trn is not empty, then is a standard training.
+    const bool stdTrainingType = !isEmpty(args[OUT_TRN_IDX]);
 
     //Reading the configuration structure
     const mxArray *netStr = args[NET_STR_IDX];
@@ -105,7 +97,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     else throw "Invalid training algorithm option!";
 
     //Creating the object for the desired training type.
-    const unsigned batchSize = 500; 
+    const unsigned batchSize = static_cast<unsigned>(mxGetScalar(args[BATCH_SIZE_IDX]));
     if (stdTrainingType)
     {
       train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], batchSize);

@@ -30,7 +30,7 @@ if (nargin == 2),
     	tot(It) = tot(It) + 1;
 	end
 
-	ret = 100*(ret ./ repmat(tot, 1, Nc));
+	ret = (ret ./ repmat(tot, 1, Nc));
 else
 	%Getting the number of patterns.
 	Nc = length(out);
@@ -54,6 +54,6 @@ else
 		%Calculating (in ind) which output node has the highest value.
 		[vals, ind] = max(out{i});
 		%Saving the ith line of the confusion matrix, ny taking the number of occurrences of each node and dividing by the total number of events in each class.
-		ret(i,:) = 100 * (hist(ind, binsCenters) ./ totEv);
+		ret(i,:) = (hist(ind, binsCenters) ./ totEv);
 	end
 end

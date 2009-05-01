@@ -43,20 +43,33 @@ elseif (nargin > 6) || (nargin < 4),
 end
 
 %Getting the desired network parameters.
-[trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
+[trnAlgo, useSP, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
 
 %Initializing the output vectors.
 pcd = [];
 bias = [];
-outNet = cell(1,numPCD);
-epoch = cell(1,numPCD);
-trnError = cell(1,numPCD);
-valError = cell(1,numPCD);
-meanEfic = zeros(1,numPCD);
-stdEfic = zeros(1,numPCD);
+outNet = cell(1,maxNumPCD);
+epoch = cell(1,maxNumPCD);
+trnError = cell(1,maxNumPCD);
+valError = cell(1,maxNumPCD);
+meanEfic = zeros(1,maxNumPCD);
+stdEfic = zeros(1,maxNumPCD);
+
+%Will count how many PCDs were actually extracted.
+pcdExtracted = 1;
+
+%It is considered a failure if the PCD max SP is less than minDiff the
+%previous one. Then , if 'maxFail' failures occur, in a sequence, the PCD
+%extraction is aborted. But mxCount is reset to zero if, after a failure,
+%the next extraction is successfull.
+minDiff = 0.0002;
+maxFail = 3;
+mfCount = 0;
+prevMaxSP = 0;
+
 
 %Extracting one PCD per iteration.
-for i=1:numPCD,
+for i=1:maxNumPCD,
   fprintf('Extracting PCD number %d\n', i);
   
   %Creating the neural network based on the PCD extraction method.
@@ -72,6 +85,7 @@ for i=1:numPCD,
   epoch{i} = nVec{idx}.epoch;
   trnError{i} = nVec{idx}.trnError;
   valError{i} = nVec{idx}.valError;
+  maxSP = nVec{idx}.sp;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.
   ef = zeros(1,numIterations);
@@ -83,10 +97,31 @@ for i=1:numPCD,
   
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
+  
+  %If the SP increment is not above the minimum threshold, we initiate the
+  %stopping countdown.
+  if (abs(maxSP-prevMaxSP) < minDiff)
+    mfCount = mfCount + 1;
+  else
+    mfCount = 0; %Stopping the countdown for the moment.
+    prevMaxSP = maxSP; % We move on to the next PCD.
+  end
+  
+  if mfCount == maxFail,
+    break; %We end the PCD extraction
+  end
+  
+  pcdExtracted = pcdExtracted + 1;
 end
 
-efficVec.mean = meanEfic;
-efficVec.std = stdEfic;
+%Returning the PCDs actually extracted.
+pcd = pcd(1:pcdExtracted,:);
+outNet = outNet(1:pcdExtracted);
+epoch = epoch(1:pcdExtracted);
+trnError = trnError(1:pcdExtracted);
+valError = valError(1:pcdExtracted);
+efficVec.mean = meanEfic(1:pcdExtracted);
+efficVec.std = stdEfic(1:pcdExtracted);
 
 
 
@@ -135,7 +170,7 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   
   
 
-function [trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
+function [trnAlgo, useSP, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
   %Getting the network information regarding its topology
 
   %Taking the training algo.
@@ -144,9 +179,8 @@ function [trnAlgo, useSP, numPCD, numNodes, trfFunc, usingBias, trnParam] = getN
   %Checking whether or not to use SP or MSE network validation goal.
   useSP = net.userdata.useSP;
 
-  %The number of PCDs to extract will be defined by the number of nodes in
-  %the first hidden layer.
-  numPCD = net.layers{1}.size;
+  %The maximum number of PCDs to be extracted is equal to the input size.
+  maxNumPCD = net.inputs{1}.size;
 
   %Taking the other layer's size and training function.
   numNodes = [net.inputs{1}.size zeros(1,length(net.layers))];

@@ -104,13 +104,14 @@ for i=1:maxNumPCD,
     mfCount = mfCount + 1;
   else
     mfCount = 0; %Stopping the countdown for the moment.
-    prevMaxSP = maxSP; % We move on to the next PCD.
   end
   
   if mfCount == maxFail,
     break; %We end the PCD extraction
   end
   
+  % We move on to the next PCD.
+  prevMaxSP = maxSP;
   pcdExtracted = pcdExtracted + 1;
 end
 

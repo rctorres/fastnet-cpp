@@ -70,7 +70,9 @@ prevMaxSP = 0;
 
 %Extracting one PCD per iteration.
 for i=1:maxNumPCD,
-  fprintf('Extracting PCD number %d\n', i);
+  pcdExtracted = i;
+  fprintf('Extracting PCD number %d\n', pcdExtracted);
+  
   
   %Creating the neural network based on the PCD extraction method.
   if deflation,
@@ -112,7 +114,6 @@ for i=1:maxNumPCD,
   
   % We move on to the next PCD.
   prevMaxSP = maxSP;
-  pcdExtracted = pcdExtracted + 1;
 end
 
 %Returning the PCDs actually extracted.

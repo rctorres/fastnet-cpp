@@ -54,6 +54,7 @@ trnError = cell(1,maxNumPCD);
 valError = cell(1,maxNumPCD);
 meanEfic = zeros(1,maxNumPCD);
 stdEfic = zeros(1,maxNumPCD);
+maxEfic = zeros(1,maxNumPCD);
 
 %Will count how many PCDs were actually extracted.
 pcdExtracted = 1;
@@ -88,6 +89,7 @@ for i=1:maxNumPCD,
   trnError{i} = nVec{idx}.trnError;
   valError{i} = nVec{idx}.valError;
   maxSP = nVec{idx}.sp;
+  maxEfic(i) = maxSP;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.
   ef = zeros(1,numIterations);
@@ -124,7 +126,7 @@ trnError = trnError(1:pcdExtracted);
 valError = valError(1:pcdExtracted);
 efficVec.mean = meanEfic(1:pcdExtracted);
 efficVec.std = stdEfic(1:pcdExtracted);
-
+efficVec.max = maxEfic(1:pcdExtracted);
 
 
 function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)

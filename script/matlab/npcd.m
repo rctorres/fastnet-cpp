@@ -66,7 +66,7 @@ pcdExtracted = 1;
 minDiff = 0.0001;
 maxFail = 3;
 mfCount = 0;
-prevMaxSP = 0;
+prevMeanSP = 0;
 
 
 %Extracting one PCD per iteration.
@@ -88,8 +88,7 @@ for i=1:maxNumPCD,
   epoch{i} = nVec{idx}.epoch;
   trnError{i} = nVec{idx}.trnError;
   valError{i} = nVec{idx}.valError;
-  maxSP = nVec{idx}.sp;
-  maxEfic(i) = maxSP;
+  maxEfic(i) = nVec{idx}.sp;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.
   ef = zeros(1,numIterations);
@@ -97,6 +96,7 @@ for i=1:maxNumPCD,
     ef(j) = nVec{j}.sp;
   end
   meanEfic(i) = mean(ef);
+  meanSP = meanEfic(i);
   stdEfic(i) = std(ef);
   
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
@@ -104,7 +104,7 @@ for i=1:maxNumPCD,
   
   %If the SP increment is not above the minimum threshold, we initiate the
   %stopping countdown.
-  if (abs(maxSP-prevMaxSP) < minDiff)
+  if ((meanSP-prevMeanSP) < minDiff)
     mfCount = mfCount + 1;
   else
     mfCount = 0; %Stopping the countdown for the moment.
@@ -115,7 +115,7 @@ for i=1:maxNumPCD,
   end
   
   % We move on to the next PCD.
-  prevMaxSP = maxSP;
+  prevMeanSP = meanSP;
 end
 
 %Returning the PCDs actually extracted.

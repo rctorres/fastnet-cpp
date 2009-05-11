@@ -11,7 +11,7 @@ net = newff2([nClasses,2,1], {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 20;
 net.trainParam.show = 1;
-batchSize = 10;
+net.trainParam.batchSize = 10;
 
 
 %Creating the training, validating and testing data sets.
@@ -27,11 +27,11 @@ outTst = single([ones(1, size(inTst{1},2), 'single') -ones(1, size(inTst{2},2), 
 
 %Training the networks to be compared.
 tic
-[fastNetCont, contE, contTrnE, contValE] = ntrain(net, contInTrn, outTrn, contInVal, outVal, batchSize);
+[fastNetCont, contE, contTrnE, contValE] = ntrain(net, contInTrn, outTrn, contInVal, outVal);
 toc
 
 tic
-[fastNet, e, trnE, valE] = ntrain(net, inTrn, inVal, batchSize);
+[fastNet, e, trnE, valE] = ntrain(net, inTrn, inVal);
 toc
 
 %Generating the testing outputs.

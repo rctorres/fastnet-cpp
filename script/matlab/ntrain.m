@@ -36,10 +36,10 @@ function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_v
 if (nargin == 3),
   %In this case, out_trn is, actually, the in_val.
   validateDataType(in_trn, out_trn);
-  [outNet, epoch, trnError, valError] = train_c(net, in_trn, [], out_trn, [], in_val);
+  [outNet, epoch, trnError, valError] = train_c(net, in_trn, [], out_trn, []);
 elseif (nargin == 5),
   validateDataType(in_trn, out_trn, in_val, out_val);
-  [outNet, epoch, trnError, valError] = train_c(net, in_trn, out_trn, in_val, out_val, batchSize);
+  [outNet, epoch, trnError, valError] = train_c(net, in_trn, out_trn, in_val, out_val);
 else
   error('Incorrect number of arguments! See help for information!');
 end

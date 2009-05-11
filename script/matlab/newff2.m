@@ -1,11 +1,9 @@
-function net = newff2(nodesDist, trfFunc, useSP, netTrain)
-%function net = newff2(nodesDist, trfFunc, useSP, netTrain)
+function net = newff2(nodesDist, trfFunc, netTrain)
+%function net = newff2(nodesDist, trfFunc, netTrain)
 %Creates a neural network structure just like the newff function (see help).
 %Parameters are:
 %  nodesDist 		-> The number of nodes in each layer (including the input).
 %  trfFunc   		-> A cell vector containing the transfer function in each layer (excluding the input).
-%  useSP (opt)     -> If true, then SP will be used for net goal.
-%                       Otherwise, MSE. If ommited, MSE goal will be used.
 %  netTrain (opt)  -> The training algorithm to be used. If none is specified, 'trainrp' will be used.
 %
 %The only modification in the net structure created, when compared to the one crated by newff
@@ -16,9 +14,6 @@ function net = newff2(nodesDist, trfFunc, useSP, netTrain)
 
 if nargin == 2,
 	netTrain = 'trainrp';
-    useSP = false;
-elseif nargin == 3,
-    netTrain = 'trainrp';
 end
 
 aux = [-ones(nodesDist(1),1) ones(nodesDist(1),1)];
@@ -39,7 +34,11 @@ for i=1:net.numLayers,
 end
 
 %Specifying the SP goal.
-net.userdata.useSP = useSP;
+net.trainParam.useSP = false;
+
+%Specifying the batch size.
+net.trainParam.batchSize = 10;
+
 
 %initializing the weights in the standard way, since the Matlab way sucks.
 wInit = -0.2;

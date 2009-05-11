@@ -180,9 +180,6 @@ function [trnAlgo, useSP, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = g
   %Taking the training algo.
   trnAlgo = net.trainFcn;
 
-  %Checking whether or not to use SP or MSE network validation goal.
-  useSP = net.userdata.useSP;
-
   %The maximum number of PCDs to be extracted is equal to the input size.
   maxNumPCD = net.inputs{1}.size;
 

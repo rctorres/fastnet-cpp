@@ -40,9 +40,6 @@ const unsigned IN_VAL_IDX = 3;
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
 
-/// Index, in the arguments list, of the batch size.
-const unsigned BATCH_SIZE_IDX = 5;
-
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
 
@@ -81,6 +78,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
     const unsigned maxFail = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
+    const unsigned batchSize = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "batchSize")));
 
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
@@ -97,7 +95,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     else throw "Invalid training algorithm option!";
 
     //Creating the object for the desired training type.
-    const unsigned batchSize = static_cast<unsigned>(mxGetScalar(args[BATCH_SIZE_IDX]));
     if (stdTrainingType)
     {
       train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], batchSize);
@@ -105,8 +102,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     else // It is a pattern recognition network.
     {
       //Getting whether we will use SP stoping criteria.
-      const mxArray *usingSP = mxGetField(mxGetField(netStr, 0, "userdata"), 0, "useSP");
-      const bool useSP = static_cast<bool>(mxGetScalar(usingSP));
+      const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));    
       train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, batchSize);
     }
 

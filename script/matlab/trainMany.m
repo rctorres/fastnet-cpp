@@ -1,5 +1,5 @@
-function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains)
-%function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains)
+function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains, forPCD)
+%function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains, forPCD)
 %Returns the maximum SP value obtained for each training, as well as the
 %trained network for each iteration. The function receives a non trained 
 %(but configured) neural network net, the training 
@@ -9,13 +9,19 @@ function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains)
 %vector containning the max sp obtained for the network, the trained network structure,
 %the epochs evolution, and the training and validation errors obtained for each epoch.
 %"I" is the index within the oNet cell vector where the best train was achieved.
+%If forPCD = true, then at each iteration, the weights of the input layer
+%will NOT be crambled. If ommited, forPCD = false.
 %
+
+if nargin == 5,
+  forPCD = false;
+end
 
 oNet = cell(1,numTrains);
 spVec = zeros(1, numTrains);
 
 for i=1:numTrains,
-  net = scrambleWeights(net);
+  net = scrambleWeights(net, forPCD);
   [aux.net, aux.epoch, aux.trnError, aux.valError] = ntrain(net, inTrn, inVal);
   aux.sp = calcSP(diag(genConfMatrix(nsim(aux.net, inTst))));
   spVec(i) = aux.sp;

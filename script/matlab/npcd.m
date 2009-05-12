@@ -43,7 +43,7 @@ elseif (nargin > 6) || (nargin < 4),
 end
 
 %Getting the desired network parameters.
-[trnAlgo, useSP, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
+[trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
 
 %Initializing the output vectors.
 pcd = [];
@@ -77,9 +77,9 @@ for i=1:maxNumPCD,
   
   %Creating the neural network based on the PCD extraction method.
   if deflation,
-    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam);
+    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
   else
-    trnNet = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam);
+    trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
   end
   
   %Doing the training.
@@ -129,10 +129,10 @@ efficVec.std = stdEfic(1:pcdExtracted);
 efficVec.max = maxEfic(1:pcdExtracted);
 
 
-function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
+function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
   nPCD = size(pcd,1);
   numNodes(2) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
-  net = newff2(numNodes, trfFunc, useSP, trnAlgo);
+  net = newff2(numNodes, trfFunc, trnAlgo);
   net.trainParam = trnParam;
   
   for i=1:length(net.layers),
@@ -148,9 +148,9 @@ function net = stdPCD(pcd, bias, trnAlgo, useSP, numNodes, trfFunc, usingBias, t
 
   
   
-function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNodes, trfFunc, usingBias, trnParam)
+function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
   numNodes(2) = 1;
-  net = newff2(numNodes, trfFunc, useSP, trnAlgo);
+  net = newff2(numNodes, trfFunc, trnAlgo);
   net.trainParam = trnParam;
 
   for i=1:length(net.layers),
@@ -174,7 +174,7 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, useSP, numNo
   
   
 
-function [trnAlgo, useSP, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
+function [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
   %Getting the network information regarding its topology
 
   %Taking the training algo.

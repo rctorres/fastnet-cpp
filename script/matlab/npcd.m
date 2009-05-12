@@ -63,7 +63,7 @@ pcdExtracted = 1;
 %previous one. Then , if 'maxFail' failures occur, in a sequence, the PCD
 %extraction is aborted. But mxCount is reset to zero if, after a failure,
 %the next extraction is successfull.
-minDiff = 0.0001;
+minDiff = 0.0002;
 maxFail = 3;
 mfCount = 0;
 prevMeanSP = 0;

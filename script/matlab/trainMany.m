@@ -26,7 +26,7 @@ oNet = cell(1,numTrains);
 spVec = zeros(1, numTrains);
 
 for i=1:numTrains,
-  net = scrambleWeights(net, forPCD);
+  net = scrambleWeights(net);
   
   %Restoring the passed init values for this node, if extracting PCD.
   if forPCD,

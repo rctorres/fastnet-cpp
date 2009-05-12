@@ -45,6 +45,18 @@ end
 %Getting the desired network parameters.
 [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
 
+%If we have more than 2 layers (excluding the input), then we'll perform
+%PCD extraction based on Caloba's rules, ensuring full PCD
+%orthogonalization. Also, in this case, there must be no bias in the first
+%hidded layer, and the activation function must be linear.
+if length(trfFunc) > 2,
+  multiLayer = true;
+  usingBias(1) = false;
+  trfFunc{1} = 'purelin';
+else
+  multiLayer = false;
+end
+
 %Initializing the output vectors.
 pcd = [];
 bias = [];
@@ -63,16 +75,16 @@ pcdExtracted = 1;
 %previous one. Then , if 'maxFail' failures occur, in a sequence, the PCD
 %extraction is aborted. But mxCount is reset to zero if, after a failure,
 %the next extraction is successfull.
-minDiff = 0.0002;
+minDiff = 0.0003;
 maxFail = 3;
 mfCount = 0;
 prevMeanSP = 0;
-
+spDiff = 0;
 
 %Extracting one PCD per iteration.
 for i=1:maxNumPCD,
   pcdExtracted = i;
-  fprintf('Extracting PCD number %d\n', pcdExtracted);
+  fprintf('Extracting PCD number %d (SP diff = %f)\n', pcdExtracted, spDiff);
   
   
   %Creating the neural network based on the PCD extraction method.
@@ -80,6 +92,9 @@ for i=1:maxNumPCD,
     [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
   else
     trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
+    if (multiLayer),
+      [trnNet, inTrn, inVal, inTst] = forceOrthogonalization(trnNet, inTrn, inVal, inTst);
+    end
   end
   
   %Doing the training.
@@ -104,7 +119,8 @@ for i=1:maxNumPCD,
   
   %If the SP increment is not above the minimum threshold, we initiate the
   %stopping countdown.
-  if ((meanSP-prevMeanSP) < minDiff)
+  spDiff = meanSP-prevMeanSP;
+  if (spDiff < minDiff)
     mfCount = mfCount + 1;
   else
     mfCount = 0; %Stopping the countdown for the moment.
@@ -173,6 +189,37 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, tr
   end
   
   
+function [oNet, inTrn, inVal, inTst] = forceOrthogonalization(net, trn, val, tst)
+  oNet = net;
+  inTrn = trn;
+  inVal = val;
+  inTst = tst;
+
+  %If we  have already extracted a PCD, we remove
+  % the information of the last PCD from the init values of the
+  % new PCD to be extracted, and also from the input data.
+  if size(net.IW{1},1) > 1,
+    Nd = size(trn{1},1);
+    
+    %Getting the last PCD extracted.
+    W = net.IW{1}(end-1,:);
+    
+    %Removing the info related to the PCD already extracted.
+    Nc = length(trn);
+    inTrn = cell(1,Nc);
+    inVal = cell(1,Nc);
+    inTst = cell(1,Nc);
+    for i=1:Nc,
+      inTrn{i} = trn{i} - ( repmat(W*trn{i},Nd,1) .* trn{i} );
+      inVal{i} = val{i} - ( repmat(W*val{i},Nd,1) .* val{i} );
+      inTst{i} = tst{i} - ( repmat(W*tst{i},Nd,1) .* tst{i} );
+    end
+  
+    %Pointing the initial weights of the new PCD to the right direction.
+    initPcdVal = net.IW{1}(end,:);
+    oNet.IW{1}(end,:) = initPcdVal - ( (W*initPcdVal') * initPcdVal );
+  end
+
 
 function [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)
   %Getting the network information regarding its topology

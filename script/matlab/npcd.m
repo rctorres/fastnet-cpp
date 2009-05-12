@@ -60,6 +60,7 @@ end
 %Initializing the output vectors.
 pcd = [];
 bias = [];
+saveWeights = [];
 outNet = cell(1,maxNumPCD);
 epoch = cell(1,maxNumPCD);
 trnError = cell(1,maxNumPCD);
@@ -93,12 +94,12 @@ for i=1:maxNumPCD,
   else
     trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
     if (multiLayer),
-      [trnNet, inTrn, inVal, inTst] = forceOrthogonalization(trnNet, inTrn, inVal, inTst);
+      [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
     end
   end
   
   %Doing the training.
-  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
+  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations, multiLayer);
   outNet{i} = nVec{idx}.net;
   epoch{i} = nVec{idx}.epoch;
   trnError{i} = nVec{idx}.trnError;
@@ -189,7 +190,7 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, tr
   end
   
   
-function [oNet, inTrn, inVal, inTst] = forceOrthogonalization(net, trn, val, tst)
+function [oNet, inTrn, inVal, inTst, sW] = forceOrthogonalization(net, trn, val, tst, saveWeights)
   oNet = net;
   inTrn = trn;
   inVal = val;
@@ -216,8 +217,10 @@ function [oNet, inTrn, inVal, inTst] = forceOrthogonalization(net, trn, val, tst
     end
   
     %Pointing the initial weights of the new PCD to the right direction.
-    initPcdVal = net.IW{1}(end,:);
-    oNet.IW{1}(end,:) = initPcdVal - ( (W*initPcdVal') * initPcdVal );
+    sW = saveWeights - ( (W*saveWeights') * saveWeights );
+    oNet.IW{1}(end,:) = sW;
+  else
+    sW = net.IW{1};
   end
 
 

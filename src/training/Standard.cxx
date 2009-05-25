@@ -29,7 +29,6 @@ REAL StandardTraining::valNetwork()
 {
   REAL gbError = 0.;
   REAL error = 0.;
-  unsigned pos;
   const REAL *output;
 
   const REAL *input = inValData;
@@ -39,7 +38,7 @@ REAL StandardTraining::valNetwork()
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
 
-  #pragma omp parallel shared(input,target,chunk,nv,gbError,numValEvents) private(i,thId,output,error,pos)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError,numValEvents) private(i,thId,output,error)
   {
     thId = omp_get_thread_num();
     error = 0.;

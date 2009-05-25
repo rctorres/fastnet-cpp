@@ -17,7 +17,7 @@ protected:
   unsigned outputSize;
   bool useSP;
   std::vector<DataManager*> dmTrn;
-  std::vector<DataManager*> dmVal;
+  int *numValEvents;
 
 
 public:

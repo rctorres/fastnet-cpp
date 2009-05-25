@@ -19,6 +19,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   inTrnList = new const REAL* [numPatterns];
   inValList = new const REAL* [numPatterns];
   targList = new const REAL* [numPatterns];
+  numValEvents = new int [numPatterns];
   if (useSP) epochValOutputs = new REAL* [numPatterns];
   
   for (unsigned i=0; i<numPatterns; i++)
@@ -35,7 +36,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
     inTrnList[i] = static_cast<REAL*>(mxGetData(patTrnData));
     inValList[i] = static_cast<REAL*>(mxGetData(patValData));
     dmTrn.push_back(new DataManager(mxGetN(patTrnData)));
-    dmVal.push_back(new DataManager(mxGetN(patValData)));
+    numValEvents[i] = static_cast<int>(mxGetN(patValData));
     if (useSP) epochValOutputs[i] = new REAL [outputSize*batchSize];
     DEBUG2("Number of training events for pattern " << i << ": " << mxGetN(patTrnData));
     DEBUG2("Number of validating events for pattern " << i << ": " << mxGetN(patValData));
@@ -57,7 +58,6 @@ PatternRecognition::~PatternRecognition()
   for (unsigned i=0; i<numPatterns; i++)
   {
     delete dmTrn[i];
-    delete dmVal[i];
     delete [] inTrnList[i];
     delete [] inValList[i];
     delete [] targList[i];
@@ -66,6 +66,7 @@ PatternRecognition::~PatternRecognition()
   delete [] inTrnList;
   delete [] inValList;
   delete [] targList;
+  delete [] numValEvents;
   if (useSP) delete [] epochValOutputs;
 };
 
@@ -130,48 +131,47 @@ REAL PatternRecognition::sp()
   return maxSP;
 };
 
+
 REAL PatternRecognition::valNetwork()
 {
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0.;
   FastNet::Backpropagation **nv = netVec;
+  int totEvents = 0;
   
   for (unsigned pat=0; pat<numPatterns; pat++)
   {
+    totEvents += numValEvents[pat];
+ 
     const REAL *target = targList[pat];
     const REAL *input = inValList[pat];
     const REAL *output;
-    unsigned pos = 0;
     REAL error = 0.;
     int i, thId;
     int chunk = chunkSize;
-    DataManager *dm = dmVal[pat];
 
     REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
     
     DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
     
-    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,numValEvents) private(i,thId,output,error)
     {
       thId = omp_get_thread_num();
       error = 0.;
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<batchSize; i++)
+      for (i=0; i<numValEvents[pat]; i++)
       {
-        #pragma omp critical
-        pos = dm->get();
-
-        error += nv[thId]->applySupervisedInput(&input[pos*inputSize], target, output);
+        error += nv[thId]->applySupervisedInput(&input[i*inputSize], target, output);
         if (useSP) outList[i] = output[0];
       }
-      
+
       #pragma omp critical
       gbError += error;
     }
   }
 
-  return (useSP) ? sp() : (gbError / static_cast<REAL>(numPatterns*batchSize));
+  return (useSP) ? sp() : (gbError / static_cast<REAL>(totEvents));
 };
 
 

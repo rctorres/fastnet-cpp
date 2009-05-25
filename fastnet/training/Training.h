@@ -23,7 +23,7 @@ struct TrainData
 {
   REAL epoch;
   REAL trnError;
-  REAL tstError;
+  REAL valError;
 };
 
 
@@ -124,14 +124,14 @@ public:
   the flushErrors method. 
   @param[in] epoch The epoch number.
   @param[in] trnError The training error obtained in that epoch.
-  @param[in] tstError The testing error obtained in that epoch.
+  @param[in] valError The validation error obtained in that epoch.
  */
-  virtual void saveTrainInfo(unsigned epoch, REAL trnError, REAL tstError)
+  virtual void saveTrainInfo(unsigned epoch, REAL trnError, REAL valError)
   {
     TrainData trainData;
     trainData.epoch = (REAL) epoch;
     trainData.trnError = trnError;
-    trainData.tstError = tstError;
+    trainData.valError = valError;
     trnEvolution.push_back(trainData);
   };
 
@@ -143,24 +143,24 @@ public:
   save these values stored in the linked list in Matlab vectors.
   @param[out] epoch A vector containing the epochs values.
   @param[out] trnError A vector containing the training error obtained in each epoch.
-  @param[out] tstErrorA vector containing the testing error obtained in each epoch.
+  @param[out] valError A vector containing the validation error obtained in each epoch.
   */
-  virtual void flushTrainInfo(mxArray *&epoch, mxArray *&trnError, mxArray *&tstError)
+  virtual void flushTrainInfo(mxArray *&epoch, mxArray *&trnError, mxArray *&valError)
   {
     const unsigned size = trnEvolution.size();  
     epoch = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     trnError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    tstError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    valError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
 
     REAL *ep = static_cast<REAL*>(mxGetData(epoch));
     REAL *trn = static_cast<REAL*>(mxGetData(trnError));
-    REAL *tst = static_cast<REAL*>(mxGetData(tstError));
+    REAL *val = static_cast<REAL*>(mxGetData(valError));
   
     for (list<TrainData>::const_iterator itr = trnEvolution.begin(); itr != trnEvolution.end(); itr++)
     {
       *ep++ = itr->epoch;
       *trn++ = itr->trnError;
-      *tst++ = itr->tstError;
+      *val++ = itr->valError;
     }
   };
   

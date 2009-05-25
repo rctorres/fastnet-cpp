@@ -17,13 +17,12 @@ StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray 
   outputSize = static_cast<unsigned>(mxGetM(outTrn));
   
   dmTrn = new DataManager(static_cast<unsigned>(mxGetN(inTrn)));
-  dmVal = new DataManager(static_cast<unsigned>(mxGetN(inVal)));
+  numValEvents = static_cast<int>(mxGetN(inVal));
 };
 
 StandardTraining::~StandardTraining()
 {
   delete dmTrn;
-  delete dmVal;
 }
 
 REAL StandardTraining::valNetwork()
@@ -39,26 +38,22 @@ REAL StandardTraining::valNetwork()
   int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
-  DataManager *dm = dmVal;
 
-  #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError,numValEvents) private(i,thId,output,error,pos)
   {
     thId = omp_get_thread_num();
     error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
-    for (i=0; i<batchSize; i++)
+    for (i=0; i<numValEvents; i++)
     {
-      #pragma omp critical
-      pos = dm->get();
-      
-      error += nv[thId]->applySupervisedInput(&input[pos*inputSize], &target[pos*outputSize], output);
+      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
     }
 
     #pragma omp critical
     gbError += error;
   }
-  return (gbError / static_cast<REAL>(batchSize));
+  return (gbError / static_cast<REAL>(numValEvents));
 };
 
 

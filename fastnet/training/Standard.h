@@ -12,8 +12,8 @@ protected:
   const REAL *outValData;
   unsigned inputSize;
   unsigned outputSize;
+  int numValEvents;
   DataManager *dmTrn;
-  DataManager *dmVal;
 
 public:
   StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);

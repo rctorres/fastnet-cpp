@@ -19,7 +19,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   inTrnList = new const REAL* [numPatterns];
   inValList = new const REAL* [numPatterns];
   targList = new const REAL* [numPatterns];
-  numValEvents = new int [numPatterns];
+  numValEvents = new unsigned [numPatterns];
   if (useSP) epochValOutputs = new REAL* [numPatterns];
   
   for (unsigned i=0; i<numPatterns; i++)
@@ -36,7 +36,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
     inTrnList[i] = static_cast<REAL*>(mxGetData(patTrnData));
     inValList[i] = static_cast<REAL*>(mxGetData(patValData));
     dmTrn.push_back(new DataManager(mxGetN(patTrnData)));
-    numValEvents[i] = static_cast<int>(mxGetN(patValData));
+    numValEvents[i] = static_cast<unsigned>(mxGetN(patValData));
     if (useSP) epochValOutputs[i] = new REAL [numValEvents[i]];
     DEBUG2("Number of training events for pattern " << i << ": " << mxGetN(patTrnData));
     DEBUG2("Number of validating events for pattern " << i << ": " << mxGetN(patValData));
@@ -91,8 +91,8 @@ REAL PatternRecognition::sp()
   const REAL *noise = epochValOutputs[TARG_NOISE];
   const REAL signalTarget = targList[TARG_SIGNAL][0];
   const REAL noiseTarget = targList[TARG_NOISE][0];
-  const int numSignalEvents = numValEvents[TARG_SIGNAL];
-  const int numNoiseEvents = numValEvents[TARG_NOISE];
+  const int numSignalEvents = static_cast<int>(numValEvents[TARG_SIGNAL]);
+  const int numNoiseEvents = static_cast<int>(numValEvents[TARG_NOISE]);
   const REAL RESOLUTION = 0.01;
   REAL maxSP = -1.;
   int i;
@@ -105,7 +105,7 @@ REAL PatternRecognition::sp()
     REAL noiseEffic = 0.;
     unsigned se, ne;
     
-    #pragma omp parallel shared(signal, noise, sigEffic, noiseEffic, numSignalEvents, numNoiseEvents) private(i,se,ne)
+    #pragma omp parallel shared(signal, noise, sigEffic, noiseEffic) private(i,se,ne)
     {
       se = ne = 0;
       
@@ -148,6 +148,7 @@ REAL PatternRecognition::valNetwork()
     const REAL *target = targList[pat];
     const REAL *input = inValList[pat];
     const REAL *output;
+    const int numEvents = numValEvents[pat];
     REAL error = 0.;
     int i, thId;
     int chunk = chunkSize;
@@ -156,13 +157,13 @@ REAL PatternRecognition::valNetwork()
     
     DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
     
-    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,numValEvents) private(i,thId,output,error)
+    #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {
       thId = omp_get_thread_num();
       error = 0.;
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<numValEvents[pat]; i++)
+      for (i=0; i<numEvents; i++)
       {
         error += nv[thId]->applySupervisedInput(&input[i*inputSize], target, output);
         if (useSP) outList[i] = output[0];

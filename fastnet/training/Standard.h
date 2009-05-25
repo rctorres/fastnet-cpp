@@ -12,7 +12,7 @@ protected:
   const REAL *outValData;
   unsigned inputSize;
   unsigned outputSize;
-  int numValEvents;
+  unsigned numValEvents;
   DataManager *dmTrn;
 
 public:

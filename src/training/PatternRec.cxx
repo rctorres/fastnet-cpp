@@ -93,7 +93,7 @@ REAL PatternRecognition::sp()
   const REAL noiseTarget = targList[TARG_NOISE][0];
   const int numSignalEvents = numValEvents[TARG_SIGNAL];
   const int numNoiseEvents = numValEvents[TARG_NOISE];
-  const REAL RESOLUTION = 0.2;
+  const REAL RESOLUTION = 0.01;
   REAL maxSP = -1.;
   int i;
   int chunk = chunkSize;
@@ -128,10 +128,8 @@ REAL PatternRecognition::sp()
     //Using normalized SP calculation.
     const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
     if (sp > maxSP) maxSP = sp;
-    REPORT("Electron = " << sigEffic << ", Jets = " << noiseEffic << ", SP = " << sp);
   }
   
-  REPORT("Max SP = " << maxSP);
   return maxSP;
 };
 

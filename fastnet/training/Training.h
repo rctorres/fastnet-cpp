@@ -180,7 +180,7 @@ public:
   
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)
   {
-    REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << "mse (val) = " << valError);
+    REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " mse (val) = " << valError);
   };
   
   virtual REAL valNetwork() = 0;

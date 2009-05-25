@@ -37,7 +37,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
     inValList[i] = static_cast<REAL*>(mxGetData(patValData));
     dmTrn.push_back(new DataManager(mxGetN(patTrnData)));
     numValEvents[i] = static_cast<int>(mxGetN(patValData));
-    if (useSP) epochValOutputs[i] = new REAL [outputSize*batchSize];
+    if (useSP) epochValOutputs[i] = new REAL [numValEvents[i]];
     DEBUG2("Number of training events for pattern " << i << ": " << mxGetN(patTrnData));
     DEBUG2("Number of validating events for pattern " << i << ": " << mxGetN(patValData));
     
@@ -91,6 +91,8 @@ REAL PatternRecognition::sp()
   const REAL *noise = epochValOutputs[TARG_NOISE];
   const REAL signalTarget = targList[TARG_SIGNAL][0];
   const REAL noiseTarget = targList[TARG_NOISE][0];
+  const int numSignalEvents = numValEvents[TARG_SIGNAL];
+  const int numNoiseEvents = numValEvents[TARG_NOISE];
   const REAL RESOLUTION = 0.001;
   REAL maxSP = -1.;
   int i;
@@ -103,25 +105,25 @@ REAL PatternRecognition::sp()
     REAL noiseEffic = 0.;
     unsigned se, ne;
     
-    #pragma omp parallel shared(signal, noise, sigEffic, noiseEffic) private(i,se,ne)
+    #pragma omp parallel shared(signal, noise, sigEffic, noiseEffic, numSignalEvents, numNoiseEvents) private(i,se,ne)
     {
       se = ne = 0;
       
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<batchSize; i++) if (signal[i] >= pos) se++;
+      for (i=0; i<numSignalEvents; i++) if (signal[i] >= pos) se++;
       
       #pragma omp critical
       sigEffic += static_cast<REAL>(se);
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<batchSize; i++) if (noise[i] < pos) ne++;
+      for (i=0; i<numNoiseEvents; i++) if (noise[i] < pos) ne++;
       
       #pragma omp critical
       noiseEffic += static_cast<REAL>(ne);
     }
     
-    sigEffic /= static_cast<REAL>(batchSize);
-    noiseEffic /= static_cast<REAL>(batchSize);
+    sigEffic /= static_cast<REAL>(numSignalEvents);
+    noiseEffic /= static_cast<REAL>(numNoiseEvents);
     
     //Using normalized SP calculation.
     const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);

@@ -57,6 +57,9 @@ else
   multiLayer = false;
 end
 
+maxNumPCD = 5; %TIRAR ESTA LINHA DEPOIS!!! E DEBUG
+
+
 %Initializing the output vectors.
 pcd = [];
 bias = [];
@@ -93,13 +96,13 @@ for i=1:maxNumPCD,
     [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
   else
     trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
-    if (multiLayer),
-      [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
+    if (multiLayer && i>1),
+%      [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
     end
   end
   
   %Doing the training.
-  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations, multiLayer);
+  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations, (multiLayer && i>1));
   outNet{i} = nVec{idx}.net;
   epoch{i} = nVec{idx}.epoch;
   trnError{i} = nVec{idx}.trnError;
@@ -191,36 +194,33 @@ function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, tr
   
   
 function [oNet, inTrn, inVal, inTst, sW] = forceOrthogonalization(net, trn, val, tst, saveWeights)
-  oNet = net;
-  inTrn = trn;
-  inVal = val;
-  inTst = tst;
-
   %If we  have already extracted a PCD, we remove
   % the information of the last PCD from the init values of the
   % new PCD to be extracted, and also from the input data.
-  if size(net.IW{1},1) > 1,
-    Nd = size(trn{1},1);
+
+  oNet = net;
+  Nd = size(trn{1},1);
     
-    %Getting the last PCD extracted.
-    W = net.IW{1}(end-1,:);
+  %Getting the last PCD extracted.
+  W = net.IW{1}(end-1,:);
     
-    %Removing the info related to the PCD already extracted.
-    Nc = length(trn);
-    inTrn = cell(1,Nc);
-    inVal = cell(1,Nc);
-    inTst = cell(1,Nc);
-    for i=1:Nc,
-      inTrn{i} = trn{i} - ( repmat(W*trn{i},Nd,1) .* trn{i} );
-      inVal{i} = val{i} - ( repmat(W*val{i},Nd,1) .* val{i} );
-      inTst{i} = tst{i} - ( repmat(W*tst{i},Nd,1) .* tst{i} );
-    end
+  %Removing the info related to the PCD already extracted.
+  Nc = length(trn);
+  inTrn = cell(1,Nc);
+  inVal = cell(1,Nc);
+  inTst = cell(1,Nc);
+  for i=1:Nc,
+    inTrn{i} = trn{i} - ( repmat(W*trn{i},Nd,1) .* trn{i} );
+    inVal{i} = val{i} - ( repmat(W*val{i},Nd,1) .* val{i} );
+    inTst{i} = tst{i} - ( repmat(W*tst{i},Nd,1) .* tst{i} );
+  end
   
-    %Pointing the initial weights of the new PCD to the right direction.
+  %Pointing the initial weights of the new PCD to the right direction.
+  if isempty(saveWeights),
+    sW = [];
+  else
     sW = saveWeights - ( (W*saveWeights') * saveWeights );
     oNet.IW{1}(end,:) = sW;
-  else
-    sW = net.IW{1};
   end
 
 

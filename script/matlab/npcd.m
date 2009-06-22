@@ -57,8 +57,6 @@ else
   multiLayer = false;
 end
 
-maxNumPCD = 5; %TIRAR ESTA LINHA DEPOIS!!! E DEBUG
-
 
 %Initializing the output vectors.
 pcd = [];

@@ -251,7 +251,7 @@ void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currS
       bestGoalSP = currSPError;
       isBestSP = true;
     }
-    isBestSP = false;
+    else isBestSP = false;
   }
 };
 

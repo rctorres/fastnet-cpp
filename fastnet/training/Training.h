@@ -139,16 +139,16 @@ public:
                               const bool stop_mse, const bool stop_sp)
   {
     TrainData trainData;    
-    trainData.epoch;
-    trainData.mse_trn;
-    trainData.mse_val;
-    trainData.sp_val;
-    trainData.is_best_mse;
-    trainData.is_best_sp;
-    trainData.num_fails_mse;
-    trainData.num_fails_sp;
-    trainData.stop_mse;
-    trainData.stop_sp;
+    trainData.epoch = epoch;
+    trainData.mse_trn = mse_trn;
+    trainData.mse_val = mse_val;
+    trainData.sp_val = sp_val;
+    trainData.is_best_mse = is_best_mse;
+    trainData.is_best_sp = is_best_sp;
+    trainData.num_fails_mse = num_fails_mse;
+    trainData.num_fails_sp = num_fails_sp;
+    trainData.stop_mse = stop_mse;
+    trainData.stop_sp = stop_sp;
     trnEvolution.push_back(trainData);
   };
 
@@ -230,7 +230,7 @@ public:
       bestGoal = currMSEError;
       isBestMSE = true;
     }
-    isBestMSE = false;
+    else isBestMSE = false;
   };
   
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)

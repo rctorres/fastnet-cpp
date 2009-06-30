@@ -127,8 +127,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
       const REAL mse_trn = train->trainNetwork();
-
-      //Updating the weight and bias matrices.
       net->updateWeights(batchSize);
 
       //Validating the new network.

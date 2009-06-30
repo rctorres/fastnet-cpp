@@ -29,7 +29,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  virtual REAL valNetwork();
+  virtual void valNetwork(REAL &mseVal, REAL &spVal);
 
 
   /// Applies the training set for the network's training.

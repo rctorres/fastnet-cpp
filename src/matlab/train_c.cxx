@@ -15,6 +15,8 @@
 #include <fstream>
 #include <iomanip>
 #include <mex.h>
+#include <cstring>
+#include <ctime>
 
 #include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
@@ -58,12 +60,24 @@ bool isEmpty(const mxArray *mat)
   return ( (!mxGetM(mat)) && (!mxGetN(mat)) );
 }
 
+string get_debug_name()
+{
+  time_t t_aux = time(NULL);
+  const tm *t = localtime(&t_aux);
+  char time_aux[50];
+  strftime(time_aux, 50, "debug_%Y-%m-%d_%H-%M-%S.txt", t);
+  return time_aux;
+}
+
 
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   Backpropagation *net = NULL;
   Training *train = NULL;
+  
+  const std::string dbFileName = get_debug_name();
+  ofstream arq(dbFileName.c_str());
   
   try
   {
@@ -118,17 +132,49 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (show) REPORT("Network Training Status:");
     
     // Performing the training.
+    unsigned epoch_best_mse = 0;
+    unsigned epoch_best_sp = 0;
     unsigned numFails = 0;
-    REAL trnError, valError;
+    unsigned numFailsSP = 0;
+    unsigned numFailsMSE = 0;
     unsigned dispCounter = 0;
+    REAL best_mse = 0.;
+    REAL best_sp = 0.;
+    const unsigned max_fail_mse = 30;
+    const unsigned max_fail_sp = 100;
+    REAL valMSEError, valSPError;
+    bool isBestMSE, isBestSP;
     
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
-      trnError = train->trainNetwork();
-      valError = train->valNetwork();
+      const REAL trnError = train->trainNetwork();
+
+      //Updating the weight and bias matrices.
+      net->updateWeights(batchSize);
+
+      //Validating the new network.
+      train->valNetwork(valMSEError, valSPError);
 
       // Saving the best weight result.
-      if (train->isBestNetwork(valError))
+      train->isBestNetwork(valMSEError, valSPError, isBestMSE, isBestSP);
+      
+      if (isBestMSE)
+      {
+        numFailsMSE = 0;
+        epoch_best_mse = epoch;
+        best_mse = valMSEError;
+      }
+      else numFailsMSE++;
+
+      if (isBestSP)
+      {
+        numFailsSP = 0;
+        epoch_best_sp = epoch;
+        best_sp = valSPError;
+      }
+      else numFailsSP++;
+      
+      if (isBestMSE || isBestSP)
       {
         net->saveBestTrain();
         //Reseting the numFails counter.
@@ -139,19 +185,43 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       //Showing partial results at every "show" epochs (if show != 0).
       if (show)
       {
-        if (!dispCounter) train->showTrainingStatus(epoch, trnError, valError);
+        if (!dispCounter) train->showTrainingStatus(epoch, trnError, valMSEError);
         dispCounter = (dispCounter + 1) % show;
       }
 
       //Saving the training evolution info.
-      train->saveTrainInfo(epoch, trnError, valError);
+      train->saveTrainInfo(epoch, trnError, valMSEError);
 
-      //Updating the weight and bias matrices.
-      net->updateWeights(batchSize);
+      arq << epoch << " " 
+          << trnError << " " 
+          << valMSEError << " "
+          << valSPError << " "
+          << isBestMSE << " "
+          << isBestSP << " "
+          << numFailsMSE << " "
+          << numFailsSP << " "
+          << numFails << " "
+          << (numFailsMSE >= max_fail_mse) << " "
+          << (numFailsSP >= max_fail_sp) << " "
+          << (numFails == maxFail) << " "
+          << endl;
       
-      if (numFails == maxFail)
+      if ( (numFailsMSE >= max_fail_mse) && (numFailsSP >= max_fail_sp) )
       {
         if (show) REPORT("Maximum number of failures reached. Finishing training...");
+        arq << -1  << " "
+            << epoch_best_mse << " " 
+            << best_mse << " " 
+            << epoch_best_sp << " "
+            << best_sp << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "
+            << endl;
         break;
       }
     }
@@ -182,4 +252,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (net) delete net;
     if (train) delete train;
   }
+  
+  arq.close();
 }

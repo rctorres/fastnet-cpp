@@ -8,7 +8,7 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   useSP = usingSP;
   if (useSP)
   {
-    bestGoal = 0.;
+    bestGoalSP = 0.;
     DEBUG2("I'll use SP validating criterium.");
   }
   else DEBUG2("I'll NOT use SP validating criterium.");
@@ -134,7 +134,7 @@ REAL PatternRecognition::sp()
 };
 
 
-REAL PatternRecognition::valNetwork()
+void PatternRecognition::valNetwork(REAL &mseVal, REAL &spVal)
 {
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0.;
@@ -174,7 +174,8 @@ REAL PatternRecognition::valNetwork()
     }
   }
 
-  return (useSP) ? sp() : (gbError / static_cast<REAL>(totEvents));
+  mseVal = gbError / static_cast<REAL>(totEvents);
+  if (useSP)  spVal = sp();
 };
 
 
@@ -237,20 +238,21 @@ void PatternRecognition::showInfo(const unsigned nEpochs) const
   REPORT("Using SP Stopping Criteria      : " << (useSP) ? "true" : "false");
 };
 
-bool PatternRecognition::isBestNetwork(const REAL currError)
+void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP)
 {
+  //Knowing whether we have a better network, according to the MSE validation criterium.
+  Training::isBestNetwork(currMSEError, currSPError, isBestMSE, isBestSP);
+
+  //Knowing whether we have a better network, according to the SP validation criterium.  
   if (useSP)
   {
-    if (currError > bestGoal)
+    if (currSPError > bestGoalSP)
     {
-      bestGoal = currError;
-      return true;
+      bestGoalSP = currSPError;
+      isBestSP = true;
     }
-    return false;
+    isBestSP = false;
   }
-  
-  //Otherwise we use the standard MSE method.
-  return Training::isBestNetwork(currError);
 };
 
 void PatternRecognition::showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)

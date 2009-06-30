@@ -168,14 +168,14 @@ public:
 
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
-  virtual bool isBestNetwork(const REAL currError)
+  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP)
   {
-    if (currError < bestGoal)
+    if (currMSEError < bestGoal)
     {
-      bestGoal = currError;
-      return true;
+      bestGoal = currMSEError;
+      isBestMSE = true;
     }
-    return false;
+    isBestMSE = false;
   };
   
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)
@@ -183,7 +183,7 @@ public:
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " mse (val) = " << valError);
   };
   
-  virtual REAL valNetwork() = 0;
+  virtual void valNetwork(REAL &mseVal, REAL &spVal) = 0;
 
   virtual REAL trainNetwork() = 0;  
 };

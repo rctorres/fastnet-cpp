@@ -16,6 +16,7 @@ protected:
   unsigned inputSize;
   unsigned outputSize;
   bool useSP;
+  REAL bestGoalSP;
   std::vector<DataManager*> dmTrn;
   unsigned *numValEvents;
 
@@ -45,7 +46,7 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  virtual REAL valNetwork();
+  virtual void valNetwork(REAL &mseVal, REAL &spVal);
 
 
   /// Applies the training set of each pattern for the network's training.
@@ -66,7 +67,7 @@ public:
 
   virtual void showInfo(const unsigned nEpochs) const;
 
-  virtual bool isBestNetwork(const REAL currError);
+  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP);
 
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError);
 };

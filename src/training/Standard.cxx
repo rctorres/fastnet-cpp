@@ -25,7 +25,7 @@ StandardTraining::~StandardTraining()
   delete dmTrn;
 }
 
-REAL StandardTraining::valNetwork()
+void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
 {
   REAL gbError = 0.;
   REAL error = 0.;
@@ -53,7 +53,8 @@ REAL StandardTraining::valNetwork()
     #pragma omp critical
     gbError += error;
   }
-  return (gbError / static_cast<REAL>(numEvents));
+  
+  mseVal = gbError / static_cast<REAL>(numEvents);
 };
 
 

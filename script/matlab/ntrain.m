@@ -1,5 +1,5 @@
-function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_val, out_val)
-%function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_val, out_val)
+function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val)
+%function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val)
 %Trains a neural network using the network structure created by "newff2".
 %Parameters are:
 %	net             -> The neural network structure created by "newff2".
@@ -11,7 +11,7 @@ function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_v
 %The data presented to the network must be organized so that each column is an event (either input or output),
 %and the number of rows specifies the number of events to be presented to the neural network. 
 %
-%function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, in_val)
+%function [outNet, trnInfo] = ntrain(net, in_trn, in_val)
 %In this case, the training process will be optimized for pattern recognition problem.
 %Parameters are:
 %	net             -> The neural network structure created by "newff2".
@@ -27,19 +27,17 @@ function [outNet, epoch, trnError, valError] = ntrain(net, in_trn, out_trn, in_v
 %
 %In every case, the function returns:
 %	outNet -> The network structure with the new weight values obtained after training.
-%	epoch    -> The epoch values.
-%	trnError -> The training errors obtained for each epoch.
-%	valError -> The validating errors obtained for each epoch.
+%	trnInfo    -> A structure containing the training evolution information.
 %
 
 %Case pat rec net.
 if (nargin == 3),
   %In this case, out_trn is, actually, the in_val.
   validateDataType(in_trn, out_trn);
-  [outNet, epoch, trnError, valError] = train_c(net, in_trn, [], out_trn, []);
+  [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, []);
 elseif (nargin == 5),
   validateDataType(in_trn, out_trn, in_val, out_val);
-  [outNet, epoch, trnError, valError] = train_c(net, in_trn, out_trn, in_val, out_val);
+  [outNet, trnInfo] = train_c(net, in_trn, out_trn, in_val, out_val);
 else
   error('Incorrect number of arguments! See help for information!');
 end

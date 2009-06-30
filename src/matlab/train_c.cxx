@@ -15,8 +15,6 @@
 #include <fstream>
 #include <iomanip>
 #include <mex.h>
-#include <cstring>
-#include <ctime>
 
 #include "fastnet/sys/Reporter.h"
 #include "fastnet/neuralnet/backpropagation.h"
@@ -45,14 +43,8 @@ const unsigned OUT_VAL_IDX = 4;
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
 
-/// Index, in the return vector, of the vector containing the epoch values.
-const unsigned OUT_EPOCH_IDX = 1;
-
-/// Index, in the return vector, of the vector containing the training error obtained in each epoch.
-const unsigned OUT_TRN_ERROR_IDX = 2;
-
-//Index, in the return vector, of the vector containing the validating error obtained in each epoch.
-const unsigned OUT_VAL_ERROR_IDX = 3;
+/// Index, in the return vector, of the structure containing the training evolution.
+const unsigned OUT_TRN_EVO = 1;
 
 
 bool isEmpty(const mxArray *mat)
@@ -60,24 +52,11 @@ bool isEmpty(const mxArray *mat)
   return ( (!mxGetM(mat)) && (!mxGetN(mat)) );
 }
 
-string get_debug_name()
-{
-  time_t t_aux = time(NULL);
-  const tm *t = localtime(&t_aux);
-  char time_aux[50];
-  strftime(time_aux, 50, "debug_%Y-%m-%d_%H-%M-%S.txt", t);
-  return time_aux;
-}
-
-
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   Backpropagation *net = NULL;
   Training *train = NULL;
-  
-  const std::string dbFileName = get_debug_name();
-  ofstream arq(dbFileName.c_str());
   
   try
   {
@@ -91,7 +70,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
-    const unsigned maxFail = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
+    const unsigned fail_limit = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
     const unsigned batchSize = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "batchSize")));
 
     //Selecting the training type by reading the training agorithm.    
@@ -108,6 +87,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else throw "Invalid training algorithm option!";
 
+    //Getting whether we will use SP stoping criteria.
+    const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));
+
     //Creating the object for the desired training type.
     if (stdTrainingType)
     {
@@ -115,8 +97,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else // It is a pattern recognition network.
     {
-      //Getting whether we will use SP stoping criteria.
-      const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));    
       train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, batchSize);
     }
 
@@ -130,98 +110,59 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 #endif
     
     if (show) REPORT("Network Training Status:");
-    
+        
     // Performing the training.
-    unsigned epoch_best_mse = 0;
-    unsigned epoch_best_sp = 0;
-    unsigned numFails = 0;
-    unsigned numFailsSP = 0;
-    unsigned numFailsMSE = 0;
+    unsigned num_fails_mse = 0;
+    unsigned num_fails_sp = 0;
     unsigned dispCounter = 0;
-    REAL best_mse = 0.;
-    REAL best_sp = 0.;
-    const unsigned max_fail_mse = 30;
-    const unsigned max_fail_sp = 100;
-    REAL valMSEError, valSPError;
-    bool isBestMSE, isBestSP;
-    
+    REAL mse_val, sp_val;
+    bool is_best_mse, is_best_sp, stop_mse, stop_sp;
+
+    //Calculating the max_fail limits for each case (MSE and SP, if the case).
+    const unsigned fail_limit_mse = (useSP) ? (fail_limit / 3) : fail_limit;
+    const unsigned fail_limit_sp = (useSP) ? fail_limit : 0;
+    bool &is_best = (useSP) ? is_best_sp :  is_best_mse;
+    REAL &val_data = (useSP) ? sp_val : mse_val;
+
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
-      const REAL trnError = train->trainNetwork();
+      const REAL mse_trn = train->trainNetwork();
 
       //Updating the weight and bias matrices.
       net->updateWeights(batchSize);
 
       //Validating the new network.
-      train->valNetwork(valMSEError, valSPError);
+      train->valNetwork(mse_val, sp_val);
 
       // Saving the best weight result.
-      train->isBestNetwork(valMSEError, valSPError, isBestMSE, isBestSP);
+      train->isBestNetwork(mse_val, sp_val, is_best_mse, is_best_sp);
       
-      if (isBestMSE)
-      {
-        numFailsMSE = 0;
-        epoch_best_mse = epoch;
-        best_mse = valMSEError;
-      }
-      else numFailsMSE++;
+      if (is_best_mse) num_fails_mse = 0;
+      else num_fails_mse++;
 
-      if (isBestSP)
-      {
-        numFailsSP = 0;
-        epoch_best_sp = epoch;
-        best_sp = valSPError;
-      }
-      else numFailsSP++;
+      if (is_best_sp) num_fails_sp = 0;
+      else num_fails_sp++;
       
-      if (isBestMSE || isBestSP)
-      {
-        net->saveBestTrain();
-        //Reseting the numFails counter.
-        numFails = 0;
-      }
-      else numFails++;
+      if (is_best) net->saveBestTrain();
 
       //Showing partial results at every "show" epochs (if show != 0).
       if (show)
       {
-        if (!dispCounter) train->showTrainingStatus(epoch, trnError, valMSEError);
+        if (!dispCounter) train->showTrainingStatus(epoch, mse_trn, val_data);
         dispCounter = (dispCounter + 1) % show;
       }
 
-      //Saving the training evolution info.
-      train->saveTrainInfo(epoch, trnError, valMSEError);
+      //Knowing whether the criterias are telling us to stop.
+      stop_mse = num_fails_mse >= fail_limit_mse;
+      stop_sp = num_fails_sp >= fail_limit_sp;
 
-      arq << epoch << " " 
-          << trnError << " " 
-          << valMSEError << " "
-          << valSPError << " "
-          << isBestMSE << " "
-          << isBestSP << " "
-          << numFailsMSE << " "
-          << numFailsSP << " "
-          << numFails << " "
-          << (numFailsMSE >= max_fail_mse) << " "
-          << (numFailsSP >= max_fail_sp) << " "
-          << (numFails == maxFail) << " "
-          << endl;
-      
-      if ( (numFailsMSE >= max_fail_mse) && (numFailsSP >= max_fail_sp) )
+      //Saving the training evolution info.
+      train->saveTrainInfo(epoch, mse_trn, mse_val, sp_val, is_best_mse, is_best_sp, 
+                            num_fails_mse, num_fails_sp, stop_mse, stop_sp);
+
+      if ( (stop_mse) && (stop_sp) )
       {
         if (show) REPORT("Maximum number of failures reached. Finishing training...");
-        arq << -1  << " "
-            << epoch_best_mse << " " 
-            << best_mse << " " 
-            << epoch_best_sp << " "
-            << best_sp << " "
-            << 0 << " "
-            << 0 << " "
-            << 0 << " "
-            << 0 << " "
-            << 0 << " "
-            << 0 << " "
-            << 0 << " "
-            << endl;
         break;
       }
     }
@@ -233,7 +174,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     net->flushBestTrainWeights(ret[OUT_NET_IDX]);
     
     //Returning the training evolution info.
-    train->flushTrainInfo(ret[OUT_EPOCH_IDX], ret[OUT_TRN_ERROR_IDX], ret[OUT_VAL_ERROR_IDX]);
+    ret[OUT_TRN_EVO] = train->flushTrainInfo();
     
     //Deleting the allocated memory.
     delete net;
@@ -252,6 +193,4 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (net) delete net;
     if (train) delete train;
   }
-  
-  arq.close();
 }

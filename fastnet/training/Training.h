@@ -21,9 +21,16 @@
 //This struct will hold the training info to be ruterned to the user.
 struct TrainData
 {
-  REAL epoch;
-  REAL trnError;
-  REAL valError;
+  unsigned epoch;
+  REAL mse_trn;
+  REAL mse_val;
+  REAL sp_val;
+  bool is_best_mse;
+  bool is_best_sp;
+  unsigned num_fails_mse;
+  unsigned num_fails_sp;
+  bool stop_mse;
+  bool stop_sp;
 };
 
 
@@ -126,12 +133,22 @@ public:
   @param[in] trnError The training error obtained in that epoch.
   @param[in] valError The validation error obtained in that epoch.
  */
-  virtual void saveTrainInfo(unsigned epoch, REAL trnError, REAL valError)
+  virtual void saveTrainInfo(const unsigned epoch, const REAL mse_trn, const REAL mse_val, 
+                              const REAL sp_val, const bool is_best_mse, const bool is_best_sp, 
+                              const unsigned num_fails_mse, const unsigned num_fails_sp, 
+                              const bool stop_mse, const bool stop_sp)
   {
-    TrainData trainData;
-    trainData.epoch = (REAL) epoch;
-    trainData.trnError = trnError;
-    trainData.valError = valError;
+    TrainData trainData;    
+    trainData.epoch;
+    trainData.mse_trn;
+    trainData.mse_val;
+    trainData.sp_val;
+    trainData.is_best_mse;
+    trainData.is_best_sp;
+    trainData.num_fails_mse;
+    trainData.num_fails_sp;
+    trainData.stop_mse;
+    trainData.stop_sp;
     trnEvolution.push_back(trainData);
   };
 
@@ -145,23 +162,61 @@ public:
   @param[out] trnError A vector containing the training error obtained in each epoch.
   @param[out] valError A vector containing the validation error obtained in each epoch.
   */
-  virtual void flushTrainInfo(mxArray *&epoch, mxArray *&trnError, mxArray *&valError)
+  virtual mxArray *flushTrainInfo()
   {
     const unsigned size = trnEvolution.size();  
-    epoch = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    trnError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    valError = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *epoch = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+    mxArray *mse_trn = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *mse_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *sp_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *is_best_mse = mxCreateLogicalMatrix(1, size);
+    mxArray *is_best_sp = mxCreateLogicalMatrix(1, size);
+    mxArray *num_fails_mse = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+    mxArray *num_fails_sp = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+    mxArray *stop_mse = mxCreateLogicalMatrix(1, size);
+    mxArray *stop_sp = mxCreateLogicalMatrix(1, size);
 
-    REAL *ep = static_cast<REAL*>(mxGetData(epoch));
-    REAL *trn = static_cast<REAL*>(mxGetData(trnError));
-    REAL *val = static_cast<REAL*>(mxGetData(valError));
+    unsigned* epoch_ptr = static_cast<unsigned*>(mxGetData(epoch));
+    REAL* mse_trn_ptr = static_cast<REAL*>(mxGetData(mse_trn));
+    REAL* mse_val_ptr = static_cast<REAL*>(mxGetData(mse_val));
+    REAL* sp_val_ptr = static_cast<REAL*>(mxGetData(sp_val));
+    bool* is_best_mse_ptr = static_cast<bool*>(mxGetData(is_best_mse));
+    bool* is_best_sp_ptr = static_cast<bool*>(mxGetData(is_best_sp));
+    unsigned* num_fails_mse_ptr = static_cast<unsigned*>(mxGetData(num_fails_mse));
+    unsigned* num_fails_sp_ptr = static_cast<unsigned*>(mxGetData(num_fails_sp));
+    bool* stop_mse_ptr = static_cast<bool*>(mxGetData(stop_mse));
+    bool* stop_sp_ptr = static_cast<bool*>(mxGetData(stop_sp));
   
     for (list<TrainData>::const_iterator itr = trnEvolution.begin(); itr != trnEvolution.end(); itr++)
     {
-      *ep++ = itr->epoch;
-      *trn++ = itr->trnError;
-      *val++ = itr->valError;
+      *epoch_ptr++ = itr->epoch;
+      *mse_trn_ptr++ = itr->mse_trn;
+      *mse_val_ptr++ = itr->mse_val;
+      *sp_val_ptr++ = itr->sp_val;
+      *is_best_mse_ptr++ = itr->is_best_mse;
+      *is_best_sp_ptr++ = itr->is_best_sp;
+      *num_fails_mse_ptr++ = itr->num_fails_mse;
+      *num_fails_sp_ptr++ = itr->num_fails_sp;
+      *stop_mse_ptr++ = itr->stop_mse;
+      *stop_sp_ptr++ = itr->stop_sp;
     }
+    
+    // Creating the Matlab structure to be returned.
+    const unsigned NNAMES = 10;
+    const char *NAMES[] = {"epoch", "mse_trn", "mse_val", "sp_val", "is_best_mse", "is_best_sp", 
+                          "num_fails_mse", "num_fails_sp", "stop_mse", "stop_sp"};
+    mxArray *ret = mxCreateStructMatrix(1,1,NNAMES,NAMES);
+    mxSetField(ret, 0, "epoch", epoch);
+    mxSetField(ret, 0, "mse_trn", mse_trn);
+    mxSetField(ret, 0, "mse_val", mse_val);
+    mxSetField(ret, 0, "sp_val", sp_val);
+    mxSetField(ret, 0, "is_best_mse", is_best_mse);
+    mxSetField(ret, 0, "is_best_sp", is_best_sp);
+    mxSetField(ret, 0, "num_fails_mse", num_fails_mse);
+    mxSetField(ret, 0, "num_fails_sp", num_fails_sp);
+    mxSetField(ret, 0, "stop_mse", stop_mse);
+    mxSetField(ret, 0, "stop_sp", stop_sp);
+    return ret;
   };
   
   virtual void checkSizeMismatch() const = 0;

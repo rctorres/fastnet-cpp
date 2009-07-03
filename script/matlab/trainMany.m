@@ -33,7 +33,7 @@ for i=1:numTrains,
     net.IW{1}(end,:) = savedWeights;
   end
   
-  [aux.net, aux.epoch, aux.trnError, aux.valError] = ntrain(net, inTrn, inVal);
+  [aux.net, aux.trnEvo] = ntrain(net, inTrn, inVal);
   aux.sp = calcSP(diag(genConfMatrix(nsim(aux.net, inTst))));
   spVec(i) = aux.sp;
   oNet{i} = aux;

@@ -1,5 +1,5 @@
-function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
-%function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
+function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
+%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -22,12 +22,8 @@ function [pcd, outNet, epoch, trnError, valError, efficVec] = npcd(net, inTrn, i
 % pcd - A matrix with the extracted PCDs.
 % outNet - A cell vector containing the trained network structure obtained after
 % each PCD extraction.
-% epoch - A cell vector containing the epochs evolution obtained during
+% trnEvo - A cell vector containing the training evolution data obtained during
 % each PCD extraction.
-% trnError - A cell vector containing the training error evolution obtained
-% during each PCD extraction.
-% valError - A cell vector containing the validation error evolution
-% obtained during each PCD extraction.
 % efficVec - a struct vector containing the mean and std of the SP efficiency obtained
 % for each PCD extraction, considering the number of iterations performed.
 %
@@ -63,9 +59,7 @@ pcd = [];
 bias = [];
 saveWeights = [];
 outNet = cell(1,maxNumPCD);
-epoch = cell(1,maxNumPCD);
-trnError = cell(1,maxNumPCD);
-valError = cell(1,maxNumPCD);
+trnEvo = cell(1,maxNumPCD);
 meanEfic = zeros(1,maxNumPCD);
 stdEfic = zeros(1,maxNumPCD);
 maxEfic = zeros(1,maxNumPCD);
@@ -102,9 +96,7 @@ for i=1:maxNumPCD,
   %Doing the training.
   [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations, (multiLayer && i>1));
   outNet{i} = nVec{idx}.net;
-  epoch{i} = nVec{idx}.epoch;
-  trnError{i} = nVec{idx}.trnError;
-  valError{i} = nVec{idx}.valError;
+  trnEvo{i} = nVec{idx}.trnEvo;
   maxEfic(i) = nVec{idx}.sp;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.

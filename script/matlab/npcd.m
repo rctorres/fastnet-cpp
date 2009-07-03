@@ -131,9 +131,7 @@ end
 %Returning the PCDs actually extracted.
 pcd = pcd(1:pcdExtracted,:);
 outNet = outNet(1:pcdExtracted);
-epoch = epoch(1:pcdExtracted);
-trnError = trnError(1:pcdExtracted);
-valError = valError(1:pcdExtracted);
+trnEvo = trnEvo(1:pcdExtracted);
 efficVec.mean = meanEfic(1:pcdExtracted);
 efficVec.std = stdEfic(1:pcdExtracted);
 efficVec.max = maxEfic(1:pcdExtracted);

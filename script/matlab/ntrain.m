@@ -47,25 +47,25 @@ function validateDataType(in_trn, out_trn, in_val, out_val)
   if nargin == 2,
     nClasses = length(in_trn);
     for i=1:nClasses,
-      if ~isa(in_trn{i}, 'single'),
-        error(sprintf('in_trn{%d} is not a single precision matrix! Data must be of type "single"!', i));
+      if ~isa(in_trn{i}, 'double'),
+        error(sprintf('in_trn{%d} is not a double precision matrix! Data must be of type "double"!', i));
       end
-      if ~isa(out_trn{i}, 'single'), %out_trn is out in_val.
-        error(sprintf('in_val{%d} is not a single precision matrix! Data must be of type "single"!', i));
+      if ~isa(out_trn{i}, 'double'), %out_trn is out in_val.
+        error(sprintf('in_val{%d} is not a double precision matrix! Data must be of type "double"!', i));
       end  
     end
   elseif nargin == 4,
-    if ~isa(in_trn, 'single'),
-      error('in_trn is not a single precision matrix! Data must be of type "single"!');
+    if ~isa(in_trn, 'double'),
+      error('in_trn is not a double precision matrix! Data must be of type "double"!');
     end
-    if ~isa(out_trn, 'single'),
-      error('out_trn is not a single precision matrix! Data must be of type "single"!');
+    if ~isa(out_trn, 'double'),
+      error('out_trn is not a double precision matrix! Data must be of type "double"!');
     end
-    if ~isa(in_val, 'single'),
-      error('in_val is not a single precision matrix! Data must be of type "single"!');
+    if ~isa(in_val, 'double'),
+      error('in_val is not a double precision matrix! Data must be of type "double"!');
     end
-    if ~isa(out_val, 'single'),
-      error('out_val is not a single precision matrix! Data must be of type "single"!');
+    if ~isa(out_val, 'double'),
+      error('out_val is not a double precision matrix! Data must be of type "double"!');
     end
 end
 

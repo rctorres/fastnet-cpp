@@ -15,14 +15,14 @@ if iscell(in_data),
   nClasses = length(in_data);
   out = cell(1, nClasses);
   for i=1:nClasses,
-    if ~isa(in_data{i}, 'single'),
-      error(sprintf('Cell number %d does not containg a single precision matrix! Data must be of type "single"!', i));
+    if ~isa(in_data{i}, 'double'),
+      error(sprintf('Cell number %d does not containg a double precision matrix! Data must be of type "double"!', i));
     end
     out{i} = sim_c(net, in_data{i});
   end
 else
-  if ~isa(in_data, 'single'),
-    error(sprintf('Input dataset is not of type "single"!'));
+  if ~isa(in_data, 'double'),
+    error(sprintf('Input dataset is not of type "double"!'));
   end  
   out = sim_c(net, in_data);
 end

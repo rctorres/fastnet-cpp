@@ -57,7 +57,7 @@ so, by simply changing its value we can easily change thw word size of all
 floating point variables created. If you change this value, you *MUST* change the value
 of REAL_TYPE as well.
 */
-typedef float REAL;
+typedef double REAL;
 
 ///Sets the corresponding matlab type we will be using.
 /**
@@ -65,7 +65,7 @@ This constant shoud be set to represent the same data type as REAL typedef. Ex: 
 set to double, this constant should be changed to mxDOUBLE_CLASS.  If you change this value, 
 you *MUST* change the value of REAL typedef as well.
 */
-const mxClassID REAL_TYPE = mxSINGLE_CLASS;
+const mxClassID REAL_TYPE = mxDOUBLE_CLASS;
 
 
 /// Macro to call pointers to member functions.

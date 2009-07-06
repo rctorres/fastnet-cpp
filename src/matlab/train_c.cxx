@@ -119,7 +119,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     bool is_best_mse, is_best_sp, stop_mse, stop_sp;
 
     //Calculating the max_fail limits for each case (MSE and SP, if the case).
-    const unsigned fail_limit_mse = (useSP) ? (fail_limit / 3) : fail_limit;
+    const unsigned fail_limit_mse = (useSP) ? (fail_limit / 2) : fail_limit;
     const unsigned fail_limit_sp = (useSP) ? fail_limit : 0;
     bool &is_best = (useSP) ? is_best_sp :  is_best_mse;
     REAL &val_data = (useSP) ? sp_val : mse_val;

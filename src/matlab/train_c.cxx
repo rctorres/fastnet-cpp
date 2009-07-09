@@ -40,6 +40,12 @@ const unsigned IN_VAL_IDX = 3;
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 4;
 
+/// Index, in the arguments list, of the input testing events.
+const unsigned IN_TST_IDX = 5;
+
+/// Index, in the arguments list, of the output testing events.
+const unsigned OUT_TST_IDX = 6;
+
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
 
@@ -89,6 +95,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
     //Getting whether we will use SP stoping criteria.
     const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));
+    const mxArray *tstData = isEmpty(args[IN_TST_IDX]) ? NULL : args[IN_TST_IDX];
 
     //Creating the object for the desired training type.
     if (stdTrainingType)
@@ -97,7 +104,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else // It is a pattern recognition network.
     {
-      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], useSP, batchSize);
+      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], tstData, useSP, batchSize);
     }
 
     //Checking if the training and validating input data sizes match the network's input layer.
@@ -115,7 +122,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     unsigned num_fails_mse = 0;
     unsigned num_fails_sp = 0;
     unsigned dispCounter = 0;
-    REAL mse_val, sp_val;
+    REAL mse_val, sp_val, mse_tst, sp_tst;
+    mse_val = sp_val = mse_tst = sp_tst = 0.;
     bool is_best_mse, is_best_sp, stop_mse, stop_sp;
 
     //Calculating the max_fail limits for each case (MSE and SP, if the case).
@@ -131,6 +139,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
       //Validating the new network.
       train->valNetwork(mse_val, sp_val);
+
+      //Testing the new network if a testing dataset was passed.
+      if (tstData) train->tstNetwork(mse_tst, sp_tst);
 
       // Saving the best weight result.
       train->isBestNetwork(mse_val, sp_val, is_best_mse, is_best_sp);
@@ -155,8 +166,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       stop_sp = num_fails_sp >= fail_limit_sp;
 
       //Saving the training evolution info.
-      train->saveTrainInfo(epoch, mse_trn, mse_val, sp_val, is_best_mse, is_best_sp, 
-                            num_fails_mse, num_fails_sp, stop_mse, stop_sp);
+      train->saveTrainInfo(epoch, mse_trn, mse_val, sp_val, mse_tst, sp_tst, is_best_mse, 
+                            is_best_sp, num_fails_mse, num_fails_sp, stop_mse, stop_sp);
 
       if ( (stop_mse) && (stop_sp) )
       {

@@ -25,6 +25,8 @@ struct TrainData
   REAL mse_trn;
   REAL mse_val;
   REAL sp_val;
+  REAL mse_tst;
+  REAL sp_tst;
   bool is_best_mse;
   bool is_best_sp;
   unsigned num_fails_mse;
@@ -134,7 +136,8 @@ public:
   @param[in] valError The validation error obtained in that epoch.
  */
   virtual void saveTrainInfo(const unsigned epoch, const REAL mse_trn, const REAL mse_val, 
-                              const REAL sp_val, const bool is_best_mse, const bool is_best_sp, 
+                              const REAL sp_val, const REAL mse_tst, const REAL sp_tst, 
+                              const bool is_best_mse, const bool is_best_sp, 
                               const unsigned num_fails_mse, const unsigned num_fails_sp, 
                               const bool stop_mse, const bool stop_sp)
   {
@@ -143,6 +146,8 @@ public:
     trainData.mse_trn = mse_trn;
     trainData.mse_val = mse_val;
     trainData.sp_val = sp_val;
+    trainData.mse_tst = mse_tst;
+    trainData.sp_tst = sp_tst;
     trainData.is_best_mse = is_best_mse;
     trainData.is_best_sp = is_best_sp;
     trainData.num_fails_mse = num_fails_mse;
@@ -169,6 +174,8 @@ public:
     mxArray *mse_trn = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     mxArray *mse_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     mxArray *sp_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *mse_tst = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+    mxArray *sp_tst = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     mxArray *is_best_mse = mxCreateLogicalMatrix(1, size);
     mxArray *is_best_sp = mxCreateLogicalMatrix(1, size);
     mxArray *num_fails_mse = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
@@ -180,6 +187,8 @@ public:
     REAL* mse_trn_ptr = static_cast<REAL*>(mxGetData(mse_trn));
     REAL* mse_val_ptr = static_cast<REAL*>(mxGetData(mse_val));
     REAL* sp_val_ptr = static_cast<REAL*>(mxGetData(sp_val));
+    REAL* mse_tst_ptr = static_cast<REAL*>(mxGetData(mse_tst));
+    REAL* sp_tst_ptr = static_cast<REAL*>(mxGetData(sp_tst));
     bool* is_best_mse_ptr = static_cast<bool*>(mxGetData(is_best_mse));
     bool* is_best_sp_ptr = static_cast<bool*>(mxGetData(is_best_sp));
     unsigned* num_fails_mse_ptr = static_cast<unsigned*>(mxGetData(num_fails_mse));
@@ -193,6 +202,8 @@ public:
       *mse_trn_ptr++ = itr->mse_trn;
       *mse_val_ptr++ = itr->mse_val;
       *sp_val_ptr++ = itr->sp_val;
+      *mse_tst_ptr++ = itr->mse_tst;
+      *sp_tst_ptr++ = itr->sp_tst;
       *is_best_mse_ptr++ = itr->is_best_mse;
       *is_best_sp_ptr++ = itr->is_best_sp;
       *num_fails_mse_ptr++ = itr->num_fails_mse;
@@ -202,14 +213,17 @@ public:
     }
     
     // Creating the Matlab structure to be returned.
-    const unsigned NNAMES = 10;
-    const char *NAMES[] = {"epoch", "mse_trn", "mse_val", "sp_val", "is_best_mse", "is_best_sp", 
-                          "num_fails_mse", "num_fails_sp", "stop_mse", "stop_sp"};
+    const unsigned NNAMES = 12;
+    const char *NAMES[] = {"epoch", "mse_trn", "mse_val", "sp_val", "mse_tst", "sp_tst",
+                            "is_best_mse", "is_best_sp", "num_fails_mse", "num_fails_sp", 
+                            "stop_mse", "stop_sp"};
     mxArray *ret = mxCreateStructMatrix(1,1,NNAMES,NAMES);
     mxSetField(ret, 0, "epoch", epoch);
     mxSetField(ret, 0, "mse_trn", mse_trn);
     mxSetField(ret, 0, "mse_val", mse_val);
     mxSetField(ret, 0, "sp_val", sp_val);
+    mxSetField(ret, 0, "mse_tst", mse_tst);
+    mxSetField(ret, 0, "sp_tst", sp_tst);
     mxSetField(ret, 0, "is_best_mse", is_best_mse);
     mxSetField(ret, 0, "is_best_sp", is_best_sp);
     mxSetField(ret, 0, "num_fails_mse", num_fails_mse);
@@ -237,9 +251,11 @@ public:
   {
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " mse (val) = " << valError);
   };
-  
-  virtual void valNetwork(REAL &mseVal, REAL &spVal) = 0;
 
+  virtual void tstNetwork(REAL &mseTst, REAL &spTst) = 0;
+
+  virtual void valNetwork(REAL &mseVal, REAL &spVal) = 0;
+  
   virtual REAL trainNetwork() = 0;  
 };
 

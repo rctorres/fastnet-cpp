@@ -19,6 +19,9 @@ public:
   StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);
 
   ~StandardTraining();
+  
+  virtual void tstNetwork(REAL &mseTst, REAL &spTst){mseTst = spTst = 0.;};
+
 
   /// Applies the validating set for the network's validation.
   /**

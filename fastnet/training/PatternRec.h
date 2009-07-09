@@ -10,20 +10,31 @@ class PatternRecognition : public Training
 protected:
   const REAL **inTrnList;
   const REAL **inValList;
+  const REAL **inTstList;
   const REAL **targList;
   REAL **epochValOutputs;
+  REAL **epochTstOutputs;
   unsigned numPatterns;
   unsigned inputSize;
   unsigned outputSize;
   bool useSP;
+  bool hasTstData;
   REAL bestGoalSP;
   std::vector<DataManager*> dmTrn;
   unsigned *numValEvents;
+  unsigned *numTstEvents;
+
+
+  void allocateDataset(const mxArray *dataSet, const bool forTrain, 
+                        const REAL **&inList, REAL **&out, unsigned *&nEv);
+
+  void deallocateDataset(const bool forTrain, const REAL **&inList, REAL **&out, unsigned *&nEv);
 
 
 public:
 
-  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned bSize);
+  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, 
+                      const mxArray *inTst,  const bool usingSP, const unsigned bSize);
 
   virtual ~PatternRecognition();
 
@@ -35,6 +46,9 @@ public:
   @return The maximum SP value obtained.
   */
   virtual REAL sp();
+
+  virtual void tstNetwork(REAL &mseTst, REAL &spTst);
+
 
   /// Applies the validating set of each pattern for the network's validation.
   /**

@@ -1,10 +1,13 @@
 #include "fastnet/training/PatternRec.h"
 
-PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, const bool usingSP, const unsigned bSize) : Training(net, bSize)
+PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, 
+                                        const mxArray *inVal, const mxArray *inTst,  
+                                        const bool usingSP, const unsigned bSize) 
+                                        : Training(net, bSize)
 {
   DEBUG1("Starting a Pattern Recognition Training Object");
-  if (mxGetN(inTrn) != mxGetN(inVal)) throw "Number of training and validating patterns are not equal";
   
+  hasTstData = inTst != NULL;
   useSP = usingSP;
   if (useSP)
   {
@@ -16,32 +19,17 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   numPatterns = mxGetN(inTrn);
   DEBUG2("Number of patterns: " << numPatterns);
   outputSize = (numPatterns == 2) ? 1 : numPatterns;
-  inTrnList = new const REAL* [numPatterns];
-  inValList = new const REAL* [numPatterns];
-  targList = new const REAL* [numPatterns];
-  numValEvents = new unsigned [numPatterns];
-  if (useSP) epochValOutputs = new REAL* [numPatterns];
   
+  //The last 2 parameters for the training case will not be used by the function, so, there is no 
+  //problem passing the corresponding validation variables to this first function call.
+  allocateDataset(inTrn, true, inTrnList, epochValOutputs, numValEvents);
+  allocateDataset(inVal, false, inValList, epochValOutputs, numValEvents);
+  if (hasTstData) allocateDataset(inTst, false, inTstList, epochTstOutputs, numTstEvents);
+  
+  //Creating the targets for each class (maximum sparsed oututs).
+  targList = new const REAL* [numPatterns];  
   for (unsigned i=0; i<numPatterns; i++)
   {
-    const mxArray *patTrnData = mxGetCell(inTrn, i);
-    const mxArray *patValData = mxGetCell(inVal, i);    
-
-    //Checking whether the dimensions are ok.
-    if ( mxGetM(patTrnData) != mxGetM(patValData) ) throw "Input training and validating events dimension does not match!";
-    if ( (i) and (mxGetM(patTrnData) != inputSize)) throw "Events dimension between patterns does not match!";
-    else inputSize = mxGetM(patTrnData);
-
-    //Getting the desired values.    
-    inTrnList[i] = static_cast<REAL*>(mxGetData(patTrnData));
-    inValList[i] = static_cast<REAL*>(mxGetData(patValData));
-    dmTrn.push_back(new DataManager(mxGetN(patTrnData)));
-    numValEvents[i] = static_cast<unsigned>(mxGetN(patValData));
-    if (useSP) epochValOutputs[i] = new REAL [numValEvents[i]];
-    DEBUG2("Number of training events for pattern " << i << ": " << mxGetN(patTrnData));
-    DEBUG2("Number of validating events for pattern " << i << ": " << mxGetN(patValData));
-    
-    //Generating the desired output for each pattern for maximum sparsed outputs.
     REAL *target = new REAL [outputSize];
     for (unsigned j=0; j<outputSize; j++) target[j] = -1;
     target[i] = 1;
@@ -53,22 +41,59 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   DEBUG2("Output events dimension: " << outputSize);
 };
 
-PatternRecognition::~PatternRecognition()
+
+void PatternRecognition::allocateDataset(const mxArray *dataSet, const bool forTrain, 
+                                         const REAL **&inList, REAL **&out, unsigned *&nEv)
+{
+  inList = new const REAL* [numPatterns];
+
+  if (!forTrain)
+  {
+    nEv = new unsigned [numPatterns];
+    if (useSP) out = new REAL* [numPatterns];
+  }
+  
+  for (unsigned i=0; i<numPatterns; i++)
+  {
+    const mxArray *patData = mxGetCell(dataSet, i);
+    inputSize = mxGetM(patData);
+    inList[i] = static_cast<REAL*>(mxGetData(patData));
+
+    if (forTrain) dmTrn.push_back(new DataManager(mxGetN(patData)));
+    else nEv[i] = static_cast<unsigned>(mxGetN(patData));
+  
+    if (useSP) out[i] = new REAL [nEv[i]];
+  }
+}
+
+void PatternRecognition::deallocateDataset(const bool forTrain, const REAL **&inList, REAL **&out, unsigned *&nEv)
 {
   for (unsigned i=0; i<numPatterns; i++)
   {
-    delete dmTrn[i];
-    delete [] inTrnList[i];
-    delete [] inValList[i];
-    delete [] targList[i];
-    if (useSP) delete [] epochValOutputs[i];
+    if (forTrain) delete dmTrn[i];
+    else if (useSP) delete [] out[i];
   }
-  delete [] inTrnList;
-  delete [] inValList;
+
+  delete [] inList;
+  if (!forTrain)
+  {
+    delete [] nEv;
+    if (useSP) delete [] out;
+  }
+}
+
+
+PatternRecognition::~PatternRecognition()
+{
+  //The last 2 parameters for the training case will not be used by the function, so, there is no 
+  //problem passing the corresponding validation variables to this first function call.
+  deallocateDataset(true, inTrnList, epochValOutputs, numValEvents);
+  deallocateDataset(false, inValList, epochValOutputs, numValEvents);
+  if (hasTstData) deallocateDataset(false, inTstList, epochTstOutputs, numTstEvents);
+  for (unsigned i=0; i<numPatterns; i++) delete [] targList[i];
   delete [] targList;
-  delete [] numValEvents;
-  if (useSP) delete [] epochValOutputs;
 };
+
 
 REAL PatternRecognition::sp()
 {
@@ -132,6 +157,9 @@ REAL PatternRecognition::sp()
   
   return maxSP;
 };
+
+void PatternRecognition::tstNetwork(REAL &mseTst, REAL &spTst)
+{}
 
 
 void PatternRecognition::valNetwork(REAL &mseVal, REAL &spVal)

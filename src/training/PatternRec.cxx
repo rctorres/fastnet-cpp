@@ -158,11 +158,9 @@ REAL PatternRecognition::sp()
   return maxSP;
 };
 
-void PatternRecognition::tstNetwork(REAL &mseTst, REAL &spTst)
-{}
 
-
-void PatternRecognition::valNetwork(REAL &mseVal, REAL &spVal)
+void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *nEvents,
+                                           REAL **epochOutputs, REAL &mseRet, REAL &spRet)
 {
   DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0.;
@@ -171,17 +169,17 @@ void PatternRecognition::valNetwork(REAL &mseVal, REAL &spVal)
   
   for (unsigned pat=0; pat<numPatterns; pat++)
   {
-    totEvents += numValEvents[pat];
+    totEvents += nEvents[pat];
  
     const REAL *target = targList[pat];
-    const REAL *input = inValList[pat];
+    const REAL *input = inList[pat];
     const REAL *output;
-    const int numEvents = numValEvents[pat];
+    const int numEvents = nEvents[pat];
     REAL error = 0.;
     int i, thId;
     int chunk = chunkSize;
 
-    REAL *outList = (useSP) ? epochValOutputs[pat] : NULL;
+    REAL *outList = (useSP) ? epochOutputs[pat] : NULL;
     
     DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
     
@@ -202,8 +200,8 @@ void PatternRecognition::valNetwork(REAL &mseVal, REAL &spVal)
     }
   }
 
-  mseVal = gbError / static_cast<REAL>(totEvents);
-  if (useSP)  spVal = sp();
+  mseRet = gbError / static_cast<REAL>(totEvents);
+  if (useSP)  spRet = sp();
 };
 
 

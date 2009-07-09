@@ -29,6 +29,8 @@ protected:
                         const REAL **&inList, REAL **&out, unsigned *&nEv);
 
   void deallocateDataset(const bool forTrain, const REAL **&inList, REAL **&out, unsigned *&nEv);
+  
+  void getNetworkErrors(const REAL **inList, const unsigned *nEvents, REAL **epochOutputs, REAL &mseRet, REAL &spRet);
 
 
 public:
@@ -47,7 +49,10 @@ public:
   */
   virtual REAL sp();
 
-  virtual void tstNetwork(REAL &mseTst, REAL &spTst);
+  virtual void tstNetwork(REAL &mseTst, REAL &spTst)
+  {
+    getNetworkErrors(inTstList, numTstEvents, epochTstOutputs, mseTst, spTst);
+  }
 
 
   /// Applies the validating set of each pattern for the network's validation.
@@ -60,7 +65,10 @@ public:
   of this class are not modified inside this method, since it is only a network validating process.
   @return The mean validating error obtained after the entire training set is presented to the network.
   */
-  virtual void valNetwork(REAL &mseVal, REAL &spVal);
+  virtual void valNetwork(REAL &mseVal, REAL &spVal)
+  {
+    getNetworkErrors(inValList, numValEvents, epochValOutputs, mseVal, spVal);
+  }
 
 
   /// Applies the training set of each pattern for the network's training.

@@ -22,10 +22,15 @@ PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxAr
   
   //The last 2 parameters for the training case will not be used by the function, so, there is no 
   //problem passing the corresponding validation variables to this first function call.
+  DEBUG2("Allocating memory for the training data.");
   allocateDataset(inTrn, true, inTrnList, epochValOutputs, numValEvents);
+  DEBUG2("Allocating memory for the validation data.");
   allocateDataset(inVal, false, inValList, epochValOutputs, numValEvents);
-  if (hasTstData) allocateDataset(inTst, false, inTstList, epochTstOutputs, numTstEvents);
-  
+  if (hasTstData)
+  {
+    DEBUG2("Allocating memory for the testing data.");
+    allocateDataset(inTst, false, inTstList, epochTstOutputs, numTstEvents);
+  }
   //Creating the targets for each class (maximum sparsed oututs).
   targList = new const REAL* [numPatterns];  
   for (unsigned i=0; i<numPatterns; i++)
@@ -60,9 +65,11 @@ void PatternRecognition::allocateDataset(const mxArray *dataSet, const bool forT
     inList[i] = static_cast<REAL*>(mxGetData(patData));
 
     if (forTrain) dmTrn.push_back(new DataManager(mxGetN(patData)));
-    else nEv[i] = static_cast<unsigned>(mxGetN(patData));
-  
-    if (useSP) out[i] = new REAL [nEv[i]];
+    else
+    {
+      nEv[i] = static_cast<unsigned>(mxGetN(patData));
+      if (useSP) out[i] = new REAL [nEv[i]];
+    }
   }
 }
 
@@ -181,7 +188,7 @@ void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *n
 
     REAL *outList = (useSP) ? epochOutputs[pat] : NULL;
     
-    DEBUG3("Applying validation set for pattern " << pat << ". Weighting factor to use: " << wFactor);
+    DEBUG3("Applying performance calculation for pattern " << pat << ".");
     
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {
@@ -224,7 +231,7 @@ REAL PatternRecognition::trainNetwork()
     unsigned pos = 0;
     DataManager *dm = dmTrn[pat];
 
-    DEBUG3("Applying training set for pattern " << pat << ". Weighting factor to use: " << wFactor);
+    DEBUG3("Applying training set for pattern " << pat << ".");
 
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {

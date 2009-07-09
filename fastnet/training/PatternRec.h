@@ -47,7 +47,7 @@ public:
   product obtained.
   @return The maximum SP value obtained.
   */
-  virtual REAL sp();
+  virtual REAL sp(const unsigned *nEvents, REAL **epochOutputs);
 
   virtual void tstNetwork(REAL &mseTst, REAL &spTst)
   {

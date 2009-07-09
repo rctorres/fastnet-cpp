@@ -95,7 +95,7 @@ PatternRecognition::~PatternRecognition()
 };
 
 
-REAL PatternRecognition::sp()
+REAL PatternRecognition::sp(const unsigned *nEvents, REAL **epochOutputs)
 {
   unsigned TARG_SIGNAL, TARG_NOISE;
   
@@ -112,12 +112,12 @@ REAL PatternRecognition::sp()
     TARG_SIGNAL = 1;
   }
 
-  const REAL *signal = epochValOutputs[TARG_SIGNAL];
-  const REAL *noise = epochValOutputs[TARG_NOISE];
+  const REAL *signal = epochOutputs[TARG_SIGNAL];
+  const REAL *noise = epochOutputs[TARG_NOISE];
   const REAL signalTarget = targList[TARG_SIGNAL][0];
   const REAL noiseTarget = targList[TARG_NOISE][0];
-  const int numSignalEvents = static_cast<int>(numValEvents[TARG_SIGNAL]);
-  const int numNoiseEvents = static_cast<int>(numValEvents[TARG_NOISE]);
+  const int numSignalEvents = static_cast<int>(nEvents[TARG_SIGNAL]);
+  const int numNoiseEvents = static_cast<int>(nEvents[TARG_NOISE]);
   const REAL RESOLUTION = 0.01;
   REAL maxSP = -1.;
   int i;
@@ -201,7 +201,7 @@ void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *n
   }
 
   mseRet = gbError / static_cast<REAL>(totEvents);
-  if (useSP)  spRet = sp();
+  if (useSP)  spRet = sp(nEvents, epochOutputs);
 };
 
 

@@ -12,7 +12,7 @@ net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 50;
 net.trainParam.show = 1;
 net.trainParam.batchSize = 1000;
-net.trainParam.useSP = true;
+net.trainParam.useSP = false;
 
 
 %Creating the training, validating and testing data sets.
@@ -42,7 +42,7 @@ grid on;
 
 figure;
 plot(evo.epoch, evo.mse_trn, 'b-', evo.epoch, evo.mse_val, 'r-', evo.epoch, evo.mse_tst, 'k-', evo.epoch, evo.sp_val, 'm-', evo.epoch, evo.sp_tst, 'g-');
-legend('MSE (trn)', 'MSE (val)', 'MSE (tst)', 'SP (val)', 'SP (tst)', 'Location', 'Best');
+legend('MSE (trn)', 'MSE (val)', 'MSE (tst)', 'SP (val)', 'SP (tst)', 'Location', 'East');
 title('Training Evolution');
 xlabel('Epoch');
 ylabel('Performance Value');

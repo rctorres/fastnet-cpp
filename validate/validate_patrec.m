@@ -7,7 +7,7 @@ c1 = [randn(1,3000); randn(1,3000)];
 c2 = [2.5 + randn(1,3000); 2.5 + randn(1,3000)];
 
 %Creating the neural network.
-net = newff2([nClasses,2,1], {'tansig', 'tansig'});
+net = newff2([nClasses,3,1], {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 50;
 net.trainParam.show = 1;

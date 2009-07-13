@@ -169,7 +169,6 @@ REAL PatternRecognition::sp(const unsigned *nEvents, REAL **epochOutputs)
 void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *nEvents,
                                            REAL **epochOutputs, REAL &mseRet, REAL &spRet)
 {
-  DEBUG2("Starting validation process for an epoch.");
   REAL gbError = 0.;
   FastNet::Backpropagation **nv = netVec;
   int totEvents = 0;
@@ -188,7 +187,7 @@ void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *n
 
     REAL *outList = (useSP) ? epochOutputs[pat] : NULL;
     
-    DEBUG3("Applying performance calculation for pattern " << pat << ".");
+    DEBUG2("Applying performance calculation for pattern " << pat << ".");
     
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {

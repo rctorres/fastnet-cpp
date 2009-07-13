@@ -51,6 +51,7 @@ public:
 
   virtual void tstNetwork(REAL &mseTst, REAL &spTst)
   {
+    DEBUG2("Starting testing process for an epoch.");
     getNetworkErrors(inTstList, numTstEvents, epochTstOutputs, mseTst, spTst);
   }
 
@@ -67,6 +68,7 @@ public:
   */
   virtual void valNetwork(REAL &mseVal, REAL &spVal)
   {
+    DEBUG2("Starting validation process for an epoch.");
     getNetworkErrors(inValList, numValEvents, epochValOutputs, mseVal, spVal);
   }
 

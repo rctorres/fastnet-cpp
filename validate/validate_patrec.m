@@ -12,7 +12,7 @@ net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 50;
 net.trainParam.show = 1;
 net.trainParam.batchSize = 1000;
-net.trainParam.useSP = false;
+net.trainParam.useSP = true;
 
 
 %Creating the training, validating and testing data sets.

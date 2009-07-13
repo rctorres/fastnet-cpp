@@ -3,8 +3,10 @@ close all;
 
 %Creating the data for validation.
 nClasses = 2;
-c1 = [randn(1,3000); randn(1,3000)];
-c2 = [2.5 + randn(1,3000); 2.5 + randn(1,3000)];
+%Creating the training, validating and testing data sets.
+inTrn = {randn(2,3000), (2.5 + randn(2,5000))};
+inVal = {randn(2,2500), (2.5 + randn(2,4500))};
+inTst = {randn(2,2000), (2.5 + randn(2,4000))};
 
 %Creating the neural network.
 net = newff2([nClasses,3,1], {'tansig', 'tansig'});
@@ -13,12 +15,6 @@ net.trainParam.max_fail = 50;
 net.trainParam.show = 1;
 net.trainParam.batchSize = 1000;
 net.trainParam.useSP = true;
-
-
-%Creating the training, validating and testing data sets.
-inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
-inVal = {c1(:,2:3:end) c2(:,2:3:end)};
-inTst = {c1(:,3:3:end) c2(:,3:3:end)};
 
 tic
 [net, evo] = ntrain(net, inTrn, inVal, inTst);

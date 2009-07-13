@@ -230,7 +230,7 @@ REAL PatternRecognition::trainNetwork()
     unsigned pos = 0;
     DataManager *dm = dmTrn[pat];
 
-    DEBUG3("Applying training set for pattern " << pat << ".");
+    DEBUG2("Applying training set for pattern " << pat << ".");
 
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {

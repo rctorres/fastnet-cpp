@@ -252,6 +252,11 @@ public:
     REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " mse (val) = " << valError);
   };
 
+  virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError, const REAL tstError)
+  {
+    REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " mse (val) = " << valError<< " mse (tst) = " << tstError);
+  };
+
   virtual void tstNetwork(REAL &mseTst, REAL &spTst) = 0;
 
   virtual void valNetwork(REAL &mseVal, REAL &spVal) = 0;

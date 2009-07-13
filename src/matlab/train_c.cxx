@@ -131,6 +131,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned fail_limit_sp = (useSP) ? fail_limit : 0;
     bool &is_best = (useSP) ? is_best_sp :  is_best_mse;
     REAL &val_data = (useSP) ? sp_val : mse_val;
+    REAL &tst_data = (useSP) ? sp_tst : mse_tst;
 
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
@@ -157,7 +158,11 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       //Showing partial results at every "show" epochs (if show != 0).
       if (show)
       {
-        if (!dispCounter) train->showTrainingStatus(epoch, mse_trn, val_data);
+        if (!dispCounter)
+        {
+          if (tstData) train->showTrainingStatus(epoch, mse_trn, val_data, tst_data);
+          else train->showTrainingStatus(epoch, mse_trn, val_data);
+        }
         dispCounter = (dispCounter + 1) % show;
       }
 

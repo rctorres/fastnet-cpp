@@ -297,3 +297,10 @@ void PatternRecognition::showTrainingStatus(const unsigned epoch, const REAL trn
   if (useSP) {REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " SP (val) = " << valError)}
   else Training::showTrainingStatus(epoch, trnError, valError);
 };
+
+
+void PatternRecognition::showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError, const REAL tstError)
+{
+  if (useSP) {REPORT("Epoch " << setw(5) << epoch << ": mse (train) = " << trnError << " SP (val) = " << valError << " SP (tst) = " << tstError)}
+  else Training::showTrainingStatus(epoch, trnError, valError, tstError);
+};

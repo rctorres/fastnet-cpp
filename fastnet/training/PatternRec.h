@@ -94,6 +94,8 @@ public:
   virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP);
 
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError);
+  
+  virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError, const REAL tstError);
 };
 
 #endif

@@ -243,6 +243,22 @@ namespace FastNet
           memcpy(savedB[i], bias[i], nNodes[(i+1)]*sizeof(REAL));
           for (unsigned j=0; j<nNodes[(i+1)]; j++) memcpy(savedW[i][j], weights[i][j], nNodes[i]*sizeof(REAL));
         }
+
+#ifdef DEBUG
+        DEBUG2("##### Saving Best Train Weights: #######")
+        for (unsigned i=0; i<(nNodes.size()-1); ++i)
+        {
+          for (unsigned j=0; j<nNodes[i+1]; ++j)
+          {
+            DEBUG2("b[" << i << "][" << j << "] = " << bias[i][j]);
+            for (unsigned k=0; k<nNodes[i]; ++k)
+            {
+              DEBUG2("w[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+            }
+          }
+        }
+        DEBUG2("##### End Saving Best Train Weights: #######")
+#endif
       };
 
 

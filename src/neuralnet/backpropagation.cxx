@@ -334,8 +334,13 @@ namespace FastNet
     
     for (unsigned i=0; i<nNodes[1]; i++)
     {
-      for (unsigned j=0; j<nNodes[0]; j++) iw(i,j) = static_cast<double>(savedW[0][i][j]);
+      for (unsigned j=0; j<nNodes[0]; j++)
+      {
+        iw(i,j) = static_cast<double>(savedW[0][i][j]);
+        DEBUG2("w[" << 0 << "][" << i << "][" << j << "] = " << static_cast<double>(savedW[0][i][j]));
+      }
       ib(i) = static_cast<double>(savedB[0][i]);
+      DEBUG2("b[0][" << i << "] = " << static_cast<double>(savedB[0][i]));
     }
     
     //Processing the other layers.
@@ -349,8 +354,13 @@ namespace FastNet
           
       for (unsigned j=0; j<nNodes[(i+1)]; j++)
       {
-        for (unsigned k=0; k<nNodes[i]; k++) iw(j,k) = static_cast<double>(savedW[i][j][k]);
+        for (unsigned k=0; k<nNodes[i]; k++)
+        {
+          iw(j,k) = static_cast<double>(savedW[i][j][k]);
+          DEBUG2("w[" << i << "][" << j << "][" << k << "] = " << static_cast<double>(savedW[i][j][k]));
+        }
         ib(j) = static_cast<double>(savedB[i][j]);
+        DEBUG2("b[" << i << "][" << j << "] = " << static_cast<double>(savedB[i][j]));
       }
     }
   }

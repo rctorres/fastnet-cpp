@@ -64,11 +64,16 @@ void PatternRecognition::allocateDataset(const mxArray *dataSet, const bool forT
     inputSize = mxGetM(patData);
     inList[i] = static_cast<REAL*>(mxGetData(patData));
 
-    if (forTrain) dmTrn.push_back(new DataManager(mxGetN(patData)));
+    if (forTrain)
+    {
+      dmTrn.push_back(new DataManager(mxGetN(patData)));
+      DEBUG2("Number of events for pattern " << i << ":" << mxGetN(patData));
+    }
     else
     {
       nEv[i] = static_cast<unsigned>(mxGetN(patData));
       if (useSP) out[i] = new REAL [nEv[i]];
+      DEBUG2("Number of events for pattern " << i << ":" << nEv[i]);
     }
   }
 }

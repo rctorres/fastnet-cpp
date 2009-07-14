@@ -40,7 +40,6 @@ elseif (nargin == 4),
   %In this case, out_trn is, actually, the in_val, and in_val is actually in_tst.
   validateData(net, in_trn, out_trn, in_val);
   [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, [], in_val);
-
 elseif (nargin == 5),
   validateData(net, in_trn, out_trn, in_val, out_val);
   [outNet, trnInfo] = train_c(net, in_trn, out_trn, in_val, out_val);
@@ -57,7 +56,7 @@ function validateData(net, in_trn, out_trn, in_val, out_val)
     for i=1:nClasses,
       validateField(in_trn{i}, inputDim, sprintf('in_trn{%d}',i));
       validateField(out_trn{i}, inputDim, sprintf('in_val{%d}',i));
-      if nargin == 3,
+      if nargin == 4,
         validateField(in_val{i}, inputDim, sprintf('in_tst{%d}',i));
       end
     end

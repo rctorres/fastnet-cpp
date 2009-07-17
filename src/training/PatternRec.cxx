@@ -221,7 +221,6 @@ REAL PatternRecognition::trainNetwork()
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
   FastNet::Backpropagation **nv = netVec;
-  updateNetworks();
 
   for(unsigned pat=0; pat<numPatterns; pat++)
   {
@@ -259,14 +258,10 @@ REAL PatternRecognition::trainNetwork()
   }
 
   updateGradients();
+  updateWeights();
   return (gbError / static_cast<REAL>(numPatterns*batchSize));  
 };
   
-void PatternRecognition::checkSizeMismatch() const
-{
-  if (inputSize != (*net)[0]) throw "Input training or validating data do not match the network input layer size!";
-};
-
 
 void PatternRecognition::showInfo(const unsigned nEpochs) const
 {

@@ -73,7 +73,6 @@ REAL StandardTraining::trainNetwork()
   FastNet::Backpropagation **nv = netVec;
   DataManager *dm = dmTrn;
 
-  updateNetworks();
   #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
   {
     thId = omp_get_thread_num(); 
@@ -94,17 +93,10 @@ REAL StandardTraining::trainNetwork()
   }
 
   updateGradients();
+  updateWeights();
   return (gbError / static_cast<REAL>(batchSize));
 }
-  
-void StandardTraining::checkSizeMismatch() const
-{
-  if (inputSize != (*net)[0])
-    throw "Input training or validating data do not match the network input layer size!";
 
-  if ( outputSize != (*net)[net->getNumLayers()-1] )
-    throw "Output training or validating data do not match the network output layer size!";
-};
   
 void StandardTraining::showInfo(const unsigned nEpochs) const
 {

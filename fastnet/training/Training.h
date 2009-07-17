@@ -72,23 +72,23 @@ class Training
 protected:
   std::list<TrainData> trnEvolution;
   REAL bestGoal;
-  FastNet::Backpropagation *net;
+  FastNet::Backpropagation *mainNet;
   FastNet::Backpropagation **netVec;
   unsigned nThreads;
   unsigned batchSize;
   int chunkSize;
 
-  void updateNetworks()
-  {
-    const FastNet::Backpropagation *mainNet = netVec[0];
-    for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
-  }
-
   void updateGradients()
   {
-    FastNet::Backpropagation *mainNet = netVec[0];
     for (unsigned i=1; i<nThreads; i++) mainNet->addToGradient(*netVec[i]);
   }
+
+  virtual void updateWeights()
+  {
+    mainNet->updateWeights(batchSize);
+    for (unsigned i=1; i<nThreads; i++) (*netVec[i]) = (*mainNet);
+  };
+
 
 #ifdef NO_OMP
 int omp_get_num_threads() {return 1;}
@@ -113,7 +113,7 @@ public:
     chunkSize = static_cast<int>(std::ceil(static_cast<float>(batchSize) / static_cast<float>(nThreads)));
     
     netVec = new FastNet::Backpropagation* [nThreads];
-    net = netVec[0] = n;
+    mainNet = netVec[0] = n;
     for (unsigned i=1; i<nThreads; i++) netVec[i] = new FastNet::Backpropagation(*n);
   };
 
@@ -233,8 +233,6 @@ public:
     return ret;
   };
   
-  virtual void checkSizeMismatch() const = 0;
-
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
   virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP)

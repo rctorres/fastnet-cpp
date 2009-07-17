@@ -87,8 +87,6 @@ public:
   */
   virtual REAL trainNetwork();
 
-  virtual void checkSizeMismatch() const;
-
   virtual void showInfo(const unsigned nEpochs) const;
 
   virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP);

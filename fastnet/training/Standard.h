@@ -44,8 +44,6 @@ public:
   */
   virtual REAL trainNetwork();
   
-  virtual void checkSizeMismatch() const;
-  
   virtual void showInfo(const unsigned nEpochs) const;
 };
 

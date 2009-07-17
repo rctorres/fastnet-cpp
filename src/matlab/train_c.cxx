@@ -107,9 +107,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], tstData, useSP, batchSize);
     }
 
-    //Checking if the training and validating input data sizes match the network's input layer.
-    train->checkSizeMismatch();
-
 #ifdef DEBUG
     //Displaying the training info before starting.
     net->showInfo();
@@ -135,8 +132,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
+      //Training the network and calculating the new weights.
       const REAL mse_trn = train->trainNetwork();
-      net->updateWeights(batchSize);
 
       //Validating the new network.
       train->valNetwork(mse_val, sp_val);

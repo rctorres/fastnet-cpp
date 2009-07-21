@@ -262,14 +262,6 @@ namespace FastNet
       };
 
 
-      /// Ramdomly initializes the weight and bias values.
-      /**
-       This method ramdomly initializes the weight and bias values of a neural
-       network.
-       @param[in] initWeightRange the weights's range, so that -initWeightRange \f$\leq\f$ w \f$\leq\f$ initWeightRange.
-      */
-      virtual void initWeights(REAL initWeightRange);
-
       /// Calculates the new weight values.
       /**
        This method retropropagates the error through the network

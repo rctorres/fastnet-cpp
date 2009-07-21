@@ -269,27 +269,6 @@ namespace FastNet
     }
   }
 
-  void Backpropagation::initWeights(REAL initWeightRange)
-  {
-    // Choosing a seed based on system time.
-    srand(time(NULL) % 10000000);
-
-    for (unsigned i=0; i<(nNodes.size() - 1); i++)
-    {
-      for (unsigned j=0; j<nNodes[i+1]; j++)
-      {
-        //Initializing the bias (if the layer is not using bias, the value is set to zero).
-        bias[i][j] = (usingBias[i]) ? (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange : 0;
-
-        //Initializing the weights.
-        for (unsigned k=0; k<nNodes[i]; k++)
-        {
-          weights[i][j][k] = (2*initWeightRange*((static_cast<REAL>(rand() % 101)) / 100)) - initWeightRange;
-        }
-      }
-    }
-  }
-
 
   bool Backpropagation::isFrozen(unsigned layer) const
   {

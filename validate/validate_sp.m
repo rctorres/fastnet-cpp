@@ -4,21 +4,21 @@ close all;
 %Creating the data for validation.
 nClasses = 2;
 Nev = 12000;
-c1 = single([randn(1,Nev); randn(1,Nev)]);
-c2 = single([2.5 + randn(1,Nev); 2.5 + randn(1,Nev)]);
-
-%Creating the neural network.
-inNet = newff2([nClasses,2,1], {'tansig', 'tansig'});
-inNet.trainParam.epochs = 3000;
-inNet.trainParam.max_fail = 20;
-inNet.trainParam.show = 0;
-inNet.trainParam.batchSize = 1000;
-inNet.trainParam.useSP = true;
+c1 = [randn(1,Nev); randn(1,Nev)];
+c2 = [2.5 + randn(1,Nev); 2.5 + randn(1,Nev)];
 
 %Creating the training, validating and testing data sets.
 inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
 inVal = {c1(:,2:3:end) c2(:,2:3:end)};
 inTst = {c1(:,3:3:end) c2(:,3:3:end)};
+
+%Creating the neural network.
+inNet = newff2(inTrn, [1 -1], 2, {'tansig', 'tansig'});
+inNet.trainParam.epochs = 3000;
+inNet.trainParam.max_fail = 20;
+inNet.trainParam.show = 0;
+inNet.trainParam.batchSize = 1000;
+inNet.trainParam.useSP = true;
 
 %Training the networks to be compared.
 tic

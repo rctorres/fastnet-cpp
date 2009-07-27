@@ -10,8 +10,22 @@ title('Classes Distribution');
 xlabel('X');
 ylabel('Y');
 
+%Creating the training, validating and testing data sets.
+inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
+inVal = {c1(:,2:3:end) c2(:,2:3:end)};
+inTst = {c1(:,3:3:end) c2(:,3:3:end)};
+contInTrn = [inTrn{1} inTrn{2}];
+contInVal = [inVal{1} inVal{2}];
+contInTst = [inTst{1} inTst{2}];
+outTrn = [ones(1, size(inTrn{1},2)) -ones(1, size(inTrn{2},2))];
+outVal = [ones(1, size(inVal{1},2)) -ones(1, size(inVal{2},2))];
+outTst = [ones(1, size(inTst{1},2)) -ones(1, size(inTst{2},2))];
+val.P = contInVal;
+val.T = outVal;
+
+
 %Creating the neural network.
-net = newff2([nClasses,2,1], {'tansig', 'tansig'});
+net = newff2(inTrn, outTrn, 2, {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 20;
 net.trainParam.show = 1;
@@ -23,35 +37,21 @@ net.trainParam.delt_inc = 1.10;
 net.trainParam.delt_dec = 0.5;
 net.trainParam.delta0 = 0.1;
 
-
-%Creating the training, validating and testing data sets.
-inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
-inVal = {c1(:,2:3:end) c2(:,2:3:end)};
-inTst = {single(c1(:,3:3:end)) single(c2(:,3:3:end))};
-contInTrn = [inTrn{1} inTrn{2}];
-contInVal = [inVal{1} inVal{2}];
-contInTst = [inTst{1} inTst{2}];
-outTrn = [ones(1, size(inTrn{1},2)) -ones(1, size(inTrn{2},2))];
-outVal = [ones(1, size(inVal{1},2)) -ones(1, size(inVal{2},2))];
-outTst = single([ones(1, size(inTst{1},2)) -ones(1, size(inTst{2},2))]);
-val.P = contInVal;
-val.T = outVal;
-
 %Training the networks to be compared.
 tic
 matNet = train(net, contInTrn, outTrn, [], [], val);
 toc
 tic
-fastNetCont = ntrain(net, single(contInTrn), single(outTrn), single(val.P), single(val.T));
+fastNetCont = ntrain(net, contInTrn, outTrn, val.P, val.T);
 toc
-inTrn = {single(c1(:,1:3:end)) single(c2(:,1:3:end))};
-inVal = {single(c1(:,2:3:end)) single(c2(:,2:3:end))};
+inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
+inVal = {c1(:,2:3:end) c2(:,2:3:end)};
 tic
 fastNet = ntrain(net, inTrn, inVal);
 toc
 
 %Generating the testing outputs.
-matOut = {sim(matNet, double(inTst{1})) sim(matNet, double(inTst{2}))};
+matOut = {sim(matNet, inTst{1}) sim(matNet, inTst{2})};
 fastNetContOut = {nsim(fastNetCont, inTst{1}) nsim(fastNetCont, inTst{2})};
 fastNetOut = {nsim(fastNet, inTst{1}) nsim(fastNet, inTst{2})};
 

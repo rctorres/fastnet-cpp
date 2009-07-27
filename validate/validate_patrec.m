@@ -9,7 +9,7 @@ inVal = {randn(2,2500), (2.5 + randn(2,4500))};
 inTst = {randn(2,2000), (2.5 + randn(2,4000))};
 
 %Creating the neural network.
-net = newff2([nClasses,3,1], {'tansig', 'tansig'});
+net = newff2(inTrn, [-1 1], 3, {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
 net.trainParam.max_fail = 50;
 net.trainParam.show = 1;

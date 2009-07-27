@@ -32,12 +32,14 @@ function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val, in_ts
 %
 
 %Case pat rec net.
+usedTstData = false;
 if (nargin == 3),
   %In this case, out_trn is, actually, the in_val.
   validateData(net, in_trn, out_trn);
   [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, [], []);
 elseif (nargin == 4),
   %In this case, out_trn is, actually, the in_val, and in_val is actually in_tst.
+  usedTstData = true;
   validateData(net, in_trn, out_trn, in_val);
   [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, [], in_val);
 elseif (nargin == 5),
@@ -46,6 +48,17 @@ elseif (nargin == 5),
 else
   error('Incorrect number of arguments! See help for information!');
 end
+
+%Removing unused fields.
+if ~usedTstData,
+  trnInfo = rmfield(trnInfo, 'mse_tst');
+  trnInfo = rmfield(trnInfo, 'sp_tst');
+end
+
+if ~net.trainParam.useSP,
+  trnInfo = rmfield(trnInfo, 'sp_val');
+end  
+
 
 
 function validateData(net, in_trn, out_trn, in_val, out_val)

@@ -1,55 +1,50 @@
-function net = newff2(nodesDist, trfFunc, netTrain)
-%function net = newff2(nodesDist, trfFunc, netTrain)
+function net = newff2(inTrn, outData, hNodes, trfFunc, netTrain)
+%function net = newff2(inTrn, outData, hNodes, trfFunc, netTrain)
 %Creates a neural network structure just like the newff function (see help).
 %Parameters are:
-%  nodesDist 		-> The number of nodes in each layer (including the input).
-%  trfFunc   		-> A cell vector containing the transfer function in each layer (excluding the input).
+%  inData          -> The input training set. Each collumn is an event.
+%  outData         -> The desired output for each training event. Each collumn
+%                     is an event.
+%  hNodes          -> The vector with the number of nodes in the hidden layers.
+%                     If zero, a simple input->output layer will be created.
+%  trfFunc         -> A cell vector containing the transfer function in each layer (excluding the input).
 %  netTrain (opt)  -> The training algorithm to be used. If none is specified, 'trainrp' will be used.
 %
 %The only modification in the net structure created, when compared to the one crated by newff
-%is that this function adds new information to be used with the MatFastNet toolbox.
-%Although the MatFastNet is full compatible with the network structures created with newff,
-%you should try use newff2 in order to get full advantage of the MatFastNet toolbox.
+%is that this function adds new information to be used with the FastNet toolbox.
+%Although a network created with newff2 will train correctly with matlab NN
+%toolbox, the opposite is not true.
 %
 
-if nargin == 2,
-	netTrain = 'trainrp';
-end
+  if nargin < 2, outData = [1 -1]; end
+  if nargin < 3, hNodes = []; end
+  if nargin < 4, trfFunc = {'tansig'}; end
+  if nargin < 5, netTrain = 'trainrp'; end
 
-aux = [-ones(nodesDist(1),1) ones(nodesDist(1),1)];
-auxOut = [-ones(nodesDist(end),1) ones(nodesDist(end),1)];
+  %Creating the default network.
+  net = newff(fmtData(inTrn), fmtData(outData), hNodes, trfFunc, netTrain);
 
-%Creating the default network.
-net = newff(aux, auxOut, nodesDist(2:(end-1)), trfFunc, netTrain);
+  %if the training is 'traingd', we add the decFactor parameter.
+  if (strcmp(net.trainFcn, 'traingd') == 1),
+    net.trainParam.decFactor = 1;
+  end
 
-%if the training is 'traingd', we add the decFactor parameter.
-if (strcmp(net.trainFcn, 'traingd') == 1),
-	net.trainParam.decFactor = 1;
-end
+  %Adding the usingBias and frozen nodes.
+  for i=1:net.numLayers,
+    net.layers{i}.userdata.usingBias = true;
+    net.layers{i}.userdata.frozenNodes = [];
+  end
 
-%Adding the usingBias and frozen nodes.
-for i=1:net.numLayers,
-	net.layers{i}.userdata.usingBias = true;
-	net.layers{i}.userdata.frozenNodes = [];
-end
+  %Specifying the SP goal.
+  net.trainParam.useSP = false;
 
-%Specifying the SP goal.
-net.trainParam.useSP = false;
-
-%Specifying the batch size.
-net.trainParam.batchSize = 10;
+  %Specifying the batch size.
+  net.trainParam.batchSize = 10;
 
 
-%initializing the weights in the standard way, since the Matlab way sucks.
-wInit = -0.2;
-wEnd = 0.2;
-
-%Doing the input layer.
-net.IW{1} = unifrnd(wInit, wEnd, size(net.IW{1}));
-net.b{1} = unifrnd(wInit, wEnd, size(net.b{1}));
-
-%Doing the other layers.
-for i=2:net.numLayers,
-	net.LW{i,(i-1)} = unifrnd(wInit, wEnd, size(net.LW{i,(i-1)}));
-	net.b{i} = unifrnd(wInit, wEnd, size(net.b{i}));
-end
+function fmtData = fmtData(data)
+  if iscell(data),
+    fmtData = minmax(cell2mat(data));
+  else
+    fmtData = minmax(data);
+  end

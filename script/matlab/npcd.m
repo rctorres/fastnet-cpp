@@ -139,8 +139,8 @@ efficVec.max = maxEfic(1:pcdExtracted);
 
 function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
   nPCD = size(pcd,1);
-  numNodes(2) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
-  net = newff2(numNodes, trfFunc, trnAlgo);
+  numNodes.hidNodes(1) = nPCD + 1; %Increasing the number of nodes in the first hidden layers.
+  net = newff2(numNodes.inRange, numNodes.outRange, numNodes.hidNodes, trfFunc, trnAlgo);
   net.trainParam = trnParam;
   
   for i=1:length(net.layers),
@@ -157,8 +157,8 @@ function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam
   
   
 function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
-  numNodes(2) = 1;
-  net = newff2(numNodes, trfFunc, trnAlgo);
+  numNodes.hidNodes(1) = 1;
+  net = newff2(numNodes.inRange, numNodes.outRange, numNodes.hidNodes, trfFunc, trnAlgo);
   net.trainParam = trnParam;
 
   for i=1:length(net.layers),
@@ -220,13 +220,19 @@ function [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetwo
 
   %The maximum number of PCDs to be extracted is equal to the input size.
   maxNumPCD = net.inputs{1}.size;
+  
+  %Getting the input and output ranges.
+  numNodes.inRange = net.inputs{1}.range;
+  numNodes.outRange = net.outputs{length(net.outputs)}.range;
 
   %Taking the other layer's size and training function.
-  numNodes = [net.inputs{1}.size zeros(1,length(net.layers))];
+  numNodes.hidNodes = zeros(1,(length(net.layers)-1));
   trfFunc = cell(1,length(net.layers));
   usingBias = zeros(1,length(net.layers));
   for i=1:length(net.layers),
-    numNodes(i+1) = net.layers{i}.size;
+    if i < length(net.layers),
+      numNodes.hidNodes(i) = net.layers{i}.size;
+    end
     trfFunc{i} = net.layers{i}.transferFcn;
     usingBias(i) = net.layers{i}.userdata.usingBias;
   end

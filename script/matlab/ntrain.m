@@ -57,6 +57,10 @@ end
 
 if ~net.trainParam.useSP,
   trnInfo = rmfield(trnInfo, 'sp_val');
+  trnInfo = rmfield(trnInfo, 'is_best_sp');
+  trnInfo = rmfield(trnInfo, 'num_fails_sp');
+  trnInfo = rmfield(trnInfo, 'stop_sp');
+  if isfield(trnInfo, 'sp_tst'), trnInfo = rmfield(trnInfo, 'sp_tst'); end
 end  
 
 

@@ -1,5 +1,5 @@
-function outNet = scrambleWeights(net)
-%function scrambleWeights(net)
+function oNet = scrambleWeights(net)
+%function oNet = scrambleWeights(net)
 %Takes a neural network structure and scrmable it weights and biases
 %matrices, returning the same network structure with the scrambled values.
 %This function respects the frozen node information, which means that, if a
@@ -7,30 +7,19 @@ function outNet = scrambleWeights(net)
 %NOT be scrambled.
 %
 
-outNet = net;
+%Scrambling the weights.
+oNet = init(net);
 
-%initializing the weights in the standard way, since the Matlab way sucks.
-wInit = -0.2;
-wEnd = 0.2;
+%We now must recover the weights and bias values of the frozen nodes.
 
 %Doing the input layer.
-
-%This will make nodesIdx contain only the index of the nodes which are NOT frozen.
-[nextLayer, currLayer] = size(outNet.IW{1});
-nodesIdx = (1:nextLayer);
-nodesIdx(net.layers{1}.userdata.frozenNodes) = []; 
-nNodes = length(nodesIdx);
-
-outNet.IW{1}(nodesIdx,:) = unifrnd(wInit, wEnd, nNodes, currLayer);
-outNet.b{1}(nodesIdx) = unifrnd(wInit, wEnd, nNodes, 1);
+nodesIdx = net.layers{1}.userdata.frozenNodes;
+oNet.IW{1}(nodesIdx,:) = net.IW{1}(nodesIdx,:);
+oNet.b{1}(nodesIdx) = net.b{1}(nodesIdx);
 
 %Doing the other layers.
-for i=2:outNet.numLayers,
-  [nextLayer, currLayer] = size(outNet.LW{i,(i-1)});
-  nodesIdx = (1:nextLayer);
-  nodesIdx(net.layers{i}.userdata.frozenNodes) = []; 
-  nNodes = length(nodesIdx);
-
-	outNet.LW{i,(i-1)}(nodesIdx,:) = unifrnd(wInit, wEnd, nNodes, currLayer);
-	outNet.b{i}(nodesIdx) = unifrnd(wInit, wEnd, nNodes, 1);
+for i=2:oNet.numLayers,
+  nodesIdx = net.layers{i}.userdata.frozenNodes; 
+	oNet.LW{i,(i-1)}(nodesIdx,:) = net.LW{i,(i-1)}(nodesIdx,:);
+	oNet.b{i}(nodesIdx) = net.b{i}(nodesIdx);
 end

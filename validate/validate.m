@@ -44,8 +44,6 @@ toc
 tic
 fastNetCont = ntrain(net, contInTrn, outTrn, val.P, val.T);
 toc
-inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
-inVal = {c1(:,2:3:end) c2(:,2:3:end)};
 tic
 fastNet = ntrain(net, inTrn, inVal);
 toc

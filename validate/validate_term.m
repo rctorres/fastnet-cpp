@@ -26,11 +26,11 @@ net.trainParam.batchSize = 10;
 
 %Training the networks to be compared.
 tic
-[fastNetCont, contE, contTrnE, contValE] = ntrain(net, contInTrn, outTrn, contInVal, outVal);
+[fastNetCont, cEvo] = ntrain(net, contInTrn, outTrn, contInVal, outVal);
 toc
 
 tic
-[fastNet, e, trnE, valE] = ntrain(net, inTrn, inVal);
+[fastNet, pEvo] = ntrain(net, inTrn, inVal);
 toc
 
 %Generating the testing outputs.
@@ -57,7 +57,7 @@ xlabel('False Alarm (%)');
 ylabel('Detection (%)');
 
 subplot(2,2,2);
-plot(contE, contTrnE, 'b-', contE, contValE,'r-', e, trnE, 'k-', e, valE,'m-');
+plot(cEvo.epoch, cEvo.mse_trn, 'b-', cEvo.epoch, cEvo.mse_val,'r-', pEvo.epoch, pEvo.mse_trn, 'k-', pEvo.epoch, pEvo.mse_val, 'm-');
 legend('Trn (cont)', 'Val (cont)', 'Trn', 'Val');
 title('Trining Evolution');
 xlabel('Epoch');

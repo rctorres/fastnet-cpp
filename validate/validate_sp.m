@@ -22,12 +22,12 @@ inNet.trainParam.useSP = true;
 
 %Training the networks to be compared.
 tic
-[spNet, spE, spTrnE, spValE] = ntrain(inNet, inTrn, inVal);
+[spNet, spEvo] = ntrain(inNet, inTrn, inVal);
 toc
 
 inNet.trainParam.useSP = false;
 tic
-[net, e, trnE, valE] = ntrain(inNet, inTrn, inVal);
+[net, mseEvo] = ntrain(inNet, inTrn, inVal);
 toc
 
 %Generating the testing outputs.
@@ -52,7 +52,7 @@ xlabel('False Alarm (%)');
 ylabel('Detection (%)');
 
 subplot(2,2,2);
-plot(e, trnE, 'b-', e, valE,'r-', spE, spTrnE, 'k-', spE, spValE,'m-');
+plot(mseEvo.epoch, mseEvo.mse_trn, 'b-', mseEvo.epoch, mseEvo.mse_val,'r-', spEvo.epoch, spEvo.mse_trn, 'k-', spEvo.epoch, spEvo.sp_val,'m-');
 legend('Trn (MSE)', 'Val (MSE)', 'Trn (SP)', 'Val (SP)');
 title('Training Evolution');
 xlabel('Epoch');

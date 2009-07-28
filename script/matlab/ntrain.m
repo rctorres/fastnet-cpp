@@ -67,6 +67,7 @@ end
 
 function validateData(net, in_trn, out_trn, in_val, out_val)
   inputDim = net.inputs{1}.size;
+  outputDim = net.outputs{length(net.outputs)}.size;
   
   if (nargin == 3) || (nargin == 4),
     nClasses = length(in_trn);
@@ -79,9 +80,9 @@ function validateData(net, in_trn, out_trn, in_val, out_val)
     end
   elseif nargin == 5,
     validateField(in_trn, inputDim, 'in_trn');
-    validateField(out_trn, inputDim, 'out_trn');
+    validateField(out_trn, outputDim, 'out_trn');
     validateField(in_val, inputDim, 'in_val');
-    validateField(out_val, inputDim, 'out_val');
+    validateField(out_val, outputDim, 'out_val');
   end
 
 function validateField(field, inputDim, id)

@@ -5,4 +5,4 @@ function ret  = calcSP(effic)
 %for each collumn.
 %
 
-ret = geomean(effic) .* mean(effic);
+ret = sqrt(geomean(effic) .* mean(effic));

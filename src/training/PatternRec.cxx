@@ -167,7 +167,7 @@ REAL PatternRecognition::sp(const unsigned *nEvents, REAL **epochOutputs)
     if (sp > maxSP) maxSP = sp;
   }
   
-  return maxSP;
+  return sqrt(maxSP); // This sqrt is so that the SP value is in percent.
 };
 
 

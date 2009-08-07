@@ -71,10 +71,10 @@ pcdExtracted = 1;
 %previous one. Then , if 'maxFail' failures occur, in a sequence, the PCD
 %extraction is aborted. But mxCount is reset to zero if, after a failure,
 %the next extraction is successfull.
-minDiff = 0.0003;
+minDiff = 0.0001;
 maxFail = 3;
 mfCount = 0;
-prevMeanSP = 0;
+prevMaxSP = 0;
 spDiff = 0;
 
 %Extracting one PCD per iteration.
@@ -98,6 +98,7 @@ for i=1:maxNumPCD,
   outNet{i} = nVec{idx}.net;
   trnEvo{i} = nVec{idx}.trnEvo;
   maxEfic(i) = nVec{idx}.sp;
+  maxSP = nVec{idx}.sp;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.
   ef = zeros(1,numIterations);
@@ -105,7 +106,6 @@ for i=1:maxNumPCD,
     ef(j) = nVec{j}.sp;
   end
   meanEfic(i) = mean(ef);
-  meanSP = meanEfic(i);
   stdEfic(i) = std(ef);
   
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
@@ -113,7 +113,7 @@ for i=1:maxNumPCD,
   
   %If the SP increment is not above the minimum threshold, we initiate the
   %stopping countdown.
-  spDiff = meanSP-prevMeanSP;
+  spDiff = maxSP-prevMaxSP;
   if (spDiff < minDiff)
     mfCount = mfCount + 1;
   else
@@ -125,7 +125,7 @@ for i=1:maxNumPCD,
   end
   
   % We move on to the next PCD.
-  prevMeanSP = meanSP;
+  prevMaxSP = maxSP;
 end
 
 %Returning the PCDs actually extracted.

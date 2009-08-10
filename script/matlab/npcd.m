@@ -1,5 +1,5 @@
-function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
-%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations)
+function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations, minDiff)
+%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations, minDiff)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -17,6 +17,7 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflat
 % for extracting a given PCD. This is used to avoid local minima. For each
 % PCD, the iteration which generated the best mean detection efficiency will
 % provide the extracted PCD. Default is 10.
+% minDiff - The minimum difference (in percentual value) in the SP for continuing extracting PCDs.
 %
 %The function returns:
 % pcd - A matrix with the extracted PCDs.
@@ -29,12 +30,11 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflat
 %
 
 
-if (nargin == 4),
-  deflation = false;
-  numIterations = 5;
-elseif (nargin == 5),
-  numIterations = 5;
-elseif (nargin > 6) || (nargin < 4),
+if (nargin < 5), deflation = false; end
+if (nargin < 6), numIterations = 5; end
+if (nargin < 7), minDiff = 0.01; end
+
+if (nargin > 7) || (nargin < 4),
   error('Invalid number of input arguments. See help.');
 end
 
@@ -71,7 +71,6 @@ pcdExtracted = 1;
 %previous one. Then , if 'maxFail' failures occur, in a sequence, the PCD
 %extraction is aborted. But mxCount is reset to zero if, after a failure,
 %the next extraction is successfull.
-minDiff = 0.0001;
 maxFail = 3;
 mfCount = 0;
 prevMaxSP = 0;
@@ -98,7 +97,7 @@ for i=1:maxNumPCD,
   outNet{i} = nVec{idx}.net;
   trnEvo{i} = nVec{idx}.trnEvo;
   maxEfic(i) = nVec{idx}.sp;
-  maxSP = nVec{idx}.sp;
+  maxSP = 100*nVec{idx}.sp;
 
   %Getting the mean and std val of the SP efficiencies obtained through the iterations.
   ef = zeros(1,numIterations);
@@ -110,10 +109,10 @@ for i=1:maxNumPCD,
   
   pcd = [pcd; outNet{i}.IW{1}(end,:)];
   bias = outNet{i}.b{1};
-  
+
   %If the SP increment is not above the minimum threshold, we initiate the
   %stopping countdown.
-  spDiff = maxSP-prevMaxSP;
+  spDiff = 100 * (maxSP-prevMaxSP) / maxSP;
   if (spDiff < minDiff)
     mfCount = mfCount + 1;
   else

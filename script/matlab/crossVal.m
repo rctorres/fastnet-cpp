@@ -86,6 +86,7 @@ function maxSP = get_best_train(net, trn, val, tst)
   for i=1:nTrains,
     onet = ntrain(net{i}, trn, val);
     out = nsim(onet, tst);
-    [sp(i), cutVec, detVec, faVec] = genROC(out{1}, out{2});
+    [spVec, cutVec, detVec, faVec] = genROC(out{1}, out{2});
+    sp(i) = max(spVec);
   end
   maxSP = max(sp);

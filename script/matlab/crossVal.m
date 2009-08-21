@@ -1,5 +1,21 @@
 function [meanSP, stdSP] = crossVal(net, data, nBlocks, nDeal, nTrains)
 %function [meanSP, stdSP] = crossVal(net, data, nBlocks, nDeal, nTrains)
+%Performs cross validation analysis on the dataset data.
+%Inputs parameters are:
+% - net: The configured network to be trained during the cross validation
+%        tests,
+% - data: a cell vector where each cell is a matrix containing the events
+%         to be used (one event per collumn).
+% - nBlocks: specifies in how many blocks the data will be divided into.
+% - nDeal: specifies how many times the blocks will be ramdomly distributed
+%          into training, validation and test sets.
+% - nTrains: specifies, for a given deal, how many times the network will
+%            be trained, to avoid local minima.
+%
+%The function returns the mean and std value of the maximum SP obtained in
+%each deal.
+%
+%WARNING: THIS FUNCTION ONLY WORKS FOR THE 2 CLASSES CASE!!!
 %
 
 if nargin < 3, nBlocks = 12; end

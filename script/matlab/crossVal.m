@@ -1,16 +1,19 @@
-function [meanSP, stdSP] = crossVal(net, data, nBlocks, nDeal, nTrains)
-%function [meanSP, stdSP] = crossVal(net, data, nBlocks, nDeal, nTrains)
+function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
+%function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
-% - net: The configured network to be trained during the cross validation
-%        tests,
 % - data: a cell vector where each cell is a matrix containing the events
 %         to be used (one event per collumn).
+% - net: The configured network to be trained during the cross validation
+%        tests. If ommited or [], a cross validation using a Fisher
+%        classifier will be used. The fisher approach is ONLY valid if you
+%        have only 2 classes!
 % - nBlocks: specifies in how many blocks the data will be divided into.
 % - nDeal: specifies how many times the blocks will be ramdomly distributed
 %          into training, validation and test sets.
 % - nTrains: specifies, for a given deal, how many times the network will
-%            be trained, to avoid local minima.
+%            be trained, to avoid local minima. If net = [], this parameter
+%            is ignored.
 %
 %The function returns the mean and std value of the maximum SP obtained in
 %each deal.
@@ -18,17 +21,25 @@ function [meanSP, stdSP] = crossVal(net, data, nBlocks, nDeal, nTrains)
 %WARNING: THIS FUNCTION ONLY WORKS FOR THE 2 CLASSES CASE!!!
 %
 
+if nargin < 2, net = []; end
 if nargin < 3, nBlocks = 12; end
 if nargin < 4, nDeal = 10; end
 if nargin < 5, nTrains = 5; end
 
 data = create_blocks(data, nBlocks);
-netVec = get_networks(net, nTrains);
 sp = zeros(1,nDeal);
 
-for d=1:nDeal,
-  [trn val tst] = deal_sets(data);
-  sp(d) = get_best_train(netVec, trn, val, tst);
+if isempty(net),
+  for d=1:nDeal,
+    [trn val tst] = deal_sets(data);
+    sp(d) = get_sp_by_fisher(trn, tst);
+  end  
+else
+  netVec = get_networks(net, nTrains);
+  for d=1:nDeal,
+    [trn val tst] = deal_sets(data);
+    sp(d) = get_best_train(netVec, trn, val, tst);
+  end
 end
 
 %Returning the mean and std of the SP obtained.
@@ -90,3 +101,16 @@ function maxSP = get_best_train(net, trn, val, tst)
     sp(i) = max(spVec);
   end
   maxSP = max(sp);
+
+  
+function maxSP = get_sp_by_fisher(trn, tst)
+%Calculates the best SP achieved considering a Fisher discriminant.
+  w = fisher(trn{1}, trn{2});
+  
+  out = {w*tst{1}, w*tst{2}};
+  [aux, pp] = mapminmax(cell2mat(out));
+  out{1} = mapminmax('apply', out{1}, pp);
+  out{2} = mapminmax('apply', out{2}, pp);
+
+  [spVec, cutVec, detVec, faVec] = genROC(out{1}, out{2});
+  maxSP = max(spVec);

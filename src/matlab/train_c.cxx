@@ -121,12 +121,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     unsigned dispCounter = 0;
     REAL mse_val, sp_val, mse_tst, sp_tst;
     mse_val = sp_val = mse_tst = sp_tst = 0.;
-    bool is_best_mse, is_best_sp, stop_mse, stop_sp;
+    ValResult is_best_mse, is_best_sp;
+    bool stop_mse, stop_sp;
 
     //Calculating the max_fail limits for each case (MSE and SP, if the case).
     const unsigned fail_limit_mse = (useSP) ? (fail_limit / 2) : fail_limit;
     const unsigned fail_limit_sp = (useSP) ? fail_limit : 0;
-    bool &is_best = (useSP) ? is_best_sp :  is_best_mse;
+    ValResult &is_best = (useSP) ? is_best_sp :  is_best_mse;
     REAL &val_data = (useSP) ? sp_val : mse_val;
     REAL &tst_data = (useSP) ? sp_tst : mse_tst;
 
@@ -144,13 +145,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       // Saving the best weight result.
       train->isBestNetwork(mse_val, sp_val, is_best_mse, is_best_sp);
       
-      if (is_best_mse) num_fails_mse = 0;
-      else num_fails_mse++;
+      if (is_best_mse == BETTER) num_fails_mse = 0;
+      else if (is_best_mse == WORSE) num_fails_mse++;
 
-      if (is_best_sp) num_fails_sp = 0;
-      else num_fails_sp++;
+      if (is_best_sp == BETTER) num_fails_sp = 0;
+      else if (is_best_sp == WORSE) num_fails_sp++;
       
-      if (is_best) net->saveBestTrain();
+      if (is_best == BETTER) net->saveBestTrain();
 
       //Showing partial results at every "show" epochs (if show != 0).
       if (show)

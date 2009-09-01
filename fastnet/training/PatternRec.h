@@ -89,7 +89,7 @@ public:
 
   virtual void showInfo(const unsigned nEpochs) const;
 
-  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP);
+  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, ValResult &isBestMSE, ValResult &isBestSP);
 
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError);
   

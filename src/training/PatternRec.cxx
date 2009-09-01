@@ -270,7 +270,7 @@ void PatternRecognition::showInfo(const unsigned nEpochs) const
   REPORT("Using SP Stopping Criteria      : " << (useSP) ? "true" : "false");
 };
 
-void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP)
+void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currSPError, ValResult &isBestMSE, ValResult &isBestSP)
 {
   //Knowing whether we have a better network, according to the MSE validation criterium.
   Training::isBestNetwork(currMSEError, currSPError, isBestMSE, isBestSP);
@@ -281,9 +281,10 @@ void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currS
     if (currSPError > bestGoalSP)
     {
       bestGoalSP = currSPError;
-      isBestSP = true;
+      isBestSP = BETTER;
     }
-    else isBestSP = false;
+    else if (currSPError < bestGoalSP) isBestSP = WORSE;
+    else isBestSP = EQUAL;
   }
 };
 

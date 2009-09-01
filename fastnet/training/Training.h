@@ -18,6 +18,8 @@
 #include "fastnet/sys/defines.h"
 
 
+enum ValResult {WORSE = -1, EQUAL = 0, BETTER = 1};
+
 //This struct will hold the training info to be ruterned to the user.
 struct TrainData
 {
@@ -27,14 +29,13 @@ struct TrainData
   REAL sp_val;
   REAL mse_tst;
   REAL sp_tst;
-  bool is_best_mse;
-  bool is_best_sp;
+  ValResult is_best_mse;
+  ValResult is_best_sp;
   unsigned num_fails_mse;
   unsigned num_fails_sp;
   bool stop_mse;
   bool stop_sp;
 };
-
 
 class DataManager
 {
@@ -137,7 +138,7 @@ public:
  */
   virtual void saveTrainInfo(const unsigned epoch, const REAL mse_trn, const REAL mse_val, 
                               const REAL sp_val, const REAL mse_tst, const REAL sp_tst, 
-                              const bool is_best_mse, const bool is_best_sp, 
+                              const ValResult is_best_mse, const ValResult is_best_sp, 
                               const unsigned num_fails_mse, const unsigned num_fails_sp, 
                               const bool stop_mse, const bool stop_sp)
   {
@@ -176,8 +177,8 @@ public:
     mxArray *sp_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     mxArray *mse_tst = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
     mxArray *sp_tst = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    mxArray *is_best_mse = mxCreateLogicalMatrix(1, size);
-    mxArray *is_best_sp = mxCreateLogicalMatrix(1, size);
+    mxArray *is_best_mse = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
+    mxArray *is_best_sp = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
     mxArray *num_fails_mse = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
     mxArray *num_fails_sp = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
     mxArray *stop_mse = mxCreateLogicalMatrix(1, size);
@@ -189,8 +190,8 @@ public:
     REAL* sp_val_ptr = static_cast<REAL*>(mxGetData(sp_val));
     REAL* mse_tst_ptr = static_cast<REAL*>(mxGetData(mse_tst));
     REAL* sp_tst_ptr = static_cast<REAL*>(mxGetData(sp_tst));
-    bool* is_best_mse_ptr = static_cast<bool*>(mxGetData(is_best_mse));
-    bool* is_best_sp_ptr = static_cast<bool*>(mxGetData(is_best_sp));
+    int* is_best_mse_ptr = static_cast<int*>(mxGetData(is_best_mse));
+    int* is_best_sp_ptr = static_cast<int*>(mxGetData(is_best_sp));
     unsigned* num_fails_mse_ptr = static_cast<unsigned*>(mxGetData(num_fails_mse));
     unsigned* num_fails_sp_ptr = static_cast<unsigned*>(mxGetData(num_fails_sp));
     bool* stop_mse_ptr = static_cast<bool*>(mxGetData(stop_mse));
@@ -204,8 +205,8 @@ public:
       *sp_val_ptr++ = itr->sp_val;
       *mse_tst_ptr++ = itr->mse_tst;
       *sp_tst_ptr++ = itr->sp_tst;
-      *is_best_mse_ptr++ = itr->is_best_mse;
-      *is_best_sp_ptr++ = itr->is_best_sp;
+      *is_best_mse_ptr++ = static_cast<int>(itr->is_best_mse);
+      *is_best_sp_ptr++ = static_cast<int>(itr->is_best_sp);
       *num_fails_mse_ptr++ = itr->num_fails_mse;
       *num_fails_sp_ptr++ = itr->num_fails_sp;
       *stop_mse_ptr++ = itr->stop_mse;
@@ -235,14 +236,15 @@ public:
   
   virtual void showInfo(const unsigned nEpochs) const = 0;
   
-  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, bool &isBestMSE, bool &isBestSP)
+  virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, ValResult &isBestMSE, ValResult &isBestSP)
   {
     if (currMSEError < bestGoal)
     {
       bestGoal = currMSEError;
-      isBestMSE = true;
+      isBestMSE = BETTER;
     }
-    else isBestMSE = false;
+    else if (currMSEError > bestGoal) isBestMSE = WORSE;
+    else isBestMSE = EQUAL;
   };
   
   virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError)

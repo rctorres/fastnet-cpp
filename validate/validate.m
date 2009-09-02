@@ -12,29 +12,32 @@ legend('Class 1', 'Class 2');
 xlabel('X');
 ylabel('Y');
 
-%Creating the data indices.
-trnInd = (1:3:nEvents);
-valInd = (2:3:nEvents);
-tstInd = (3:3:nEvents);
-
-%Creating the training, validating and testing data sets.
-trn = {c1(:,trnInd) c2(:,trnInd)};
-val = {c1(:,valInd) c2(:,valInd)};
-tst = {c1(:,tstInd) c2(:,tstInd)};
+%Matlab data sets.
 in_data = [c1 c2];
 out_data = [ones(1,nEvents) -ones(1,nEvents)];
+
+%Creating the data indices. So the FastNet and Matlab will be trained,
+%validated and tested with the same data sets.
+trnInd = {(1:1000), (3001:4000)};
+valInd = {(1001:2000), (4001:5000)};
+tstInd = {(2001:3000), (5001:6000)};
+
+%Creating the training, validating and testing data sets.
+trn = {in_data(:,trnInd{1}) in_data(:,trnInd{2})};
+val = {in_data(:,valInd{1}) in_data(:,valInd{2})};
+tst = {in_data(:,tstInd{1}) in_data(:,tstInd{2})};
 
 %Creating the neural network.
 net = newff2(trn, [-1 1], 2, {'tansig', 'tansig'});
 net.trainParam.epochs = 5000;
-net.trainParam.batchSize = length(trnInd);
+net.trainParam.batchSize = size(trn{1},2);
 net.trainParam.max_fail = 50;
 net.trainParam.show = 1;
 net.trainParam.showWindow = true;
 net.trainParam.showCommandLine = true;
-net.divideParam.trainInd = trnInd;
-net.divideParam.valInd = valInd;
-net.divideParam.testInd = tstInd;
+net.divideParam.trainInd = cell2mat(trnInd);
+net.divideParam.valInd = cell2mat(valInd);
+net.divideParam.testInd = cell2mat(tstInd);
 
 cases = {'mat' 'fn'};
 color = 'br';
@@ -50,16 +53,16 @@ for i=1:length(cases),
   %Training the networks to be compared.
   if isMat,
     tic
-    [net evo] = train(net, in_data, out_data);
+    [onet evo] = train(net, in_data, out_data);
     etime = toc;
     %Generating the network output after training.
-    out = {sim(net, tst{1}) sim(net, tst{2})};
+    out = {sim(onet, tst{1}) sim(onet, tst{2})};
   else
     tic
-    [net, evo] = ntrain(net, trn, val, tst);
+    [onet, evo] = ntrain(net, trn, val, tst);
     etime = toc;
     %Generating the network output after training.
-    out = nsim(net, tst);
+    out = nsim(onet, tst);
   end
  
   %First analysis: RoC.

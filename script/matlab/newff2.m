@@ -22,7 +22,7 @@ function net = newff2(inTrn, outData, hNodes, trfFunc, netTrain)
   if nargin < 5, netTrain = 'trainrp'; end
 
   %Creating the default network.
-  net = newff(fmtData(inTrn), fmtData(outData), hNodes, trfFunc, netTrain, 'learngdm', 'mse', {}, {});
+  net = newff(fmtData(inTrn), fmtData(outData), hNodes, trfFunc, netTrain, 'learngdm', 'mse', {}, {}, 'divideind');
 
   %if the training is 'traingd', we add the decFactor parameter.
   if (strcmp(net.trainFcn, 'traingd') == 1),

@@ -1,106 +1,116 @@
-clear all;
-close all;
+%clear all;
+%close all;
 
 %Creating the data for validation.
 nClasses = 2;
-c1 = [randn(1,3000); randn(1,3000)];
-c2 = [2.5 + randn(1,3000); 2.5 + randn(1,3000)];
+nEvents = 3000;
+c1 = [randn(1,nEvents); randn(1,nEvents)];
+c2 = [2.5 + randn(1,nEvents); 2.5 + randn(1,nEvents)];
 plot(c1(1,:), c1(2,:), 'bo', c2(1,:), c2(2,:), 'ro');
 title('Classes Distribution');
+legend('Class 1', 'Class 2');
 xlabel('X');
 ylabel('Y');
 
-%Creating the training, validating and testing data sets.
-inTrn = {c1(:,1:3:end) c2(:,1:3:end)};
-inVal = {c1(:,2:3:end) c2(:,2:3:end)};
-inTst = {c1(:,3:3:end) c2(:,3:3:end)};
-contInTrn = [inTrn{1} inTrn{2}];
-contInVal = [inVal{1} inVal{2}];
-contInTst = [inTst{1} inTst{2}];
-outTrn = [ones(1, size(inTrn{1},2)) -ones(1, size(inTrn{2},2))];
-outVal = [ones(1, size(inVal{1},2)) -ones(1, size(inVal{2},2))];
-outTst = [ones(1, size(inTst{1},2)) -ones(1, size(inTst{2},2))];
-val.P = contInVal;
-val.T = outVal;
+%Creating the data indices.
+trnInd = (1:3:nEvents);
+valInd = (2:3:nEvents);
+tstInd = (3:3:nEvents);
 
+%Creating the training, validating and testing data sets.
+trn = {c1(:,trnInd) c2(:,trnInd)};
+val = {c1(:,valInd) c2(:,valInd)};
+tst = {c1(:,tstInd) c2(:,tstInd)};
+in_data = [c1 c2];
+out_data = [ones(1,nEvents) -ones(1,nEvents)];
 
 %Creating the neural network.
-net = newff2(inTrn, outTrn, 2, {'tansig', 'tansig'});
-net.trainParam.epochs = 3000;
-net.trainParam.max_fail = 20;
+net = newff2(trn, [-1 1], 2, {'tansig', 'tansig'});
+net.trainParam.epochs = 5000;
+net.trainParam.batchSize = length(trnInd);
+net.trainParam.max_fail = 50;
 net.trainParam.show = 1;
-net.trainParam.showWindow = 0;
-net.trainParam.showCommandLine = 1;
-net.trainParam.deltamax = 50.0;
-net.trainParam.min_grad = 1E-6;
-net.trainParam.delt_inc = 1.10;
-net.trainParam.delt_dec = 0.5;
-net.trainParam.delta0 = 0.1;
+net.trainParam.showWindow = true;
+net.trainParam.showCommandLine = true;
+net.divideParam.trainInd = trnInd;
+net.divideParam.valInd = valInd;
+net.divideParam.testInd = tstInd;
 
-%Training the networks to be compared.
-tic
-matNet = train(net, contInTrn, outTrn, [], [], val);
-toc
-tic
-fastNetCont = ntrain(net, contInTrn, outTrn, val.P, val.T);
-toc
-tic
-fastNet = ntrain(net, inTrn, inVal);
-toc
+cases = {'mat' 'fn'};
+color = 'br';
+rocFig = figure;
+outFig = figure;
+evoFig = figure;
 
-%Generating the testing outputs.
-matOut = {sim(matNet, inTst{1}) sim(matNet, inTst{2})};
-fastNetContOut = {nsim(fastNetCont, inTst{1}) nsim(fastNetCont, inTst{2})};
-fastNetOut = {nsim(fastNet, inTst{1}) nsim(fastNet, inTst{2})};
+for i=1:length(cases),
+  c = cases{i};
+  col = color(i);
+  isMat = strcmp(c, 'mat');
+  
+  %Training the networks to be compared.
+  if isMat,
+    tic
+    [net evo] = train(net, in_data, out_data);
+    etime = toc;
+    %Generating the network output after training.
+    out = {sim(net, tst{1}) sim(net, tst{2})};
+  else
+    tic
+    [net, evo] = ntrain(net, trn, val, tst);
+    etime = toc;
+    %Generating the network output after training.
+    out = nsim(net, tst);
+  end
+ 
+  %First analysis: RoC.
+  figure(rocFig);
+  [sp, cut, det.(c), fa.(c)] = genROC(out{1}, out{2});
+  [maxSP.(c) spIdx.(c)] = max(sp);
+  plot(100*fa.(c), 100*det.(c), col);
+  hold on;
+  
+  %Second analysis: output distribution.
+  figure(outFig);
+  subplot(2,1,i);
+  nBims = 200;
+  hist(out{1}, nBims);
+  hold on;
+  hist(out{2}, nBims);
+  hold off;
+  h = findobj(gca, 'Type', 'patch');
+  set(h(1), 'FaceColor', 'r');
+  title(sprintf('Output Distribution (%s)', c));
+  xlabel('Network Output');
+  ylabel('Counts');
+  legend(sprintf('C1 (%f+-%f)', mean(out{1}), std(out{1})), sprintf('C2 (%f+-%f)', mean(out{2}), std(out{2})), 'Location', 'North');
+  
+  %Third analysis: training evolution.
+  figure(evoFig);
+  if isMat,
+    plot(evo.epoch, evo.perf, 'b', evo.epoch, evo.vperf, 'r' ,evo.epoch, evo.tperf, 'k')
+    hold on;
+  else
+    plot(evo.epoch, evo.mse_trn, 'c', evo.epoch, evo.mse_val, 'm' ,evo.epoch, evo.mse_tst, 'g')
+    hold on;  
+  end
+end
 
-%First analysis: RoC.
-nPoints =50000;
-[matSP, matCut, matDet, matFa] = genROC(matOut{1}, matOut{2}, nPoints);
-[matMaxSP matIdx] = max(matSP);
-[fastNetContSP, fastNetContCut, fastNetContDet, fastNetContFa] = genROC(fastNetContOut{1}, fastNetContOut{2}, nPoints);
-[fastNetContMaxSP fastNetContIdx] = max(fastNetContSP);
-[fastNetSP, fastNetCut, fastNetDet, fastNetFa] = genROC(fastNetOut{1}, fastNetOut{2}, nPoints);
-[fastNetMaxSP fastNetIdx] = max(fastNetSP);
-figure;
-plot(matFa, matDet, 'b-');
-hold on;
-plot(fastNetContFa, fastNetContDet, 'r-');
-plot(fastNetFa, fastNetDet, 'k-');
-legend(sprintf('Matlab (SP = %f)', matMaxSP), sprintf('FastNet (cont) (SP = %f)', fastNetContMaxSP), sprintf('FastNet (SP = %f)', fastNetMaxSP));
-plot(matFa(matIdx), matDet(matIdx), 'bo');
-plot(fastNetContFa(fastNetContIdx), fastNetContDet(fastNetContIdx), 'rx');
-plot(fastNetFa(fastNetIdx), fastNetDet(fastNetIdx), 'k*');
-title('RoC Between the Algorithms');
+figure(rocFig);
+grid on;
+legend(sprintf('Matlab (SP = %f)', 100*maxSP.mat), sprintf('FastNet (SP = %f)', 100*maxSP.fn), 'Location', 'SouthEast');
+plot(100*fa.mat(spIdx.mat), 100*det.mat(spIdx.mat), 'b*');
+plot(100*fa.fn(spIdx.fn), 100*det.fn(spIdx.fn), 'r*');
+hold off;
+title('RoC');
 xlabel('False Alarm (%)');
 ylabel('Detection (%)');
 
-%Second analysis: output distribution.
-nBims = 200;
-[matH1, matX1] = hist(matOut{1}, nBims);
-[matH2, matX2] = hist(matOut{2}, nBims);
-[fastNetContH1, fastNetContX1] = hist(fastNetContOut{1}, nBims);
-[fastNetContH2, fastNetContX2] = hist(fastNetContOut{2}, nBims);
-[fastNetH1, fastNetX1] = hist(fastNetOut{1}, nBims);
-[fastNetH2, fastNetX2] = hist(fastNetOut{2}, nBims);
-figure;
-subplot(1,3,1);
-bar(matX1, matH1, 'r');
-hold on;
-bar(matX2, matH2, 'b');
+
+figure(evoFig);
 hold off;
-title('Output Distribution for the Matlab Version')
-xlabel('Network Output');
-subplot(1,3,2);
-bar(fastNetContX1, fastNetContH1, 'r');
-hold on;
-bar(fastNetContX2, fastNetContH2, 'b');
-hold off;
-title('Output Distribution for the FastNet (Cont) Version')
-xlabel('Network Output');
-subplot(1,3,3);
-bar(fastNetX1, fastNetH1, 'r');
-hold on;
-bar(fastNetX2, fastNetH2, 'b');
-hold off;
-title('Output Distribution for the FastNet Version')
-xlabel('Network Output');
+grid on;
+set(gca, 'XScale', 'Log');
+title('Training Evolution');
+xlabel('Epochs');
+ylabel('MSE');
+legend('trn (mat)', 'val (mat)', 'tst (mat)', 'trn (fn)', 'val (fn)', 'tst (fn)');

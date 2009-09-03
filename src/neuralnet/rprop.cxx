@@ -150,11 +150,10 @@ namespace FastNet
         
           if (usingBias[i])
           {
-             DEBUG2("delta_w[" << i << "][" << j << "][" << k << "] = " << delta_b[i][j][k]
-                    << ", dw[" << i << "][" << j << "][" << k << "] = " << db[i][j][k]
-                    << ", prev_dw[" << i << "][" << j << "][" << k << "] = " << prev_db[i][j][k]
-                    << ", weights[" << i << "][" << j << "][" << k << "] = " << bias[i][j][k]);
-
+            DEBUG2("delta_b[" << i << "][" << j << "] = " << delta_b[i][j]
+                    << ", db[" << i << "][" << j << "] = " << db[i][j]
+                    << ", prev_db[" << i << "][" << j << "] = " << prev_db[i][j]
+                    << ", bias[" << i << "][" << j << "] = " << bias[i][j]);
             updateW(delta_b[i][j], db[i][j], prev_db[i][j], bias[i][j]);
           }
           else bias[i][j] = 0;

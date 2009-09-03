@@ -28,7 +28,6 @@ namespace FastNet
     Backpropagation::operator=(net);
 
     deltaMax = net.deltaMax;
-    deltaMin = net.deltaMin;
     incEta = net.incEta;
     decEta = net.decEta;
     initEta = net.initEta;
@@ -52,8 +51,6 @@ namespace FastNet
     const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
     else this->deltaMax = 50.0;
-    if (mxGetField(trnParam, 0, "min_grad")) this->deltaMin = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "min_grad")));
-    else this->deltaMin = 1E-6;
     if (mxGetField(trnParam, 0, "delt_inc")) this->incEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_inc")));
     else this->incEta = 1.10;
     if (mxGetField(trnParam, 0, "delt_dec")) this->decEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_dec")));
@@ -144,10 +141,22 @@ namespace FastNet
         {
           for (unsigned k=0; k<nNodes[i]; k++)
           {
+            DEBUG2("delta_w[" << i << "][" << j << "][" << k << "] = " << delta_w[i][j][k]
+            << ", dw[" << i << "][" << j << "][" << k << "] = " << dw[i][j][k]
+            << ", prev_dw[" << i << "][" << j << "][" << k << "] = " << prev_dw[i][j][k]
+            << ", weights[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
             updateW(delta_w[i][j][k], dw[i][j][k], prev_dw[i][j][k], weights[i][j][k]);
           }
         
-          if (usingBias[i]) updateW(delta_b[i][j], db[i][j], prev_db[i][j], bias[i][j]);
+          if (usingBias[i])
+          {
+             DEBUG2("delta_w[" << i << "][" << j << "][" << k << "] = " << delta_b[i][j][k]
+                    << ", dw[" << i << "][" << j << "][" << k << "] = " << db[i][j][k]
+                    << ", prev_dw[" << i << "][" << j << "][" << k << "] = " << prev_db[i][j][k]
+                    << ", weights[" << i << "][" << j << "][" << k << "] = " << bias[i][j][k]);
+
+            updateW(delta_b[i][j], db[i][j], prev_db[i][j], bias[i][j]);
+          }
           else bias[i][j] = 0;
         }
       }
@@ -159,15 +168,10 @@ namespace FastNet
   {
     const REAL val = prev_d * d;
           
-    if (val > 0.)
-    {
-      delta = min((delta*incEta), deltaMax);
-    }
-    else if (val < 0.)
-    {
-      delta = max((delta*decEta), deltaMin);
-    }
+    if (val > 0.) delta *= incEta;
+    else if (val < 0.) delta *= decEta;
 
+    delta = min(delta, deltaMax);
     w += (sign(d) * delta);
     prev_d = d;
     d = 0;
@@ -180,7 +184,6 @@ namespace FastNet
     REPORT("TRAINING ALGORITHM INFORMATION");
     REPORT("Training algorithm: Resilient Backpropagation");
     REPORT("Maximum allowed learning rate value (deltaMax) = " << deltaMax);
-    REPORT("Minimum allowed learning rate value (deltaMin) = " << deltaMin);
     REPORT("Learning rate increasing factor (incEta) = " << incEta);
     REPORT("Learning rate decreasing factor (decEta) = " << decEta);
     REPORT("Initial learning rate value (initEta) = " << initEta);

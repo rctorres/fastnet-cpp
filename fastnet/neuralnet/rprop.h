@@ -50,13 +50,6 @@ namespace FastNet
       */
       REAL deltaMax;
 
-      /// The minimum allowed learning rate value.
-      /**
-       Since the upate value can be increased or decreased, this value
-       specifies the minimum accepted value for the update factor.
-      */
-      REAL deltaMin;
-
       /// Specifies the increase factor for the learning rate.
       /**
        If the learning rate must be increased, this factor specifies by

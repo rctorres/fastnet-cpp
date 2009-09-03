@@ -130,7 +130,7 @@ namespace FastNet
        @param[in] deriv If true, the function will calculate the dervative, otherwise, the hyperbolic tangent value of "val".
        @return The hyperbolic value of "val" (\f$ \tanh(val) \f$), if "deriv" = false, or its derivative \f$1 - val^2\f$ otherwise.
       */
-      REAL hyperbolicTangent(REAL val, bool deriv) const {return (deriv) ? (1 - (val*val)) : tanhf(val);};
+      REAL hyperbolicTangent(REAL val, bool deriv) const {return (deriv) ? (1 - (val*val)) : tanh(val);};
 
       
       /// Linear transfer function.

@@ -142,9 +142,9 @@ namespace FastNet
           for (unsigned k=0; k<nNodes[i]; k++)
           {
             DEBUG2("delta_w[" << i << "][" << j << "][" << k << "] = " << delta_w[i][j][k]
-            << ", dw[" << i << "][" << j << "][" << k << "] = " << dw[i][j][k]
-            << ", prev_dw[" << i << "][" << j << "][" << k << "] = " << prev_dw[i][j][k]
-            << ", weights[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+                    << ", dw[" << i << "][" << j << "][" << k << "] = " << dw[i][j][k]
+                    << ", prev_dw[" << i << "][" << j << "][" << k << "] = " << prev_dw[i][j][k]
+                    << ", weights[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
             updateW(delta_w[i][j][k], dw[i][j][k], prev_dw[i][j][k], weights[i][j][k]);
           }
         

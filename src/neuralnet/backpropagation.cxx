@@ -290,7 +290,11 @@ namespace FastNet
     output = propagateInput(input);
       
     //Calculating the error.
-    for (int i=0; i<nNodes[size]; i++) error += SQR(target[i] - output[i]);
+    for (int i=0; i<nNodes[size]; i++)
+    {
+      DEBUG2("outputnode[" << i << "]: val = " << output[i] << ", target = " << target[i])
+      error += SQR(target[i] - output[i]);
+    }
 
     //Returning the MSE
     DEBUG2("MSE = " << error / nNodes[size])

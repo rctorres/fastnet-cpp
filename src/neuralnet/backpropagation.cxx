@@ -293,6 +293,7 @@ namespace FastNet
     for (int i=0; i<nNodes[size]; i++) error += SQR(target[i] - output[i]);
 
     //Returning the MSE
+    DEBUG2("MSE = " << error / nNodes[size])
     return (error / nNodes[size]);
   }
 

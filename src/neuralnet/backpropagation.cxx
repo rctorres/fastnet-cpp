@@ -145,7 +145,7 @@ namespace FastNet
   {
     const unsigned size = nNodes.size() - 1;
 
-    for (unsigned i=0; i<nNodes[size]; i++) sigma[size-1][i] = (2./6.)*(target[i] - output[i]) * CALL_TRF_FUNC(trfFunc[size-1])(output[i], true);
+    for (unsigned i=0; i<nNodes[size]; i++) sigma[size-1][i] = (target[i] - output[i]) * CALL_TRF_FUNC(trfFunc[size-1])(output[i], true);
 
     //Retropropagating the error.
     for (int i=(size-2); i>=0; i--)

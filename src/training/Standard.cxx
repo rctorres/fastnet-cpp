@@ -58,7 +58,7 @@ void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
 };
 
 
-REAL StandardTraining::trainNetwork()
+REAL StandardTraining::trainNetwork(const bool firstEpoch)
 {
   unsigned pos;
   REAL gbError = 0.;

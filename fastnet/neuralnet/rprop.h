@@ -226,6 +226,18 @@ namespace FastNet
         @param[in] net The network from where to copy the data from.
       */
       virtual void operator=(const RProp &net);
+      
+      virtual void set_prev_dw()
+      {
+        for (unsigned i=0; i<(nNodes.size() - 1); i++)
+        {
+          memcpy(prev_db[i], db[i], nNodes[i+1]*sizeof(REAL));
+          for (unsigned j=0; j<nNodes[i+1]; j++) 
+          {
+            memcpy(prev_dw[i][j], dw[i][j], nNodes[i]*sizeof(REAL));
+          }
+        }
+      };
   };
 }
 

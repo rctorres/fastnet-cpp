@@ -216,7 +216,7 @@ void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *n
 };
 
 
-REAL PatternRecognition::trainNetwork()
+REAL PatternRecognition::trainNetwork(const bool firstEpoch)
 {
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
@@ -258,6 +258,7 @@ REAL PatternRecognition::trainNetwork()
   }
 
   updateGradients();
+  if (firstEpoch) nv[0]->set_prev_dw();
   updateWeights();
   return (gbError / static_cast<REAL>(numPatterns*batchSize));  
 };

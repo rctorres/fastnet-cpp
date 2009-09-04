@@ -261,7 +261,7 @@ public:
 
   virtual void valNetwork(REAL &mseVal, REAL &spVal) = 0;
   
-  virtual REAL trainNetwork() = 0;  
+  virtual REAL trainNetwork(const bool firstEpoch) = 0;  
 };
 
 #endif

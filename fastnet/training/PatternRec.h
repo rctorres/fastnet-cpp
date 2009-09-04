@@ -85,7 +85,7 @@ public:
   class's method for that.
   @return The mean training error obtained after the entire training of each pattern set is presented to the network.
   */
-  virtual REAL trainNetwork();
+  virtual REAL trainNetwork(const bool firstEpoch);
 
   virtual void showInfo(const unsigned nEpochs) const;
 

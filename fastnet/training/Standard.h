@@ -42,7 +42,7 @@ public:
   after each input-output pair is presented. At the end, the mean training error is returned.
   @return The mean training error obtained after the entire training set is presented to the network.
   */
-  virtual REAL trainNetwork();
+  virtual REAL trainNetwork(const bool firstEpoch);
   
   virtual void showInfo(const unsigned nEpochs) const;
 };

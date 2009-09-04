@@ -134,7 +134,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
       //Training the network and calculating the new weights.
-      const REAL mse_trn = train->trainNetwork();
+      const REAL mse_trn = train->trainNetwork(!epoch);
 
       //Validating the new network.
       train->valNetwork(mse_val, sp_val);

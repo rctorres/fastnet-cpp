@@ -306,6 +306,8 @@ namespace FastNet
        @return True if bias is being used, false otherwise.
       */
       bool isUsingBias(const unsigned layer) const {return usingBias[layer];};
+      
+      virtual void set_prev_dw() {};
   };
 }
 

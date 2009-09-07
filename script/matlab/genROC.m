@@ -8,15 +8,20 @@ function [spVec, cutVec, detVec, faVec] = genROC(out_signal, out_noise, numPts)
 %                     jets were applied to it
 %   numPts         -> (opt) The number of points to generate your ROC.
 %
-%If no output parameters are specified, then the ROC is plot. Otherwise,
+%If any output parameters is specified, then the ROC is plot. Otherwise,
 %the sp values, cut values, the detection efficiency and false alarm rate 
-% are returned.
+% are returned (in that order).
 %
 
-if nargin == 2,
-    numPts = 1000;
-end
+if nargin < 3, numPts = 1000; end
 
+%Placing the data within the [-1,+1] range.
+[aux, pp] = mapminmax([out_signal out_noise]);
+clear aux;
+out_signal = mapminmax('apply', out_signal, pp);
+out_noise = mapminmax('apply', out_noise, pp);
+
+%Stablishing where to calculate the efficiencies (thresholds).
 cutVec = -1 : (2/numPts) : 1;
 cutVec = cutVec(1:numPts);
 detVec = zeros(1,length(cutVec));
@@ -28,9 +33,8 @@ end
 
 spVec = calcSP([detVec; (1-faVec)]);
 [sp, cutIdx] = max(spVec);
-cut = cutVec(cutIdx);
 
-if nargout ~= 4,
+if nargout == 0,
     plot(100*faVec, 100*detVec);
     hold on
     plot(100*faVec(cutIdx), 100*detVec(cutIdx), 'rx');
@@ -40,3 +44,8 @@ if nargout ~= 4,
     legend('ROC', 'Max SP');
     hold off;
 end
+
+%Sinde we normalize the output values to be within +- 1, the vector of
+%thresholds shoube be, at the end of this function, with the same dnamic
+%range as the original output values (non-normalized).
+cutVec = mapminmax('reverse', cutVec, pp);

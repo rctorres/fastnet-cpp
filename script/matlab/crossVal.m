@@ -97,7 +97,7 @@ function maxSP = get_best_train(net, trn, val, tst)
   for i=1:nTrains,
     onet = ntrain(net{i}, trn, val);
     out = nsim(onet, tst);
-    [spVec, cutVec, detVec, faVec] = genROC(out{1}, out{2});
+    spVec = genROC(out{1}, out{2});
     sp(i) = max(spVec);
   end
   maxSP = max(sp);
@@ -106,11 +106,6 @@ function maxSP = get_best_train(net, trn, val, tst)
 function maxSP = get_sp_by_fisher(trn, tst)
 %Calculates the best SP achieved considering a Fisher discriminant.
   w = fisher(trn{1}, trn{2});
-  
   out = {w*tst{1}, w*tst{2}};
-  [aux, pp] = mapminmax(cell2mat(out));
-  out{1} = mapminmax('apply', out{1}, pp);
-  out{2} = mapminmax('apply', out{2}, pp);
-
-  [spVec, cutVec, detVec, faVec] = genROC(out{1}, out{2});
+  spVec = genROC(out{1}, out{2});
   maxSP = max(spVec);

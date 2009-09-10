@@ -1,4 +1,4 @@
-function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
 %function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
@@ -15,8 +15,12 @@ function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
 %            be trained, to avoid local minima. If net = [], this parameter
 %            is ignored.
 %
-%The function returns the mean and std value of the maximum SP obtained in
-%each deal.
+%The function returns a structure containing the following fields:
+% - net : the best discriminator obtained for each deal. If a numerica
+%         Fisher is used, then net is the projection achieved in each deal.
+% - sp  : The maximum SP value achieved in each deal.
+% - det : The detection efficiency values for the ROC curve, for each deal.
+% - fa : The values for the false alarm for the ROC curve, for each deal.
 %
 %WARNING: THIS FUNCTION ONLY WORKS FOR THE 2 CLASSES CASE!!!
 %
@@ -27,24 +31,25 @@ if nargin < 4, nDeal = 10; end
 if nargin < 5, nTrains = 5; end
 
 data = create_blocks(data, nBlocks);
-sp = zeros(1,nDeal);
+
+nROC = 500;
+ret.net = cell(1,nDeal);
+ret.sp = zeros(1,nDeal);
+ret.det = zeros(nDeal, nROC);
+ret.fa = zeros(nDeal, nROC);
 
 if isempty(net),
   for d=1:nDeal,
     [trn val tst] = deal_sets(data);
-    sp(d) = get_sp_by_fisher(trn, tst);
+    [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
 else
   netVec = get_networks(net, nTrains);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data);
-    sp(d) = get_best_train(netVec, trn, val, tst);
+    [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
   end
 end
-
-%Returning the mean and std of the SP obtained.
-meanSP = mean(sp);
-stdSP = std(sp);
 
 
 function bdata = create_blocks(data, nBlocks)
@@ -88,24 +93,34 @@ function netVec = get_networks(net, numCopies)
   end
 
 
-function maxSP = get_best_train(net, trn, val, tst)
+function [onet osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
 %Trains the network net multiple times, and returns the best SP obtained.
 %The number of trains to perform is get from the length of the cell vector
 %net.
   nTrains = length(net);
+
+  netVec = cell(1, nTrains);
   sp = zeros(1, nTrains);
+  det = zeros(nTrains, nROC);
+  fa = zeros(nTrains, nROC);
+  
   for i=1:nTrains,
-    onet = ntrain(net{i}, trn, val);
-    out = nsim(onet, tst);
-    spVec = genROC(out{1}, out{2});
+    netVec{i} = ntrain(net{i}, trn, val);
+    out = nsim(netVec{i}, tst);
+    [spVec, cutVec, det(i,:), fa(i,:)] = genROC(out{1}, out{2}, nROC);
     sp(i) = max(spVec);
   end
-  maxSP = max(sp);
+  
+  [maxSP, idx] = max(sp);
+  onet = netVec{idx};
+  osp = sp(idx);
+  odet = det(idx,:);
+  ofa = fa(idx,:);
 
   
-function maxSP = get_sp_by_fisher(trn, tst)
+function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)
 %Calculates the best SP achieved considering a Fisher discriminant.
   w = fisher(trn{1}, trn{2});
   out = {w*tst{1}, w*tst{2}};
-  spVec = genROC(out{1}, out{2});
+  [spVec, cutVec, det, fa] = genROC(out{1}, out{2}, nROC);
   maxSP = max(spVec);

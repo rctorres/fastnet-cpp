@@ -1,5 +1,5 @@
 function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
-%function [meanSP, stdSP] = crossVal(data, net, nBlocks, nDeal, nTrains)
+%function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events

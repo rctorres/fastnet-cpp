@@ -27,16 +27,19 @@ if debug > 0:
   globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
 
 #Am I using a MAC computer? Then I apply some optimizations for it
-if 'Darwin' in platform.system():
+if platform.system() == 'Darwin':
   if debug == 0: libCPPFlags += ['-fast']
   matlabPath = '/Applications/MATLAB_R2008b.app'
   matlabArch = 'maci'
   globalCPPFlags += ['-DNO_OMP']
-else:
-  if debug == 0: libCPPFlags += ['-O3', '-m64', '-fopenmp', '-march=core2']
+elif platform.system() == 'Linux':
+  if debug == 0: libCPPFlags += ['-O3', '-m64', '-march=core2']
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
-    
+  dist, version, branch = platform.dist()
+  if (dist == 'debian') and (debug == 0): libCPPFlags.append('-fopenmp')
+  else: globalCPPFlags += ['-DNO_OMP']
+
 incPath = ['../', '%s/extern/include' % matlabPath]
 libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
 

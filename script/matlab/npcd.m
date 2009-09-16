@@ -1,5 +1,5 @@
-function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations, minDiff)
-%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflation, numIterations, minDiff)
+function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff)
+%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -8,11 +8,6 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflat
 % inTrn - The training data set, organized as a cell vector.
 % inVal - The validating data set, organized as a cell vector.
 % inTst - The testing data set, organized as a cell vector.
-% deflation - if true, the PCDs will be extracted by the deflation method.
-% In this case, the returned neural network MUST NOT be used as a
-% discriminator. Deflation should be used ONLY if you want just to extract
-% the PCDs, and not develop the classifier at the same time. Default is
-% false.
 % numIterations - The number of times a neural network should be trained
 % for extracting a given PCD. This is used to avoid local minima. For each
 % PCD, the iteration which generated the best mean detection efficiency will
@@ -28,13 +23,12 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, deflat
 % efficVec - a struct vector containing the mean and std of the SP efficiency obtained
 % for each PCD extraction, considering the number of iterations performed.
 %
+%
 
+if (nargin < 5), numIterations = 5; end
+if (nargin < 6), minDiff = 0.01; end
 
-if (nargin < 5), deflation = false; end
-if (nargin < 6), numIterations = 5; end
-if (nargin < 7), minDiff = 0.01; end
-
-if (nargin > 7) || (nargin < 4),
+if (nargin > 6) || (nargin < 4),
   error('Invalid number of input arguments. See help.');
 end
 
@@ -82,14 +76,9 @@ for i=1:maxNumPCD,
   fprintf('Extracting PCD number %d (SP diff = %f)\n', pcdExtracted, spDiff);
   
   
-  %Creating the neural network based on the PCD extraction method.
-  if deflation,
-    [trnNet, inTrn, inVal] = defPCD(inTrn, inVal, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
-  else
-    trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
-    if (multiLayer && i>1),
-%      [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
-    end
+  trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
+  if (multiLayer && i>1),
+%    [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
   end
   
   %Doing the training.
@@ -151,32 +140,6 @@ function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam
     net.IW{1}(1:nPCD,:) = pcd;
     net.b{1}(1:nPCD) = bias;
     net.layers{1}.userdata.frozenNodes = (1:nPCD);
-  end
-
-  
-  
-function [net, inTrn, inVal] = defPCD(in_trn, in_val, pcd, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
-  numNodes.hidNodes(1) = 1;
-  net = newff2(numNodes.inRange, numNodes.outRange, numNodes.hidNodes, trfFunc, trnAlgo);
-  net.trainParam = trnParam;
-
-  for i=1:length(net.layers),
-    net.layers{i}.userdata.usingBias = usingBias(i);
-  end
-  
-  %Projecting the dataset on the PCD previously extracted.
-  if ~isempty(pcd),
-    W = pcd(end,:);
-    nClasses = length(in_trn);
-    inTrn = cell(1,nClasses);
-    inVal = cell(1,nClasses);
-    for i=1:nClasses,
-      inTrn{i} = in_trn{i} - ((W*in_trn{i})'*W)';
-      inVal{i} = in_val{i} - ((W*in_val{i})'*W)';
-    end
-  else
-    inTrn = in_trn;
-    inVal = in_val;
   end
   
   

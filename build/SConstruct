@@ -11,6 +11,16 @@ import fnmatch
 import sc_libs
 import sc_matlab
 
+COMPILER = 'icpc';
+#COMPILER = 'g++';
+
+LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
+OPENMP_FLAG = '-fopenmp'
+if COMPILER == 'icpc':
+  LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
+  OPENMP_FLAG = '-DNO_OMP'
+  
+
 #To retrieve all source code files.
 def getSourceFiles(sourcesDir):
 	srcFilter = re.compile('\.cxx\Z|\.cpp\Z|\.c\Z')
@@ -33,18 +43,18 @@ if platform.system() == 'Darwin':
   matlabArch = 'maci'
   globalCPPFlags += ['-DNO_OMP']
 elif platform.system() == 'Linux':
-  if debug == 0: libCPPFlags += ['-O3', '-m64', '-march=core2']
+  if debug == 0: libCPPFlags += LINUX_OPT_FLAGS
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
   dist, version, branch = platform.dist()
-  if (dist == 'debian') and (debug == 0): libCPPFlags.append('-fopenmp')
+  if (dist == 'debian') and (debug == 0): libCPPFlags.append(OPENMP_FLAG)
   else: globalCPPFlags += ['-DNO_OMP']
 
 incPath = ['../', '%s/extern/include' % matlabPath]
 libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
 
 #Setting the list of directories where to look for header files.
-env = Environment(CPPPATH = incPath, ENV = os.environ)
+env = Environment(CXX = COMPILER, CPPPATH = incPath, ENV = os.environ)
 
 #The installation dir is defined in the following environment variable. Otherwise, it will
 #be installed in fastnel/install.

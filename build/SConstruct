@@ -18,7 +18,7 @@ LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
 OPENMP_FLAG = '-fopenmp'
 if COMPILER == 'icpc':
   LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
-  OPENMP_FLAG = '-DNO_OMP'
+  OPENMP_FLAG = '-openmp'
   
 
 #To retrieve all source code files.

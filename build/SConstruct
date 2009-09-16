@@ -11,8 +11,8 @@ import fnmatch
 import sc_libs
 import sc_matlab
 
-COMPILER = 'icpc';
-#COMPILER = 'g++';
+#Supported otptions are 'icpc' or 'g++';
+COMPILER = os.environ.get('FASTNET_COMPILER', 'g++');
 
 LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
 OPENMP_FLAG = '-fopenmp'

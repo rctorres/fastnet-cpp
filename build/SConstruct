@@ -70,7 +70,7 @@ libMap = {}
 for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib, source = getSourceFiles('../src/%s' % lib),
                               CCFLAGS = globalCPPFlags + libCPPFlags,
-                              LIBS = opt['LIBS'] + ['pthread'] + ['mx', 'mex', 'mat', 'm'],
+                              LIBS = opt['LIBS'] + ['mx', 'mex', 'mat', 'm'],
                               LIBPATH = libPath)
   libInstList.append(libName)
   libMap[lib] = libName

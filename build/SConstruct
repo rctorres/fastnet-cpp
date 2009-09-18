@@ -47,7 +47,7 @@ elif platform.system() == 'Linux':
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
   dist, version, branch = platform.dist()
-  if (dist == 'debian') and (debug == 0): libCPPFlags.append(OPENMP_FLAG)
+  if (debug == 0) and ((dist == 'debian') or (COMPILER == 'icpc') ): libCPPFlags.append(OPENMP_FLAG)
   else: globalCPPFlags += ['-DNO_OMP']
 
 incPath = ['../', '%s/extern/include' % matlabPath]

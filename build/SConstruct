@@ -15,11 +15,11 @@ import sc_matlab
 COMPILER = os.environ.get('FASTNET_COMPILER', 'g++');
 
 LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
-OPENMP_FLAG = '-fopenmp'
+OPENMP_FLAG = ['-fopenmp']
 if COMPILER == 'icpc':
-  LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
-  OPENMP_FLAG = '-openmp'
-  
+  LINUX_OPT_FLAGS = ['-m64', '-ipo', '-O3', '-static', '-xHost'];
+  OPENMP_FLAG = ['-openmp']
+
 
 #To retrieve all source code files.
 def getSourceFiles(sourcesDir):
@@ -47,7 +47,7 @@ elif platform.system() == 'Linux':
   matlabPath = '/usr/local/matlab'
   matlabArch = 'glnxa64'
   dist, version, branch = platform.dist()
-  if (debug == 0) and ((dist == 'debian') or (COMPILER == 'icpc') ): libCPPFlags.append(OPENMP_FLAG)
+  if (debug == 0) and ((dist == 'debian') or (COMPILER == 'icpc') ): libCPPFlags += OPENMP_FLAG
   else: globalCPPFlags += ['-DNO_OMP']
 
 incPath = ['../', '%s/extern/include' % matlabPath]

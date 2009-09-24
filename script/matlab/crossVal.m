@@ -44,10 +44,11 @@ if isempty(net),
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
 else
+  ret.evo = cell(1,nDeal);
   netVec = get_networks(net, nTrains);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data);
-    [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
+    [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
   end
 end
 
@@ -93,19 +94,20 @@ function netVec = get_networks(net, numCopies)
   end
 
 
-function [onet osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
+function [onet oevo osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
 %Trains the network net multiple times, and returns the best SP obtained.
 %The number of trains to perform is get from the length of the cell vector
 %net.
   nTrains = length(net);
 
   netVec = cell(1, nTrains);
+  evo = cell(1, nTrains);
   sp = zeros(1, nTrains);
   det = zeros(nTrains, nROC);
   fa = zeros(nTrains, nROC);
   
   for i=1:nTrains,
-    netVec{i} = ntrain(net{i}, trn, val);
+    [netVec{i} evo{i}]  = ntrain(net{i}, trn, val);
     out = nsim(netVec{i}, tst);
     [spVec, cutVec, det(i,:), fa(i,:)] = genROC(out{1}, out{2}, nROC);
     sp(i) = max(spVec);
@@ -113,6 +115,7 @@ function [onet osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
   
   [maxSP, idx] = max(sp);
   onet = netVec{idx};
+  oevo = evo{idx};
   osp = sp(idx);
   odet = det(idx,:);
   ofa = fa(idx,:);

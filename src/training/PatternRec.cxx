@@ -192,7 +192,7 @@ void PatternRecognition::getNetworkErrors(const REAL **inList, const unsigned *n
 
     REAL *outList = (useSP) ? epochOutputs[pat] : NULL;
     
-    DEBUG2("Applying performance calculation for pattern " << pat << ".");
+    DEBUG2("Applying performance calculation for pattern " << pat << " (" << numEvents << " events).");
     
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat) private(i,thId,output,error)
     {

@@ -78,11 +78,11 @@ for i=1:maxNumPCD,
   
   trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
   if (multiLayer && i>1),
-%    [trnNet, inTrn, inVal, inTst, saveWeights] = forceOrthogonalization(trnNet, inTrn, inVal, inTst, saveWeights);
+    [trnNet, inTrn, inVal, inTst] = forceOrthogonalization(trnNet, inTrn, inVal, inTst);
   end
   
   %Doing the training.
-  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations, (multiLayer && i>1));
+  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
   outNet{i} = nVec{idx}.net;
   trnEvo{i} = nVec{idx}.trnEvo;
   maxEfic(i) = nVec{idx}.sp;
@@ -143,33 +143,32 @@ function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam
   end
   
   
-function [oNet, inTrn, inVal, inTst, sW] = forceOrthogonalization(net, trn, val, tst, saveWeights)
+function [oNet, inTrn, inVal, inTst] = forceOrthogonalization(net, trn, val, tst)
   %If we  have already extracted a PCD, we remove
   % the information of the last PCD from the init values of the
   % new PCD to be extracted, and also from the input data.
 
   oNet = net;
-  Nd = size(trn{1},1);
     
   %Getting the last PCD extracted.
   W = net.IW{1}(end-1,:);
     
-  %Removing the info related to the PCD already extracted.
+  %Removing the info related to the last PCD extracted.
   Nc = length(trn);
   inTrn = cell(1,Nc);
   inVal = cell(1,Nc);
   inTst = cell(1,Nc);
   for i=1:Nc,
-    inTrn{i} = trn{i} - ( repmat(W*trn{i},Nd,1) .* trn{i} );
-    inVal{i} = val{i} - ( repmat(W*val{i},Nd,1) .* val{i} );
-    inTst{i} = tst{i} - ( repmat(W*tst{i},Nd,1) .* tst{i} );
+    inTrn{i} = trn{i} - ( W' * (W * trn{i}) );
+    inVal{i} = val{i} - ( W' * (W * val{i}) );
+    inTst{i} = tst{i} - ( W' * (W * tst{i}) );
   end
   
   %Pointing the initial weights of the new PCD to the right direction.
-  if isempty(saveWeights),
-    sW = [];
-  else
-    sW = saveWeights - ( (W*saveWeights') * saveWeights );
+  W_all = net.IW{1}(1:end-1,:);
+  if ~isempty(W_all),
+    sW = oNet.IW{1}(end,:);
+    sW = sW - ( W_all' * (W_all * sW') )';
     oNet.IW{1}(end,:) = sW;
   end
 

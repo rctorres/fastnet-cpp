@@ -234,7 +234,7 @@ REAL PatternRecognition::trainNetwork()
     unsigned pos = 0;
     DataManager *dm = dmTrn[pat];
 
-    DEBUG2("Applying training set for pattern " << pat << ".");
+    DEBUG2("Applying training set for pattern " << pat << " by randomly selecting " << batchSize << " events (out of " << dm->size() << ").");
 
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {

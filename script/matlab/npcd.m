@@ -51,7 +51,6 @@ end
 %Initializing the output vectors.
 pcd = [];
 bias = [];
-saveWeights = [];
 outNet = cell(1,maxNumPCD);
 trnEvo = cell(1,maxNumPCD);
 meanEfic = zeros(1,maxNumPCD);

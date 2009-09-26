@@ -81,9 +81,6 @@ namespace FastNet
      // This will be a pointer to the input event.
     layerOutputs[0] = NULL;
     
-    //Taking the weights and values info.
-    readWeights(netStr);
-    
     //Getting the using bias information.
     for (unsigned i=0; i<mxGetM(layers); i++)
     {
@@ -91,6 +88,10 @@ namespace FastNet
       this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
       DEBUG2("Layer " << (i+1) << " is using bias? " << this->usingBias[i]);
     }
+
+    //Taking the weights and values info. This line must come after knowing wich layers won't
+    //have biases.
+    readWeights(netStr);
   }
 
 
@@ -116,7 +117,7 @@ namespace FastNet
         weights[0][i][j] = static_cast<REAL>(iw(i,j));
         DEBUG3("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
       }
-      bias[0][i] = static_cast<REAL>(ib(i));
+      bias[0][i] = (usingBias[0]) ? static_cast<REAL>(ib(i)) : 0.;
       DEBUG3("Bias[0][" << i << "] = " << bias[0][i]);
     }
     
@@ -136,7 +137,7 @@ namespace FastNet
           weights[i][j][k] = static_cast<REAL>(iw(j,k));
           DEBUG3("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
         }
-        bias[i][j] = static_cast<REAL>(ib(j));
+        bias[i][j] = (usingBias[i]) ? static_cast<REAL>(ib(j)) : 0.;
         DEBUG3("Bias[" << i << "][" << j << "] = " << bias[i][j]);
       }
     }

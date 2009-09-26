@@ -13,11 +13,19 @@ function [oNet, I] = trainMany(net, inTrn, inVal, inTst, numTrains)
 
 oNet = cell(1,numTrains);
 spVec = zeros(1, numTrains);
+nClasses = length(inTrn);
 
 for i=1:numTrains,
-  net = scrambleWeights(net);  
+  net = scrambleWeights(net);
   [aux.net, aux.trnEvo] = ntrain(net, inTrn, inVal);
-  aux.sp = calcSP(diag(genConfMatrix(nsim(aux.net, inTst))));
+  out = nsim(aux.net, inTst);
+  
+  if nClasses > 2,
+    aux.sp = calcSP(diag(genConfMatrix(out)));
+  else
+    aux.sp = max(genROC(out{1}, out{2}));
+  end
+
   spVec(i) = aux.sp;
   oNet{i} = aux;
 end

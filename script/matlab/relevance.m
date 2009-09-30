@@ -37,13 +37,13 @@ function r = do_by_sp(net, data, mdata)
   %Does relevance by SP.
   nDim = size(data{1},1);
   r = zeros(1,nDim);
-  sp_ref = get_sp(get_output(net, data{1}), get_output(net, data{2}))
+  sp_ref = get_sp(get_output(net, data{1}), get_output(net, data{2}));
   
   for i=1:nDim,
      aux = data;
      aux{1}(i,:) = mdata(i);
      aux{2}(i,:) = mdata(i);
-     sp = get_sp(get_output(net, aux{1}), get_output(net, aux{2}))
+     sp = get_sp(get_output(net, aux{1}), get_output(net, aux{2}));
      r(i) = sp_ref - sp;
   end
 

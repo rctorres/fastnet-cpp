@@ -11,9 +11,11 @@ function r = relevance(net, trn, val)
 %
 
   if iscell(trn),
+    disp('Doing relevance analysis by SP.');
     mdata = mean(cell2mat(trn), 2);
     r = do_by_sp(net, val, mdata);
   else
+    disp('Doing relevance analysis by MSE.');
     mdata = mean(trn, 2);
     r = do_by_mse(net, val, mdata);
   end

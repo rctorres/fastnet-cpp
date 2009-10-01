@@ -149,6 +149,7 @@ function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)
   
 function [otrn, oval, otst] = do_nothing(trn, val, tst)
 %Dummy function to work with pp_function ponter.
+  disp('Applying NO pre-processing...');
   otrn = trn;
   oval = val;
   otst = tst;

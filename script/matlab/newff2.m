@@ -16,7 +16,7 @@ function net = newff2(inTrn, outData, hNodes, trfFunc, netTrain)
 %toolbox, the opposite is not true.
 %
 
-  if nargin < 2, outData = [1 -1]; end
+  if nargin < 2, outData = [-1 1]; end
   if nargin < 3, hNodes = []; end
   if nargin < 4, trfFunc = {'tansig'}; end
   if nargin < 5, netTrain = 'trainrp'; end

@@ -1,5 +1,5 @@
-function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
-%function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
+%function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
@@ -8,6 +8,13 @@ function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
 %        tests. If ommited or [], a cross validation using a Fisher
 %        classifier will be used. The fisher approach is ONLY valid if you
 %        have only 2 classes!
+% - pp_func : A pointer to a function the will be called once the trn, val,
+%             tst sets are created. The function must have the following
+%             interface [otrn, oval, otst] = pp_func(trn, val, tst). If
+%             this parameter os ommited, or [], no pre-processing will be
+%             done.
+% - tstIsVal : If true, in each deal, the data will be split into trn and
+%             val only, and tst = val. Default is FALSE. 
 % - nBlocks: specifies in how many blocks the data will be divided into.
 % - nDeal: specifies how many times the blocks will be ramdomly distributed
 %          into training, validation and test sets.
@@ -26,9 +33,12 @@ function ret = crossVal(data, net, nBlocks, nDeal, nTrains)
 %
 
 if nargin < 2, net = []; end
-if nargin < 3, nBlocks = 12; end
-if nargin < 4, nDeal = 10; end
-if nargin < 5, nTrains = 5; end
+if nargin < 3, pp_func = @do_nothing; end
+if nargin < 4, tstIsVal = false; end
+if nargin < 5, nBlocks = 12; end
+if nargin < 6, nDeal = 10; end
+if nargin < 7, nTrains = 5; end
+if nargin > 7, error('Invalid number of parameters. See help!'); end
 
 data = create_blocks(data, nBlocks);
 
@@ -40,14 +50,16 @@ ret.fa = zeros(nDeal, nROC);
 
 if isempty(net),
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data);
+    [trn val tst] = deal_sets(data, tstIsVal);
+    [trn val tst] = pp_func(trn, val, tst);
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
 else
   ret.evo = cell(1,nDeal);
   netVec = get_networks(net, nTrains);
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data);
+    [trn val tst] = deal_sets(data, tstIsVal);
+    [trn val tst] = pp_func(trn, val, tst);
     [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
   end
 end
@@ -68,7 +80,7 @@ function bdata = create_blocks(data, nBlocks)
   end
   
 
-function [trn val tst] = deal_sets(data)
+function [trn val tst] = deal_sets(data, tstIsVal)
 %Create the training, validation and test sets based on how many blocks per
 %set we should have.
 
@@ -79,9 +91,15 @@ function [trn val tst] = deal_sets(data)
   
   for c=1:nClasses,
     idx = randperm(nBlocks);
-    trn{c} = cell2mat(data(c,idx(1:3:end)));
-    val{c} = cell2mat(data(c,idx(2:3:end)));
-    tst{c} = cell2mat(data(c,idx(3:3:end)));
+    if tstIsVal,
+      trn{c} = cell2mat(data(c,idx(1:2:end)));
+      val{c} = cell2mat(data(c,idx(2:2:end)));
+      tst{c} = val{c};
+    else
+      trn{c} = cell2mat(data(c,idx(1:3:end)));
+      val{c} = cell2mat(data(c,idx(2:3:end)));
+      tst{c} = cell2mat(data(c,idx(3:3:end)));
+    end
   end
   
   
@@ -127,3 +145,10 @@ function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)
   out = {w*tst{1}, w*tst{2}};
   [spVec, cutVec, det, fa] = genROC(out{1}, out{2}, nROC);
   maxSP = max(spVec);
+
+  
+function [otrn, oval, otst] = do_nothing(trn, val, tst)
+%Dummy function to work with pp_function ponter.
+  otrn = trn;
+  oval = val;
+  otst = tst;

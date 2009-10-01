@@ -33,7 +33,7 @@ function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
 %
 
 if nargin < 2, net = []; end
-if nargin < 3, pp_func = @do_nothing; end
+if (nargin < 3) || (isempty(pp_func)), pp_func = @do_nothing; end
 if nargin < 4, tstIsVal = false; end
 if nargin < 5, nBlocks = 12; end
 if nargin < 6, nDeal = 10; end

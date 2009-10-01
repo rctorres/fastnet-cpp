@@ -28,6 +28,7 @@ function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
 % - sp  : The maximum SP value achieved in each deal.
 % - det : The detection efficiency values for the ROC curve, for each deal.
 % - fa : The values for the false alarm for the ROC curve, for each deal.
+% - pp : Pre-processing structure returned by pp_func.
 %
 %WARNING: THIS FUNCTION ONLY WORKS FOR THE 2 CLASSES CASE!!!
 %
@@ -44,6 +45,7 @@ data = create_blocks(data, nBlocks);
 
 nROC = 500;
 ret.net = cell(1,nDeal);
+ret.pp = cell(1,nDeal);
 ret.sp = zeros(1,nDeal);
 ret.det = zeros(nDeal, nROC);
 ret.fa = zeros(nDeal, nROC);
@@ -51,7 +53,7 @@ ret.fa = zeros(nDeal, nROC);
 if isempty(net),
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    [trn val tst] = pp_func(trn, val, tst);
+    [trn val tst ret.pp{d}] = pp_func(trn, val, tst);
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
 else
@@ -59,7 +61,7 @@ else
   netVec = get_networks(net, nTrains);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    [trn val tst] = pp_func(trn, val, tst);
+    [trn val tst ret.pp{d}] = pp_func(trn, val, tst);
     [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
   end
 end

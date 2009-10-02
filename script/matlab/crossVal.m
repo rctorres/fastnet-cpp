@@ -1,5 +1,5 @@
-function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
-%function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
+%function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
@@ -8,11 +8,12 @@ function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
 %        tests. If ommited or [], a cross validation using a Fisher
 %        classifier will be used. The fisher approach is ONLY valid if you
 %        have only 2 classes!
-% - pp_func : A pointer to a function the will be called once the trn, val,
-%             tst sets are created. The function must have the following
-%             interface [otrn, oval, otst] = pp_func(trn, val, tst). If
-%             this parameter os ommited, or [], no pre-processing will be
-%             done.
+% - pp :      A structure containing 2 fileds named 'func' and 'par'.
+%            'func' must be a pointer to a pre-processing function to be 
+%             executed on the data. 'par' must be a structure containing 
+%             any parameter that must be used by func. The calling
+%             procedure is [trn,val,tst,] = pp.func(trn, val, tst, pp.par)
+%             if func does not use any par, pp.par must be [].
 % - tstIsVal : If true, in each deal, the data will be split into trn and
 %             val only, and tst = val. Default is FALSE. 
 % - nBlocks: specifies in how many blocks the data will be divided into.
@@ -34,7 +35,10 @@ function ret = crossVal(data, net, pp_func, tstIsVal, nBlocks, nDeal, nTrains)
 %
 
 if nargin < 2, net = []; end
-if (nargin < 3) || (isempty(pp_func)), pp_func = @do_nothing; end
+if (nargin < 3) || (isempty(pp)),
+  pp.func = @do_nothing;
+  pp.par = [];
+end
 if nargin < 4, tstIsVal = false; end
 if nargin < 5, nBlocks = 12; end
 if nargin < 6, nDeal = 10; end
@@ -53,7 +57,7 @@ ret.fa = zeros(nDeal, nROC);
 if isempty(net),
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    [trn val tst ret.pp{d}] = pp_func(trn, val, tst);
+    [trn val tst ret.pp{d}] = pp.func(trn, val, tst, pp.par);
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
 else
@@ -61,7 +65,7 @@ else
   netVec = get_networks(net, nTrains);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    [trn val tst ret.pp{d}] = pp_func(trn, val, tst);
+    [trn val tst ret.pp{d}] = pp.func(trn, val, tst, pp.par);
     [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
   end
 end
@@ -149,9 +153,11 @@ function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)
   maxSP = max(spVec);
 
   
-function [otrn, oval, otst] = do_nothing(trn, val, tst)
+function [otrn, oval, otst, pp] = do_nothing(trn, val, tst, par)
 %Dummy function to work with pp_function ponter.
   disp('Applying NO pre-processing...');
   otrn = trn;
   oval = val;
   otst = tst;
+  pp = [];
+  

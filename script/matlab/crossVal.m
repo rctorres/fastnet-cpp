@@ -14,6 +14,8 @@ function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
 %             any parameter that must be used by func. The calling
 %             procedure is [trn,val,tst,] = pp.func(trn, val, tst, pp.par)
 %             if func does not use any par, pp.par must be [].
+%             If this parameter os ommited, or [], no pre-processing will 
+%             be done.
 % - tstIsVal : If true, in each deal, the data will be split into trn and
 %             val only, and tst = val. Default is FALSE. 
 % - nBlocks: specifies in how many blocks the data will be divided into.

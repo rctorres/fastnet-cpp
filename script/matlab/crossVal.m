@@ -64,11 +64,11 @@ if isempty(net),
   end  
 else
   ret.evo = cell(1,nDeal);
-  netVec = get_networks(net, nTrains);
+  [net_par.hidNodes, net_par.trfFunc, net_par.trnParam] = getNetworkInfo(net);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
     [trn val tst ret.pp{d}] = pp.func(trn, val, tst, pp.par);
-    [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(netVec, trn, val, tst, nROC);
+    [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(net_par, trn, val, tst, nTrains, nROC);
   end
 end
 
@@ -109,22 +109,12 @@ function [trn val tst] = deal_sets(data, tstIsVal)
       tst{c} = cell2mat(data(c,idx(3:3:end)));
     end
   end
-  
-  
-function netVec = get_networks(net, numCopies)
-%Get a passed neural network and generates nCopies of each. Each copy will
-%have a different weights initialization.
-  netVec = cell(1,numCopies);
-  for i=1:numCopies,
-    netVec{i} = scrambleWeights(net);
-  end
+ 
 
-
-function [onet oevo osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
+function [onet oevo osp odet ofa] = get_best_train(net_par, trn, val, tst, nTrains, nROC)
 %Trains the network net multiple times, and returns the best SP obtained.
 %The number of trains to perform is get from the length of the cell vector
 %net.
-  nTrains = length(net);
 
   netVec = cell(1, nTrains);
   evo = cell(1, nTrains);
@@ -133,7 +123,9 @@ function [onet oevo osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
   fa = zeros(nTrains, nROC);
   
   for i=1:nTrains,
-    [netVec{i} evo{i}]  = ntrain(net{i}, trn, val);
+    net = newff2(trn, [-1 1], net_par.hidNodes, net_par.trfFunc);
+    net.trainParam = net_par.trnParam;
+    [netVec{i} evo{i}]  = ntrain(net, trn, val);
     out = nsim(netVec{i}, tst);
     [spVec, cutVec, det(i,:), fa(i,:)] = genROC(out{1}, out{2}, nROC);
     sp(i) = max(spVec);
@@ -145,6 +137,21 @@ function [onet oevo osp odet ofa] = get_best_train(net, trn, val, tst, nROC)
   osp = sp(idx);
   odet = det(idx,:);
   ofa = fa(idx,:);
+
+  
+function [hidNodes, trfFunc, trnParam] = getNetworkInfo(net)
+  %Getting the network information regarding its topology
+
+  hidNodes = zeros(1,(length(net.layers)-1));
+  trfFunc = cell(1,length(net.layers));
+  for i=1:length(net.layers),
+    if i < length(net.layers),
+      hidNodes(i) = net.layers{i}.size;
+    end
+    trfFunc{i} = net.layers{i}.transferFcn;
+  end
+  
+  trnParam = net.trainParam;
 
   
 function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)

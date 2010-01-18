@@ -43,7 +43,9 @@ if length(trfFunc) > 2,
   multiLayer = true;
   usingBias(1) = false;
   trfFunc{1} = 'purelin';
+  disp('Extracting via Caloba Style');
 else
+  disp('Extracting via Seixas Style');
   multiLayer = false;
 end
 
@@ -76,6 +78,7 @@ for i=1:maxNumPCD,
   
   
   trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
+
   if (multiLayer && i>1),
     [trnNet, inTrn, inVal, inTst] = forceOrthogonalization(trnNet, inTrn, inVal, inTst);
   end
@@ -95,7 +98,11 @@ for i=1:maxNumPCD,
   meanEfic(i) = mean(ef);
   stdEfic(i) = std(ef);
   
-  pcd = [pcd; outNet{i}.IW{1}(end,:)];
+  pcd2Save = outNet{i}.IW{1}(end,:);
+  if multiLayer, %Unit norm if Caloba Style.
+    pcd2Save = pcd2Save ./ norm(pcd2Save);
+  end
+  pcd = [pcd; pcd2Save];
   bias = outNet{i}.b{1};
 
   %If the SP increment is not above the minimum threshold, we initiate the
@@ -142,34 +149,31 @@ function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam
   end
   
   
-function [oNet, inTrn, inVal, inTst] = forceOrthogonalization(net, trn, val, tst)
+function [net, trn, val, tst] = forceOrthogonalization(net, trn, val, tst)
   %If we  have already extracted a PCD, we remove
   % the information of the last PCD from the init values of the
   % new PCD to be extracted, and also from the input data.
-
-  oNet = net;
-    
+  
+  disp('Extracting the residual information for the next component.')
+  
   %Getting the last PCD extracted.
   W = net.IW{1}(end-1,:);
     
   %Removing the info related to the last PCD extracted.
   Nc = length(trn);
-  inTrn = cell(1,Nc);
-  inVal = cell(1,Nc);
-  inTst = cell(1,Nc);
   for i=1:Nc,
-    inTrn{i} = trn{i} - ( W' * (W * trn{i}) );
-    inVal{i} = val{i} - ( W' * (W * val{i}) );
-    inTst{i} = tst{i} - ( W' * (W * tst{i}) );
+    trn{i} = trn{i} - ( W' * (W * trn{i}) );
+    val{i} = val{i} - ( W' * (W * val{i}) );
+    tst{i} = tst{i} - ( W' * (W * tst{i}) );
   end
   
   %Pointing the initial weights of the new PCD to the right direction.
-  W_all = net.IW{1}(1:end-1,:);
-  if ~isempty(W_all),
-    sW = oNet.IW{1}(end,:);
-    sW = sW - ( W_all' * (W_all * sW') )';
-    oNet.IW{1}(end,:) = sW;
-  end
+%  W_all = net.IW{1}(1:end-1,:);
+%  if ~isempty(W_all),
+%    sW = net.IW{1}(end,:);
+%    sW = sW - ( W_all' * (W_all * sW') )';
+%    net.IW{1}(end,:) = sW;
+%  end
 
 
 function [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)

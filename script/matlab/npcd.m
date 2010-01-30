@@ -1,5 +1,5 @@
-function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff)
-%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff)
+function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff, nPCD)
+%function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIterations, minDiff, nPCD)
 %Extracts the Principal Components of Discrimination (PCD).
 %Input parameters are:
 % net - The template neural netork to use. The number of PCDs to be
@@ -13,6 +13,8 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIte
 % PCD, the iteration which generated the best mean detection efficiency will
 % provide the extracted PCD. Default is 10.
 % minDiff - The minimum difference (in percentual value) in the SP for continuing extracting PCDs.
+% nPCD - If not zero, it must be the numer of OCD to be extracted. This parameter, if > 0, overrides
+%        minDiff.
 %
 %The function returns:
 % pcd - A matrix with the extracted PCDs.
@@ -27,13 +29,18 @@ function [pcd, outNet, trnEvo, efficVec] = npcd(net, inTrn, inVal, inTst, numIte
 
 if (nargin < 5), numIterations = 5; end
 if (nargin < 6), minDiff = 0.01; end
+if (nargin < 7), nPCD = 0; end
 
-if (nargin > 6) || (nargin < 4),
+
+if (nargin > 7) || (nargin < 4),
   error('Invalid number of input arguments. See help.');
 end
 
 %Getting the desired network parameters.
 [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net);
+if nPCD > 0,
+  maxNumPCD = nPCD;
+end
 
 %If we have more than 2 layers (excluding the input), then we'll perform
 %PCD extraction based on Caloba's rules, ensuring full PCD
@@ -114,7 +121,7 @@ for i=1:maxNumPCD,
     mfCount = 0; %Stopping the countdown for the moment.
   end
   
-  if mfCount == maxFail,
+  if (nPCD == 0) && (mfCount == maxFail),
     break; %We end the PCD extraction
   end
   

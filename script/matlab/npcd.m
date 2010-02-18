@@ -89,7 +89,7 @@ for i=1:maxNumPCD,
   end
   
   %Doing the training.
-  [outNet{i}, trnEvo{i}, maxEfic(i)] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
+  [outNet{i}, trnEvo{i}, maxEfic(i)] = doTrain(trnNet, inTrn, inVal, inTst, numIterations);
   maxSP = 100*maxEfic(i);
   
   pcd2Save = outNet{i}.IW{1}(end,:);
@@ -166,7 +166,7 @@ function [trn, val, tst] = forceOrthogonalization(lastPCD, trn, val, tst)
 %  end
 
 
-function [bNet, bEvo, maxSP] = trainMany(net, inTrn, inVal, inTst, numTrains)
+function [bNet, bEvo, maxSP] = doTrain(net, inTrn, inVal, inTst, numTrains)
   netVec = cell(1,numTrains);
   trnVec = cell(1,numTrains);
   spVec = zeros(1, numTrains);

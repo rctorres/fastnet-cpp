@@ -89,7 +89,7 @@ for i=1:maxNumPCD,
   end
   
   %Doing the training.
-  [outNet{i}, trnEvo{i}, maxEfic(i)] = doTrain(trnNet, inTrn, inVal, inTst, numIterations);
+  [outNet{i}, trnEvo{i}, maxEfic(i)] = doTrain(trnNet, inTrn, inVal, inTst, numIterations, (multiLayer && i>1));
   maxSP = 100*maxEfic(i);
   
   pcd2Save = outNet{i}.IW{1}(end,:);
@@ -121,6 +121,7 @@ pcd = pcd(1:pcdExtracted,:);
 outNet = outNet(1:pcdExtracted);
 trnEvo = trnEvo(1:pcdExtracted);
 efficVec = maxEfic(1:pcdExtracted);
+
 
 
 function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
@@ -156,17 +157,18 @@ function [trn, val, tst] = forceOrthogonalization(lastPCD, trn, val, tst)
     val{i} = val{i} - ( lastPCD' * (lastPCD * val{i}) );
     tst{i} = tst{i} - ( lastPCD' * (lastPCD * tst{i}) );
   end
+
   
-  %Pointing the initial weights of the new PCD to the right direction.
-%  W_all = net.IW{1}(1:end-1,:);
-%  if ~isempty(W_all),
-%    sW = net.IW{1}(end,:);
-%    sW = sW - ( W_all' * (W_all * sW') )';
-%    net.IW{1}(end,:) = sW;
-%  end
+  function iw = ortWeights(iw)
+    disp('Pointing the initial weights of the new PCD to the right direction.');
+    sw = iw(end,:);
+    for i=1:(size(iw,1)-1)
+      pw = iw(i,:);
+      iw(end,:) = iw(end,:) - ( (pw*sw') / (pw*pw') )*pw;
+    end
 
-
-function [bNet, bEvo, maxSP] = doTrain(net, inTrn, inVal, inTst, numTrains)
+  
+function [bNet, bEvo, maxSP] = doTrain(net, inTrn, inVal, inTst, numTrains, ortWeight)
   netVec = cell(1,numTrains);
   trnVec = cell(1,numTrains);
   spVec = zeros(1, numTrains);
@@ -174,6 +176,11 @@ function [bNet, bEvo, maxSP] = doTrain(net, inTrn, inVal, inTst, numTrains)
 
   for i=1:numTrains,
     net = scrambleWeights(net);
+    
+    if ortWeight,
+      net.IW{1} = ortWeights(net.IW{1});
+    end
+    
     [netVec{i}, trnVec{i}] = ntrain(net, inTrn, inVal);
     out = nsim(netVec{i}, inTst);
   

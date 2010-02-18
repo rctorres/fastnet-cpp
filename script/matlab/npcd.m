@@ -62,8 +62,6 @@ pcd = [];
 bias = [];
 outNet = cell(1,maxNumPCD);
 trnEvo = cell(1,maxNumPCD);
-meanEfic = zeros(1,maxNumPCD);
-stdEfic = zeros(1,maxNumPCD);
 maxEfic = zeros(1,maxNumPCD);
 
 %Will count how many PCDs were actually extracted.
@@ -91,19 +89,8 @@ for i=1:maxNumPCD,
   end
   
   %Doing the training.
-  [nVec, idx] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
-  outNet{i} = nVec{idx}.net;
-  trnEvo{i} = nVec{idx}.trnEvo;
-  maxEfic(i) = nVec{idx}.sp;
-  maxSP = 100*nVec{idx}.sp;
-
-  %Getting the mean and std val of the SP efficiencies obtained through the iterations.
-  ef = zeros(1,numIterations);
-  for j=1:numIterations,
-    ef(j) = nVec{j}.sp;
-  end
-  meanEfic(i) = mean(ef);
-  stdEfic(i) = std(ef);
+  [outNet{i}, trnEvo{i}, maxEfic(i)] = trainMany(trnNet, inTrn, inVal, inTst, numIterations);
+  maxSP = 100*maxEfic(i);
   
   pcd2Save = outNet{i}.IW{1}(end,:);
   if multiLayer, %Unit norm if Caloba Style.
@@ -133,9 +120,7 @@ end
 pcd = pcd(1:pcdExtracted,:);
 outNet = outNet(1:pcdExtracted);
 trnEvo = trnEvo(1:pcdExtracted);
-efficVec.mean = meanEfic(1:pcdExtracted);
-efficVec.std = stdEfic(1:pcdExtracted);
-efficVec.max = maxEfic(1:pcdExtracted);
+efficVec = maxEfic(1:pcdExtracted);
 
 
 function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam)
@@ -179,6 +164,29 @@ function [trn, val, tst] = forceOrthogonalization(lastPCD, trn, val, tst)
 %    sW = sW - ( W_all' * (W_all * sW') )';
 %    net.IW{1}(end,:) = sW;
 %  end
+
+
+function [bNet, bEvo, maxSP] = trainMany(net, inTrn, inVal, inTst, numTrains)
+  netVec = cell(1,numTrains);
+  trnVec = cell(1,numTrains);
+  spVec = zeros(1, numTrains);
+  nClasses = length(inTrn);
+
+  for i=1:numTrains,
+    net = scrambleWeights(net);
+    [netVec{i}, trnVec{i}] = ntrain(net, inTrn, inVal);
+    out = nsim(netVec{i}, inTst);
+  
+    if nClasses > 2,
+      spVec(i) = calcSP(diag(genConfMatrix(out)));
+    else
+      spVec(i) = max(genROC(out{1}, out{2}));
+    end
+  end
+
+  [maxSP, idx] = max(spVec);
+  bNet = netVec{idx};
+  bEvo = trnVec{idx};
 
 
 function [trnAlgo, maxNumPCD, numNodes, trfFunc, usingBias, trnParam] = getNetworkInfo(net)

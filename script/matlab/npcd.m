@@ -87,7 +87,7 @@ for i=1:maxNumPCD,
   trnNet = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam);
 
   if (multiLayer && i>1),
-    [trnNet, inTrn, inVal, inTst] = forceOrthogonalization(trnNet, inTrn, inVal, inTst);
+    [inTrn, inVal, inTst] = forceOrthogonalization(pcd(end,:), inTrn, inVal, inTst);
   end
   
   %Doing the training.
@@ -154,24 +154,22 @@ function net = stdPCD(pcd, bias, trnAlgo, numNodes, trfFunc, usingBias, trnParam
     net.b{1}(1:nPCD) = bias;
     net.layers{1}.userdata.frozenNodes = (1:nPCD);
   end
+
+
   
-  
-function [net, trn, val, tst] = forceOrthogonalization(net, trn, val, tst)
+function [trn, val, tst] = forceOrthogonalization(lastPCD, trn, val, tst)
   %If we  have already extracted a PCD, we remove
   % the information of the last PCD from the init values of the
   % new PCD to be extracted, and also from the input data.
   
   disp('Extracting the residual information for the next component.')
-  
-  %Getting the last PCD extracted.
-  W = net.IW{1}(end-1,:);
     
   %Removing the info related to the last PCD extracted.
   Nc = length(trn);
   for i=1:Nc,
-    trn{i} = trn{i} - ( W' * (W * trn{i}) );
-    val{i} = val{i} - ( W' * (W * val{i}) );
-    tst{i} = tst{i} - ( W' * (W * tst{i}) );
+    trn{i} = trn{i} - ( lastPCD' * (lastPCD * trn{i}) );
+    val{i} = val{i} - ( lastPCD' * (lastPCD * val{i}) );
+    tst{i} = tst{i} - ( lastPCD' * (lastPCD * tst{i}) );
   end
   
   %Pointing the initial weights of the new PCD to the right direction.

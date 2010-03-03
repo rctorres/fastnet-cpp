@@ -156,12 +156,26 @@ function [hidNodes, trfFunc, trnParam] = getNetworkInfo(net)
   
 function [w maxSP det fa] = get_sp_by_fisher(trn, tst, nROC)
 %Calculates the best SP achieved considering a Fisher discriminant.
-  w = fisher(trn{1}, trn{2});
-  out = {w*tst{1}, w*tst{2}};
-  [spVec, cutVec, det, fa] = genROC(out{1}, out{2}, nROC);
+  if (size(trn{1},1) > 1),
+    w = fisher(trn{1}, trn{2});
+    out = {w*tst{1}, w*tst{2}};
+  else
+    disp('Data is unidimensional. Looking straight to the distribution!');
+    w = [1];
+    out = tst;
+  end
+
+  %Ensuring that signal will always reside on the right side of the
+  %histogram.
+  if mean(out{2}) > mean(out{1}),
+    out{2} = -out{2};
+    out{1} = -out{1};
+  end
+
+  [spVec, cutVec, det, fa] = genROC(out{1}, out{2}, nROC, true);
   maxSP = max(spVec);
 
-  
+   
 function [otrn, oval, otst, pp] = do_nothing(trn, val, tst, par)
 %Dummy function to work with pp_function ponter.
   disp('Applying NO pre-processing...');

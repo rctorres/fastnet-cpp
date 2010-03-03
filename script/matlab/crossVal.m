@@ -68,7 +68,11 @@ else
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
     [trn val tst ret.pp{d}] = calculate_pre_processing(trn, val, tst, pp);
-    [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(net_par, trn, val, tst, nTrains, nROC);
+    if (size(trn{1},1) > 1),
+      [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(net_par, trn, val, tst, nTrains, nROC);
+    else
+      [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
+    end
   end
 end
 

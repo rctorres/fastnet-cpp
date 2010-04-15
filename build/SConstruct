@@ -39,8 +39,8 @@ if debug > 0:
 #Am I using a MAC computer? Then I apply some optimizations for it
 if platform.system() == 'Darwin':
   if debug == 0: libCPPFlags += ['-fast']
-  matlabPath = '/Applications/MATLAB_R2008b.app'
-  matlabArch = 'maci'
+  matlabPath = '/Applications/MATLAB_R2009b.app'
+  matlabArch = 'maci64'
   globalCPPFlags += ['-DNO_OMP']
 elif platform.system() == 'Linux':
   if debug == 0: libCPPFlags += LINUX_OPT_FLAGS

@@ -44,7 +44,7 @@ end
 if nargin < 4, tstIsVal = false; end
 if nargin < 5, nBlocks = 12; end
 if nargin < 6, nDeal = 10; end
-if nargin < 7, nTrains = 1; end
+if nargin < 7, nTrains = 5; end
 if nargin > 7, error('Invalid number of parameters. See help!'); end
 
 data = create_blocks(data, nBlocks);

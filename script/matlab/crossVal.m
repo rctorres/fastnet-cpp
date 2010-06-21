@@ -1,5 +1,5 @@
-function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
-%function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, pp, tstIsVal, saveData, nBlocks, nDeal, nTrains)
+%function ret = crossVal(data, net, pp, tstIsVal, saveData, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
@@ -17,13 +17,15 @@ function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
 %             If this parameter os ommited, or [], no pre-processing will 
 %             be done.
 % - tstIsVal : If true, in each deal, the data will be split into trn and
-%             val only, and tst = val. Default is FALSE. 
-% - nBlocks: specifies in how many blocks the data will be divided into.
+%             val only, and tst = val. Default is FALSE.
+% - saveData : If true, after each deal, the trn, val, tst matrices are saved.
+%              (default is false).
 % - nDeal: specifies how many times the blocks will be ramdomly distributed
 %          into training, validation and test sets.
 % - nTrains: specifies, for a given deal, how many times the network will
 %            be trained, to avoid local minima. If net = [], this parameter
 %            is ignored.
+% - 
 %
 %The function returns a structure containing the following fields:
 % - net : the best discriminator obtained for each deal. If a numerica
@@ -32,6 +34,7 @@ function ret = crossVal(data, net, pp, tstIsVal, nBlocks, nDeal, nTrains)
 % - det : The detection efficiency values for the ROC curve, for each deal.
 % - fa : The values for the false alarm for the ROC curve, for each deal.
 % - pp : Pre-processing structure returned by pp_func.
+% - data: the events distribution used by each deal.
 %
 %WARNING: THIS FUNCTION ONLY WORKS FOR THE 2 CLASSES CASE!!!
 %
@@ -42,10 +45,11 @@ if (nargin < 3) || (isempty(pp)),
   pp.par = [];
 end
 if nargin < 4, tstIsVal = false; end
-if nargin < 5, nBlocks = 12; end
-if nargin < 6, nDeal = 10; end
-if nargin < 7, nTrains = 5; end
-if nargin > 7, error('Invalid number of parameters. See help!'); end
+if nargin < 5, saveData = false; end
+if nargin < 6, nBlocks = 12; end
+if nargin < 7, nDeal = 10; end
+if nargin < 8, nTrains = 5; end
+if nargin > 8, error('Invalid number of parameters. See help!'); end
 
 data = create_blocks(data, nBlocks);
 
@@ -55,10 +59,14 @@ ret.pp = cell(1,nDeal);
 ret.sp = zeros(1,nDeal);
 ret.det = zeros(nDeal, nROC);
 ret.fa = zeros(nDeal, nROC);
+ret.data = cell(1, nDeal);
 
 if isempty(net),
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
+    ret.data{d}.trn = trn;
+    ret.data{d}.val = val;
+    ret.data{d}.tst = tst;    
     [trn val tst ret.pp{d}] = calculate_pre_processing(trn, val, tst, pp);
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
@@ -67,6 +75,9 @@ else
   [net_par.hidNodes, net_par.trfFunc, net_par.trnParam] = getNetworkInfo(net);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
+    ret.data{d}.trn = trn;
+    ret.data{d}.val = val;
+    ret.data{d}.tst = tst;    
     [trn val tst ret.pp{d}] = calculate_pre_processing(trn, val, tst, pp);
     if (size(trn{1},1) > 1),
       [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(net_par, trn, val, tst, nTrains, nROC);

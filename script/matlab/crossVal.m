@@ -59,14 +59,18 @@ ret.pp = cell(1,nDeal);
 ret.sp = zeros(1,nDeal);
 ret.det = zeros(nDeal, nROC);
 ret.fa = zeros(nDeal, nROC);
-ret.data = cell(1, nDeal);
+if saveData,
+  ret.data = cell(1, nDeal);
+end
 
 if isempty(net),
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    ret.data{d}.trn = trn;
-    ret.data{d}.val = val;
-    ret.data{d}.tst = tst;    
+    if saveData,
+      ret.data{d}.trn = trn;
+      ret.data{d}.val = val;
+      ret.data{d}.tst = tst;    
+    end
     [trn val tst ret.pp{d}] = calculate_pre_processing(trn, val, tst, pp);
     [ret.net{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_sp_by_fisher(trn, tst, nROC);
   end  
@@ -75,9 +79,11 @@ else
   [net_par.hidNodes, net_par.trfFunc, net_par.trnParam] = getNetworkInfo(net);
   for d=1:nDeal,
     [trn val tst] = deal_sets(data, tstIsVal);
-    ret.data{d}.trn = trn;
-    ret.data{d}.val = val;
-    ret.data{d}.tst = tst;    
+    if saveData,
+      ret.data{d}.trn = trn;
+      ret.data{d}.val = val;
+      ret.data{d}.tst = tst;    
+    end
     [trn val tst ret.pp{d}] = calculate_pre_processing(trn, val, tst, pp);
     if (size(trn{1},1) > 1),
       [ret.net{d} ret.evo{d} ret.sp(d) ret.det(d,:) ret.fa(d,:)] = get_best_train(net_par, trn, val, tst, nTrains, nROC);

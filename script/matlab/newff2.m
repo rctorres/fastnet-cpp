@@ -38,6 +38,10 @@ function net = newff2(inTrn, outData, hNodes, trfFunc, netTrain)
   %Specifying the SP goal.
   net.trainParam.useSP = false;
 
+  %Specify SP calculation weights
+  net.trainParam.sp_signal_weight = 1;
+  net.trainParam.sp_noise_weight = 1;
+
   %Specifying the batch size.
   net.trainParam.batchSize = 10;
 

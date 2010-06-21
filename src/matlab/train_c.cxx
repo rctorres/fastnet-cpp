@@ -78,6 +78,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
     const unsigned fail_limit = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));
     const unsigned batchSize = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "batchSize")));
+    const REAL signalWeight = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "sp_signal_weight")));
+    const REAL noiseWeight = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "sp_noise_weight")));
 
     //Selecting the training type by reading the training agorithm.    
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
@@ -104,7 +106,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     }
     else // It is a pattern recognition network.
     {
-      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], tstData, useSP, batchSize);
+      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], tstData, useSP, batchSize, signalWeight, noiseWeight);
     }
 
 #ifdef DEBUG

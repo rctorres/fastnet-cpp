@@ -20,6 +20,8 @@ protected:
   bool useSP;
   bool hasTstData;
   REAL bestGoalSP;
+  REAL signalWeight;
+  REAL noiseWeight;
   std::vector<DataManager*> dmTrn;
   unsigned *numValEvents;
   unsigned *numTstEvents;
@@ -36,7 +38,8 @@ protected:
 public:
 
   PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, 
-                      const mxArray *inTst,  const bool usingSP, const unsigned bSize);
+                      const mxArray *inTst,  const bool usingSP, const unsigned bSize,
+                      const REAL signalWeigh = 1.0, const REAL noiseWeight = 1.0);
 
   virtual ~PatternRecognition();
 

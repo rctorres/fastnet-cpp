@@ -2,11 +2,16 @@
 
 PatternRecognition::PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, 
                                         const mxArray *inVal, const mxArray *inTst,  
-                                        const bool usingSP, const unsigned bSize) 
+                                        const bool usingSP, const unsigned bSize,
+                                        const REAL signalWeight, const REAL noiseWeight) 
                                         : Training(net, bSize)
 {
   DEBUG1("Starting a Pattern Recognition Training Object");
   
+  // Initialize weights for SP calculation
+  this->signalWeight = signalWeight;
+  this->noiseWeight = noiseWeight;
+
   hasTstData = inTst != NULL;
   useSP = usingSP;
   if (useSP)
@@ -161,7 +166,11 @@ REAL PatternRecognition::sp(const unsigned *nEvents, REAL **epochOutputs)
     
     sigEffic /= static_cast<REAL>(numSignalEvents);
     noiseEffic /= static_cast<REAL>(numNoiseEvents);
-    
+
+    // Use weights for signal and noise efficiencies
+    sigEffic *= signalWeight;
+    noiseEffic *= noiseWeight;
+
     //Using normalized SP calculation.
     const REAL sp = ((sigEffic + noiseEffic) / 2) * sqrt(sigEffic * noiseEffic);
     if (sp > maxSP) maxSP = sp;

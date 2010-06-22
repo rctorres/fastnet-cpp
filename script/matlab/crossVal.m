@@ -1,5 +1,5 @@
-function ret = crossVal(data, net, pp, tstIsVal, saveData, nBlocks, nDeal, nTrains)
-%function ret = crossVal(data, net, pp, tstIsVal, saveData, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, pp, trnDiv, saveData, nBlocks, nDeal, nTrains)
+%function ret = crossVal(data, net, pp, trnDiv, saveData, nBlocks, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
@@ -16,8 +16,9 @@ function ret = crossVal(data, net, pp, tstIsVal, saveData, nBlocks, nDeal, nTrai
 %             if func does not use any par, pp.par must be [].
 %             If this parameter os ommited, or [], no pre-processing will 
 %             be done.
-% - tstIsVal : If true, in each deal, the data will be split into trn and
-%             val only, and tst = val. Default is FALSE.
+% - trnDiv : Struct containing the number of blocks for trn, val, tst sets. 
+%            If tst = 0, then this function will assume val = tst. Structure fields
+%            must be named as 'trn', 'val' and 'tst'. 
 % - saveData : If true, after each deal, the trn, val, tst matrices are saved.
 %              (default is false).
 % - nDeal: specifies how many times the blocks will be ramdomly distributed
@@ -44,7 +45,7 @@ if (nargin < 3) || (isempty(pp)),
   pp.func = @do_nothing;
   pp.par = [];
 end
-if nargin < 4, tstIsVal = false; end
+if nargin < 4, trnDiv = struct('trn', 4, 'val', 4, 'tst', 4); end
 if nargin < 5, saveData = false; end
 if nargin < 6, nBlocks = 12; end
 if nargin < 7, nDeal = 10; end
@@ -65,7 +66,7 @@ end
 
 if isempty(net),
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data, tstIsVal);
+    [trn val tst] = deal_sets(data, trnDiv);
     if saveData,
       ret.data{d}.trn = trn;
       ret.data{d}.val = val;
@@ -78,7 +79,7 @@ else
   ret.evo = cell(1,nDeal);
   [net_par.hidNodes, net_par.trfFunc, net_par.trnParam] = getNetworkInfo(net);
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data, tstIsVal);
+    [trn val tst] = deal_sets(data, trnDiv);
     if saveData,
       ret.data{d}.trn = trn;
       ret.data{d}.val = val;
@@ -109,7 +110,7 @@ function bdata = create_blocks(data, nBlocks)
   end
   
 
-function [trn val tst] = deal_sets(data, tstIsVal)
+function [trn val tst] = deal_sets(data, trnDiv)
 %Create the training, validation and test sets based on how many blocks per
 %set we should have.
 
@@ -118,16 +119,29 @@ function [trn val tst] = deal_sets(data, tstIsVal)
   val = cell(1,nClasses);
   tst = cell(1,nClasses);
   
+  %Checking whether we are taking all the blocks!
+  if sum([trnDiv.trn trnDiv.val trnDiv.tst]) ~= nBlocks,
+    error('Number of blocks in each set must sum to the total number of blocks!');
+  end
+  
   for c=1:nClasses,
+    %Ramdonly sorting the blocks order.
     idx = randperm(nBlocks);
-    if tstIsVal,
-      trn{c} = cell2mat(data(c,idx(1:2:end)));
-      val{c} = cell2mat(data(c,idx(2:2:end)));
-      tst{c} = val{c};
+
+    ipos =  1;
+    epos = trnDiv.trn;
+    trn{c} = cell2mat(data(c,idx(ipos:epos)));
+    
+    ipos = epos + 1;
+    epos = ipos + trnDiv.val - 1;
+    val{c} = cell2mat(data(c,idx(ipos:epos)));
+    
+    if trnDiv.tst ~= 0,
+      ipos = epos + 1;
+      epos = ipos + trnDiv.tst - 1;
+      tst{c} = cell2mat(data(c,idx(ipos:epos)));
     else
-      trn{c} = cell2mat(data(c,idx(1:3:end)));
-      val{c} = cell2mat(data(c,idx(2:3:end)));
-      tst{c} = cell2mat(data(c,idx(3:3:end)));
+      tst{c} = val{c};
     end
   end
  

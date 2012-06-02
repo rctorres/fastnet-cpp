@@ -32,19 +32,20 @@ function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val, in_ts
 %
 
 %Case pat rec net.
+trainParam = net.trainParam();
 usedTstData = false;
 if (nargin == 3),
   %In this case, out_trn is, actually, the in_val.
   validateData(net, in_trn, out_trn);
-  [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, [], []);
+  [outNet, trnInfo] = train_c(net, trainParam, in_trn, [], out_trn, [], []);
 elseif (nargin == 4),
   %In this case, out_trn is, actually, the in_val, and in_val is actually in_tst.
   usedTstData = true;
   validateData(net, in_trn, out_trn, in_val);
-  [outNet, trnInfo] = train_c(net, in_trn, [], out_trn, [], in_val);
+  [outNet, trnInfo] = train_c(net, trainParam, in_trn, [], out_trn, [], in_val);
 elseif (nargin == 5),
   validateData(net, in_trn, out_trn, in_val, out_val);
-  [outNet, trnInfo] = train_c(net, in_trn, out_trn, in_val, out_val);
+  [outNet, trnInfo] = train_c(net, trainParam, in_trn, out_trn, in_val, out_val);
 else
   error('Incorrect number of arguments! See help for information!');
 end

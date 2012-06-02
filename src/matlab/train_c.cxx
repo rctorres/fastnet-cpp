@@ -28,23 +28,26 @@ using namespace FastNet;
 /// Index, in the arguments list, of the neural network structure.
 const unsigned NET_STR_IDX = 0;
 
+/// Index, in the arguments list, of the neural network train parameters structure.
+const unsigned NET_TRN_STR_IDX = 1;
+
 /// Index, in the arguments list, of the input training events.
-const unsigned IN_TRN_IDX = 1;
+const unsigned IN_TRN_IDX = 2;
 
 /// Index, in the arguments list, of the output training events.
-const unsigned OUT_TRN_IDX = 2;
+const unsigned OUT_TRN_IDX = 3;
 
 /// Index, in the arguments list, of the input validating events.
-const unsigned IN_VAL_IDX = 3;
+const unsigned IN_VAL_IDX = 4;
 
 /// Index, in the arguments list, of the output validating events.
-const unsigned OUT_VAL_IDX = 4;
+const unsigned OUT_VAL_IDX = 5;
 
 /// Index, in the arguments list, of the input testing events.
-const unsigned IN_TST_IDX = 5;
+const unsigned IN_TST_IDX = 6;
 
 /// Index, in the arguments list, of the output testing events.
-const unsigned OUT_TST_IDX = 6;
+const unsigned OUT_TST_IDX = 7;
 
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
@@ -73,7 +76,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const mxArray *netStr = args[NET_STR_IDX];
 
     //Reading the showing period, epochs and max_fail.
-    const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
+    const mxArray *trnParam =  args[NET_TRN_STR_IDX];
     const unsigned nEpochs = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "epochs")));
     const unsigned show = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "show")));
     const unsigned fail_limit = static_cast<unsigned>(mxGetScalar(mxGetField(trnParam, 0, "max_fail")));

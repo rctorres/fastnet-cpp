@@ -50,7 +50,7 @@ namespace FastNet
     DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
 
     //Getting the number of nodes in the input layer.
-    this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
+    this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetProperty(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
     DEBUG2("Number of nodes in layer 0: " << nNodes[0]);
     
     //Getting the number of nodes and transfer function in each layer:
@@ -58,9 +58,9 @@ namespace FastNet
     for (size_t i=0; i<mxGetM(layers); i++)
     {
       const mxArray *layer = mxGetCell(layers, i);
-      this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
+      this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetProperty(layer, 0, "size"))));
       DEBUG2("Number of nodes in layer " << (i+1) << ": " << nNodes[(i+1)]);
-      const string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
+      const string transFunction = mxArrayToString(mxGetProperty(layer, 0, "transferFcn"));
       if (transFunction == TGH_ID)
       {
         this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
@@ -84,7 +84,7 @@ namespace FastNet
     //Getting the using bias information.
     for (unsigned i=0; i<mxGetM(layers); i++)
     {
-      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
+      const mxArray *userData = mxGetProperty(mxGetCell(layers, i), 0, "userdata");
       this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
       DEBUG2("Layer " << (i+1) << " is using bias? " << this->usingBias[i]);
     }

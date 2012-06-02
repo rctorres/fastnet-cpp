@@ -294,8 +294,9 @@ namespace FastNet
       This constructor should be called when the network parameters are stored in a matlab
       network structure.
       @param[in] netStr The Matlab network structure as returned by newff.
+      @param[in] trnParam The Matlab network train parameter (net.trainParam) structure.
       */
-      Backpropagation(const mxArray *netStr);
+      Backpropagation(const mxArray *netStr, const mxArray *trnParam);
 
       /// Returns a clone of the object.
       /**

@@ -88,12 +88,12 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp(netStr);
+      net = new RProp(netStr, trnParam);
       if (show) REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
-      net = new Backpropagation(netStr);
+      net = new Backpropagation(netStr, trnParam);
       if (show) REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";

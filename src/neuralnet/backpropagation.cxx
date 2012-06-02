@@ -46,12 +46,11 @@ namespace FastNet
   }
   
 
-  Backpropagation::Backpropagation(const mxArray *netStr) : NeuralNetwork(netStr)
+  Backpropagation::Backpropagation(const mxArray *netStr, const mxArray *trnParam) : NeuralNetwork(netStr)
   {
     DEBUG1("Initializing the Backpropagation class from a Matlab Network structure.");
 
     //We first test whether the values exists, otherwise, we use default ones.
-    const mxArray *trnParam =  mxGetField(netStr, 0, "trainParam");
     if (mxGetField(trnParam, 0, "lr")) this->learningRate = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
     else this->learningRate = 0.05;
     if (mxGetField(trnParam, 0, "decFactor")) this->decFactor = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "decFactor"))));
@@ -71,7 +70,7 @@ namespace FastNet
       setFrozen(i, false);
       
       //Getting from Matlab any possible frozen nodes.
-      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
+      const mxArray *userData = mxGetProperty(mxGetCell(layers, i), 0, "userdata");
       const mxArray *matFNodes = mxGetField(userData, 0, "frozenNodes");
       const double *fNodes = mxGetPr(matFNodes);
       for (unsigned j=0; j<mxGetN(matFNodes); j++)

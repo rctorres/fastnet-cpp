@@ -31,8 +31,15 @@ function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val, in_ts
 %	trnInfo    -> A structure containing the training evolution information.
 %
 
-%Case pat rec net.
+%Since I do not know how to execute a class method from a mex file,
+%I was forced to save the trainPAram info as an external structure, %
+%so my mex function could properly read its attributes. In case you are wondering,
+%I know it is not pretty, but until I come up with a better solution,
+%this will do it.
 trainParam = net.trainParam();
+
+
+%Case pat rec net.
 usedTstData = false;
 if (nargin == 3),
   %In this case, out_trn is, actually, the in_val.

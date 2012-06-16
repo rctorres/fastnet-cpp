@@ -82,7 +82,7 @@ classdef RandomBlocks
     end
   end
 
-  methods (SetAccess = private)
+  methods
     function bdata = create_blocks(self, data, nBlocks)
     %function bdata = create_blocks(self, data, nBlocks)
     %Split the data into nBlocks per class and return the data separated in

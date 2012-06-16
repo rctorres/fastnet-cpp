@@ -3,92 +3,113 @@ classdef KMeansBlocks
 %It divides the input data in a set of clusters, and, at each deal, ramdomly
 %selects a number of blocks for the training, validation and testing sets.
   properties (SetAccess = private)
-    nTrn;
-    nVal;
-    nTst;
-    blocks;
-    tstIsVal;
+    percTrn;
+    percVal;
+    percTst;
+    clusters;
   end
   
   methods
-    function self = KMeansBlocks(data, nTrn, nVal, nTst)
-    %function self = RandomBlocks(data, nTrn, nVal, nTst)
+    function self = KMeansBlocks(data, nClusters, percTrn, percVal, percTst)
+    %function self = KMeansBlocks(data, nClusters, percTrn, percVal, percTst)
     %Class constructor. Receives:
     %  - data. A cell vector, where each cell holds de events of a given class.
-    %  - nTrn: the number of blocks (per class) selected for composing the training set
-    %  - nVal: the number of blocks (per class) selected for composing the validation set
-    %  - nTst: the number of blocks (per class) selected for composing the
-    %          testing set. if nTst = 0, the clas wil enforce the testing
-    %          set to be the same as the validation set.
+    %  - nCluster: the number of clusters to create.
+    %  - percTrn: the percentage of events (per class) for composing the training set
+    %  - percVal: the percentage of events (per class) for composing the validation set
+    %  - percTst: the percentage of events (per class) for composing the testing set
+    %             testing set. if nTst = 0, the clas wil enforce the testing
+    %             set to be the same as the validation set.
     
-      self.nTrn = nTrn;
-      self.nVal = nVal;
-      self.nTst = nTst;
-      nBlocks = self.nTrn + self.nVal + self.nTst;
-      self.blocks = self.create_blocks(data, nBlocks);
+      self.percTrn = percTrn;
+      self.percVal = percVal;
+      self.percTst = percTst;
+      
+      perc = self.percTrn + self.percVal + self.percTst;
+      if perc > 100,
+        error('Sum of percentages is greater than 100%%!');
+      elseif perc < 100,
+        warning('Sum of percentages is smaller than 100%%!');
+      end
+      
+      self.clusters = self.create_clusters(data, nClusters);
 
       %Taking the total number of blocks.
-      fprintf('Numbers of blocks for cross validation: %d\n', nBlocks);
-      fprintf('    Training blocks   : %d\n', self.nTrn);
-      fprintf('    Validation blocks : %d\n', self.nVal);
-      fprintf('    Testing blocks    : %d\n', self.nTst);
+      fprintf('Numbers of clusters for cross validation: %d\n', nClusters);
+      fprintf('    Percentage of training events   : %2.2f\n', 100*self.percTrn);
+      fprintf('    Percentage of validation events : %2.2f\n', 100*self.percVal);
+      fprintf('    Percentage of testing events    : %2.2f\n', 100*self.percTst);
       
-      self.tstIsVal = (self.nTst == 0);
-      if self.tstIsVal,
+      if (self.nTst == 0),
         fprintf('    Enforcing tst = val!\n');
       end
     end
         
     
+    function ret = tstIsVal(self)
+    %function ret = tstIsVal(self)
+    %Returns true if the class is enforcing tst = val.
+      ret = (self.nTst == 0);
+    end
+    
+    
     function [trn val tst] = deal_sets(self)
     %function [trn val tst] = deal_sets(self)
-    % Ramdomly selects the blocks for composing the training, validation
-    % and testing sets. If the number of testing blocks is zero, the method
+    % Selects the trn, val and tst events respecting the percentage set for
+    % the class. If percentual of tst events is zero, the method
     % will make tst = val. The class return:
     % - trn : a cell vector where each cell hold the training set for each class.
     % - val : a cell vector where each cell hold the validation set for each class.
     % - tst : a cell vector where each cell hold the testing set for each class.
 
-      [nClasses, nBlocks] = size(self.blocks);
+      [nClasses, nClusters] = size(self.blocks);
       trn = cell(1,nClasses);
       val = cell(1,nClasses);
       tst = cell(1,nClasses);
     
       for c=1:nClasses,
-        %Ramdonly sorting the blocks order.
-        idx = randperm(nBlocks);
-
-        ipos = 1;
-        epos = self.nTrn;
-        trn{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
-    
-        ipos = epos + 1;
-        epos = ipos + self.nVal - 1;
-        val{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
-    
-        if self.nTst ~= 0,
-          ipos = epos + 1;
-          epos = ipos + self.nTst - 1;
-          tst{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
-        else
+        data_trn = [];
+        data_val = [];
+        data_tst = [];
+        
+        for clus=1:nClusters,
+          cluster = self.clusters{c, clus};
+          [idx_trn, idx_val, idx_tst] = dividerand(cluster, self.percTrn, self.percVal, self.percTst);
+          data_trn = [data_trn cluster(:,idx_trn)];
+          data_val = [data_val cluster(:,idx_val)];
+          data_tst = [data_tst cluster(:,idx_tst)];
+        end
+        
+        trn{c} = data_trn;
+        val{c} = data_val;
+        tst{c} = data_tst;
+            
+        if self.nTst == 0,
           tst{c} = val{c};
         end
       end
     end
   end
 
-  methods (SetAccess = private)
-    function bdata = create_blocks(self, data, nBlocks)
-    %function bdata = create_blocks(self, data, nBlocks)
-    %Split the data into nBlocks per class and return the data separated in
-    %blocks.
-      nClasses = length(data);
-      bdata = cell(nClasses, nBlocks);
   
-      %Ramdomly placing the events within the blocks.
+  methods (SetAccess = private)
+    function bdata = create_clusters(self, data, nClusters)
+    %function bdata = create_clusters(self, data, nClusters)
+    %Create nClusters for each class using k-means clustering algorithm.
+    %Returns a cell vector where each row represents a class, and each
+    %column represents a cluster.
+    %
+      nClasses = length(data);
+      bdata = cell(nClasses, nClusters);
+  
+      %Generating the clusters for each class.
       for c=1:nClasses,
-        for b=1:nBlocks,
-          bdata{c,b} = data{c}(:,b:nBlocks:end);
+        classData = data{c};
+        idx = kmeans(classData', nClusters);
+        
+        %Splitting among each cluster
+        for clus=1:nClusters,
+          bdata{c,clus} = classData(:, (idx == clus));
         end
       end
     end

@@ -7,7 +7,6 @@ classdef RandomBlocks
     nVal;
     nTst;
     blocks;
-    tstIsVal;
   end
   
   methods
@@ -38,7 +37,14 @@ classdef RandomBlocks
         fprintf('    Enforcing tst = val!\n');
       end
     end
-        
+    
+    
+    function ret = tstIsVal(self)
+    %function ret = tstIsVal(self)
+    %Returns true if the class is enforcing tst = val.
+      ret = (self.nTst == 0);
+    end
+
     
     function [trn val tst] = deal_sets(self)
     %function [trn val tst] = deal_sets(self)

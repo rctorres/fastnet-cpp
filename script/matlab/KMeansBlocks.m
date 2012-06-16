@@ -1,4 +1,4 @@
-classdef RandomBlocks
+classdef RandomBlocks < handle
 %This class implements the sorted blocks algorithm for cross validation.
 %It divides the input data in a set of blocks, and, at eachd eal, ramdomly
 %selects a number of blocks for the training, validation and testing sets.
@@ -35,7 +35,23 @@ classdef RandomBlocks
         fprintf('    Enforcing tst = val!\n');
       end
     end
-        
+    
+    
+    function bdata = create_blocks(RB, data, nBlocks)
+    %function bdata = create_blocks(RB, data, nBlocks)
+    %Split the data into nBlocks per class and return the data separated in
+    %blocks.
+      nClasses = length(data);
+      bdata = cell(nClasses, nBlocks);
+  
+      %Ramdomly placing the events within the blocks.
+      for c=1:nClasses,
+        for b=1:nBlocks,
+          bdata{c,b} = data{c}(:,b:nBlocks:end);
+        end
+      end
+    end
+    
     
     function [trn val tst] = deal_sets(RB)
     %function [trn val tst] = deal_sets(RB)
@@ -72,23 +88,6 @@ classdef RandomBlocks
         end
       end
     end
+    
   end
-
-  methods (SetAccess = private)
-    function bdata = create_blocks(RB, data, nBlocks)
-    %function bdata = create_blocks(RB, data, nBlocks)
-    %Split the data into nBlocks per class and return the data separated in
-    %blocks.
-      nClasses = length(data);
-      bdata = cell(nClasses, nBlocks);
-  
-      %Ramdomly placing the events within the blocks.
-      for c=1:nClasses,
-        for b=1:nBlocks,
-          bdata{c,b} = data{c}(:,b:nBlocks:end);
-        end
-      end
-    end
-  end
-  
 end

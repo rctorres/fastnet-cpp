@@ -1,5 +1,5 @@
 function ret = crossVal(data, net, pp, dealAlgo, saveData, nDeal, nTrains)
-%function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
+%function ret = crossVal(data, net, pp, dealAlgo, saveData, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events

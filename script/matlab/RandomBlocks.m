@@ -7,11 +7,12 @@ classdef RandomBlocks
     nVal;
     nTst;
     blocks;
+    tstIsVal;
   end
   
   methods
-    function RB = RandomBlocks(data, nTrn, nVal, nTst)
-    %function RB = RandomBlocks(data, nTrn, nVal, nTst)
+    function self = RandomBlocks(data, nTrn, nVal, nTst)
+    %function self = RandomBlocks(data, nTrn, nVal, nTst)
     %Class constructor. Receives:
     %  - data. A cell vector, where each cell holds de events of a given class.
     %  - nTrn: the number of blocks (per class) selected for composing the training set
@@ -20,25 +21,27 @@ classdef RandomBlocks
     %          testing set. if nTst = 0, the clas wil enforce the testing
     %          set to be the same as the validation set.
     
-      RB.nTrn = nTrn;
-      RB.nVal = nVal;
-      RB.nTst = nTst;
-      nBlocks = RB.nTrn + RB.nVal + RB.nTst;
-      RB.blocks = RB.create_blocks(data, nBlocks);
+      self.nTrn = nTrn;
+      self.nVal = nVal;
+      self.nTst = nTst;
+      nBlocks = self.nTrn + self.nVal + self.nTst;
+      self.blocks = self.create_blocks(data, nBlocks);
 
       %Taking the total number of blocks.
       fprintf('Numbers of blocks for cross validation: %d\n', nBlocks);
-      fprintf('    Training blocks   : %d\n', RB.nTrn);
-      fprintf('    Validation blocks : %d\n', RB.nVal);
-      fprintf('    Testing blocks    : %d\n', RB.nTst);
-      if RB.nTst == 0,
+      fprintf('    Training blocks   : %d\n', self.nTrn);
+      fprintf('    Validation blocks : %d\n', self.nVal);
+      fprintf('    Testing blocks    : %d\n', self.nTst);
+      
+      self.tstIsVal = (self.nTst == 0);
+      if self.tstIsVal,
         fprintf('    Enforcing tst = val!\n');
       end
     end
         
     
-    function [trn val tst] = deal_sets(RB)
-    %function [trn val tst] = deal_sets(RB)
+    function [trn val tst] = deal_sets(self)
+    %function [trn val tst] = deal_sets(self)
     % Ramdomly selects the blocks for composing the training, validation
     % and testing sets. If the number of testing blocks is zero, the method
     % will make tst = val. The class return:
@@ -46,7 +49,7 @@ classdef RandomBlocks
     % - val : a cell vector where each cell hold the validation set for each class.
     % - tst : a cell vector where each cell hold the testing set for each class.
 
-      [nClasses, nBlocks] = size(RB.blocks);
+      [nClasses, nBlocks] = size(self.blocks);
       trn = cell(1,nClasses);
       val = cell(1,nClasses);
       tst = cell(1,nClasses);
@@ -56,17 +59,17 @@ classdef RandomBlocks
         idx = randperm(nBlocks);
 
         ipos = 1;
-        epos = RB.nTrn;
-        trn{c} = cell2mat(RB.blocks(c,idx(ipos:epos)));
+        epos = self.nTrn;
+        trn{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
     
         ipos = epos + 1;
-        epos = ipos + RB.nVal - 1;
-        val{c} = cell2mat(RB.blocks(c,idx(ipos:epos)));
+        epos = ipos + self.nVal - 1;
+        val{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
     
-        if RB.nTst ~= 0,
+        if self.nTst ~= 0,
           ipos = epos + 1;
-          epos = ipos + RB.nTst - 1;
-          tst{c} = cell2mat(RB.blocks(c,idx(ipos:epos)));
+          epos = ipos + self.nTst - 1;
+          tst{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
         else
           tst{c} = val{c};
         end
@@ -75,8 +78,8 @@ classdef RandomBlocks
   end
 
   methods (SetAccess = private)
-    function bdata = create_blocks(RB, data, nBlocks)
-    %function bdata = create_blocks(RB, data, nBlocks)
+    function bdata = create_blocks(self, data, nBlocks)
+    %function bdata = create_blocks(self, data, nBlocks)
     %Split the data into nBlocks per class and return the data separated in
     %blocks.
       nClasses = length(data);

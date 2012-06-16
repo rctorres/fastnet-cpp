@@ -1,5 +1,5 @@
-function ret = crossVal(data, net, pp, trnDiv, saveData, nBlocks, nDeal, nTrains)
-%function ret = crossVal(data, net, pp, trnDiv, saveData, nBlocks, nDeal, nTrains)
+function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
+%function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
@@ -47,11 +47,16 @@ if (nargin < 3) || (isempty(pp)),
 end
 if nargin < 4, trnDiv = struct('trn', 4, 'val', 4, 'tst', 4); end
 if nargin < 5, saveData = false; end
-if nargin < 6, nBlocks = 12; end
-if nargin < 7, nDeal = 10; end
-if nargin < 8, nTrains = 5; end
-if nargin > 8, error('Invalid number of parameters. See help!'); end
+if nargin < 6, nDeal = 10; end
+if nargin < 7, nTrains = 5; end
+if nargin > 7, error('Invalid number of parameters. See help!'); end
 
+%Taking the total number of blocks.
+nBlocks = trnDiv.trn + trnDiv.val + trnDiv.tst;
+fprintf('Numbers of blocks for cross validation: %d\n', nBlocks);
+fprintf('    Training blocks   : %d\n', trnDiv.trn);
+fprintf('    Validation blocks : %d\n', trnDiv.val);
+fprintf('    Testing blocks    : %d\n', trnDiv.tst);
 data = create_blocks(data, nBlocks);
 
 nROC = 500;

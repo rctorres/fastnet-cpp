@@ -1,6 +1,6 @@
 function oNet = scrambleWeights(net)
 %function oNet = scrambleWeights(net)
-%Takes a neural network structure and scrmable it weights and biases
+%Takes a neural network structure and scrambles it weights and biases
 %matrices, returning the same network structure with the scrambled values.
 %This function respects the frozen node information, which means that, if a
 %node is frozen, the weights of the inputs and bias connected to it will

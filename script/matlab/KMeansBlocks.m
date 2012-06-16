@@ -26,9 +26,9 @@ classdef KMeansBlocks
       self.percTst = percTst;
       
       perc = self.percTrn + self.percVal + self.percTst;
-      if perc > 100,
+      if perc > 1,
         error('Sum of percentages is greater than 100%%!');
-      elseif perc < 100,
+      elseif perc < 1,
         warning('Sum of percentages is smaller than 100%%!');
       end
       

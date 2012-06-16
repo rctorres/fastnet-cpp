@@ -92,8 +92,9 @@ classdef RandomBlocks
   
       %Ramdomly placing the events within the blocks.
       for c=1:nClasses,
+        classData = data{c};
         for b=1:nBlocks,
-          bdata{c,b} = data{c}(:,b:nBlocks:end);
+          bdata{c,b} = classData(:,b:nBlocks:end);
         end
       end
     end

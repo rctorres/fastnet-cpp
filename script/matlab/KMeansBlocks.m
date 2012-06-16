@@ -40,7 +40,7 @@ classdef KMeansBlocks
       fprintf('    Percentage of validation events : %2.2f\n', 100*self.percVal);
       fprintf('    Percentage of testing events    : %2.2f\n', 100*self.percTst);
       
-      if (self.nTst == 0),
+      if self.tstIsVal(),
         fprintf('    Enforcing tst = val!\n');
       end
     end
@@ -49,7 +49,7 @@ classdef KMeansBlocks
     function ret = tstIsVal(self)
     %function ret = tstIsVal(self)
     %Returns true if the class is enforcing tst = val.
-      ret = (self.nTst == 0);
+      ret = (self.percTst == 0);
     end
     
     
@@ -62,7 +62,7 @@ classdef KMeansBlocks
     % - val : a cell vector where each cell hold the validation set for each class.
     % - tst : a cell vector where each cell hold the testing set for each class.
 
-      [nClasses, nClusters] = size(self.blocks);
+      [nClasses, nClusters] = size(self.clusters);
       trn = cell(1,nClasses);
       val = cell(1,nClasses);
       tst = cell(1,nClasses);
@@ -73,18 +73,17 @@ classdef KMeansBlocks
         data_tst = [];
         
         for clus=1:nClusters,
-          cluster = self.clusters{c, clus};
-          [idx_trn, idx_val, idx_tst] = dividerand(cluster, self.percTrn, self.percVal, self.percTst);
-          data_trn = [data_trn cluster(:,idx_trn)];
-          data_val = [data_val cluster(:,idx_val)];
-          data_tst = [data_tst cluster(:,idx_tst)];
+          [clus_trn, clus_val, clus_tst] = dividerand(self.clusters{c, clus}, self.percTrn, self.percVal, self.percTst);
+          data_trn = [data_trn clus_trn];
+          data_val = [data_val clus_val];
+          data_tst = [data_tst clus_tst];
         end
         
         trn{c} = data_trn;
         val{c} = data_val;
         tst{c} = data_tst;
             
-        if self.nTst == 0,
+        if self.tstIsVal(),
           tst{c} = val{c};
         end
       end
@@ -92,7 +91,7 @@ classdef KMeansBlocks
   end
 
   
-  methods (SetAccess = private)
+  methods
     function bdata = create_clusters(self, data, nClusters)
     %function bdata = create_clusters(self, data, nClusters)
     %Create nClusters for each class using k-means clustering algorithm.

@@ -32,8 +32,7 @@ classdef RandomBlocks
       fprintf('    Validation blocks : %d\n', self.nVal);
       fprintf('    Testing blocks    : %d\n', self.nTst);
       
-      self.tstIsVal = (self.nTst == 0);
-      if self.tstIsVal,
+      if self.tstIsVal(),
         fprintf('    Enforcing tst = val!\n');
       end
     end
@@ -72,12 +71,12 @@ classdef RandomBlocks
         epos = ipos + self.nVal - 1;
         val{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
     
-        if self.nTst ~= 0,
+        if self.tstIsVal(),
+          tst{c} = val{c};
+        else
           ipos = epos + 1;
           epos = ipos + self.nTst - 1;
           tst{c} = cell2mat(self.blocks(c,idx(ipos:epos)));
-        else
-          tst{c} = val{c};
         end
       end
     end

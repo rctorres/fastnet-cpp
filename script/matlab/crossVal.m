@@ -1,9 +1,9 @@
-function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
+function ret = crossVal(data, net, pp, dealAlgo, saveData, nDeal, nTrains)
 %function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
 %Performs cross validation analysis on the dataset data.
 %Inputs parameters are:
 % - data: a cell vector where each cell is a matrix containing the events
-%         to be used (one event per collumn).
+%         to be used (one event per collumn) belonging to a given class.
 % - net: The configured network to be trained during the cross validation
 %        tests. If ommited or [], a cross validation using a Fisher
 %        classifier will be used. The fisher approach is ONLY valid if you
@@ -16,9 +16,11 @@ function ret = crossVal(data, net, pp, trnDiv, saveData, nDeal, nTrains)
 %             if func does not use any par, pp.par must be [].
 %             If this parameter os ommited, or [], no pre-processing will 
 %             be done.
-% - trnDiv : Struct containing the number of blocks for trn, val, tst sets. 
-%            If tst = 0, then this function will assume val = tst. Structure fields
-%            must be named as 'trn', 'val' and 'tst'. 
+% - dealAlgo : A class instance that will be responsible for sorting the
+%              trn, val and tst sets for each deal. The class must contain
+%              a method called dealsets with the following interface
+%              [trn, val, tst] = dealAlgo.deal_Sets(). It is this class
+%              responsability to manage the case when val = tst.
 % - saveData : If true, after each deal, the trn, val, tst matrices are saved.
 %              (default is false).
 % - nDeal: specifies how many times the blocks will be ramdomly distributed
@@ -45,19 +47,11 @@ if (nargin < 3) || (isempty(pp)),
   pp.func = @do_nothing;
   pp.par = [];
 end
-if nargin < 4, trnDiv = struct('trn', 4, 'val', 4, 'tst', 4); end
+if nargin < 4, dealAlgo = RandomBlocks(data, 4, 4, 4); end
 if nargin < 5, saveData = false; end
 if nargin < 6, nDeal = 10; end
 if nargin < 7, nTrains = 5; end
 if nargin > 7, error('Invalid number of parameters. See help!'); end
-
-%Taking the total number of blocks.
-nBlocks = trnDiv.trn + trnDiv.val + trnDiv.tst;
-fprintf('Numbers of blocks for cross validation: %d\n', nBlocks);
-fprintf('    Training blocks   : %d\n', trnDiv.trn);
-fprintf('    Validation blocks : %d\n', trnDiv.val);
-fprintf('    Testing blocks    : %d\n', trnDiv.tst);
-data = create_blocks(data, nBlocks);
 
 nROC = 500;
 ret.net = cell(1,nDeal);
@@ -71,7 +65,7 @@ end
 
 if isempty(net),
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data, trnDiv);
+    [trn val tst] = dealAlgo.deal_sets();
     if saveData,
       ret.data{d}.trn = trn;
       ret.data{d}.val = val;
@@ -84,7 +78,7 @@ else
   ret.evo = cell(1,nDeal);
   [net_par.hidNodes, net_par.trfFunc, net_par.trnParam] = getNetworkInfo(net);
   for d=1:nDeal,
-    [trn val tst] = deal_sets(data, trnDiv);
+    [trn val tst] = dealAlgo.deal_sets();
     if saveData,
       ret.data{d}.trn = trn;
       ret.data{d}.val = val;
@@ -100,56 +94,6 @@ else
 end
 
 
-function bdata = create_blocks(data, nBlocks)
-%Creating the blocks. bdata{c,b}, where c is the class idx, and b is the
-%block idx.
-%
-  nClasses = length(data);
-  bdata = cell(nClasses, nBlocks);
-  
-  %Ramdomly placing the events within the blocks.
-  for c=1:nClasses,
-    for b=1:nBlocks,
-      bdata{c,b} = data{c}(:,b:nBlocks:end);
-    end
-  end
-  
-
-function [trn val tst] = deal_sets(data, trnDiv)
-%Create the training, validation and test sets based on how many blocks per
-%set we should have.
-
-  [nClasses, nBlocks] = size(data);
-  trn = cell(1,nClasses);
-  val = cell(1,nClasses);
-  tst = cell(1,nClasses);
-  
-  %Checking whether we are taking all the blocks!
-  if sum([trnDiv.trn trnDiv.val trnDiv.tst]) ~= nBlocks,
-    error('Number of blocks in each set must sum to the total number of blocks!');
-  end
-  
-  for c=1:nClasses,
-    %Ramdonly sorting the blocks order.
-    idx = randperm(nBlocks);
-
-    ipos =  1;
-    epos = trnDiv.trn;
-    trn{c} = cell2mat(data(c,idx(ipos:epos)));
-    
-    ipos = epos + 1;
-    epos = ipos + trnDiv.val - 1;
-    val{c} = cell2mat(data(c,idx(ipos:epos)));
-    
-    if trnDiv.tst ~= 0,
-      ipos = epos + 1;
-      epos = ipos + trnDiv.tst - 1;
-      tst{c} = cell2mat(data(c,idx(ipos:epos)));
-    else
-      tst{c} = val{c};
-    end
-  end
- 
 
 function [onet oevo osp odet ofa] = get_best_train(net_par, trn, val, tst, nTrains, nROC)
 %Trains the network net multiple times, and returns the best SP obtained.

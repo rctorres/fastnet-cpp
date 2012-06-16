@@ -25,6 +25,15 @@ classdef RandomBlocks < handle
       RB.nTst = nTst;
       nBlocks = RB.nTrn + RB.nVal + RB.nTst;
       RB.blocks = RB.create_blocks(data, nBlocks);
+
+      %Taking the total number of blocks.
+      fprintf('Numbers of blocks for cross validation: %d\n', nBlocks);
+      fprintf('    Training blocks   : %d\n', RB.nTrn);
+      fprintf('    Validation blocks : %d\n', RB.nVal);
+      fprintf('    Testing blocks    : %d\n', RB.nTst);
+      if RB.nTst == 0,
+        fprintf('    Enforcing tst = val!\n');
+      end
     end
     
     

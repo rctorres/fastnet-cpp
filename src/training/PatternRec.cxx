@@ -230,6 +230,7 @@ REAL PatternRecognition::trainNetwork()
   DEBUG2("Starting training process for an epoch.");
   REAL gbError = 0;
   FastNet::Backpropagation **nv = netVec;
+  int totEvents = 0; // Holds the amount of events presented to the network.
 
   for(unsigned pat=0; pat<numPatterns; pat++)
   {
@@ -243,15 +244,17 @@ REAL PatternRecognition::trainNetwork()
     unsigned pos = 0;
     DataManager *dm = dmTrn[pat];
 
-    DEBUG2("Applying training set for pattern " << pat << " by randomly selecting " << batchSize << " events (out of " << dm->size() << ").");
-
+    const int nEvents = (batchSize) ? batchSize : dm->size();
+    totEvents += nEvents;
+    DEBUG2("Applying training set for pattern " << pat << " by randomly selecting " << nEvents << " events (out of " << dm->size() << ").");
+    
     #pragma omp parallel shared(input,target,chunk,nv,gbError,pat,dm) private(i,thId,output,error,pos)
     {
       thId = omp_get_thread_num();
       error = 0.;
 
       #pragma omp for schedule(dynamic,chunk) nowait
-      for (i=0; i<batchSize; i++)
+      for (i=0; i<nEvents; i++)
       {
         #pragma omp critical
         pos = dm->get();
@@ -268,7 +271,7 @@ REAL PatternRecognition::trainNetwork()
 
   updateGradients();
   updateWeights();
-  return (gbError / static_cast<REAL>(numPatterns*batchSize));  
+  return (gbError / static_cast<REAL>(totEvents));
 };
   
 

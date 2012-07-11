@@ -72,6 +72,7 @@ REAL StandardTraining::trainNetwork()
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
   DataManager *dm = dmTrn;
+  const int nEvents = (batchSize) ? batchSize : dm->size();
 
   #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
   {
@@ -79,7 +80,7 @@ REAL StandardTraining::trainNetwork()
     error = 0.;
 
     #pragma omp for schedule(dynamic,chunk) nowait
-    for (i=0; i<batchSize; i++)
+    for (i=0; i<nEvents; i++)
     {
         #pragma omp critical
         pos = dm->get();
@@ -94,7 +95,7 @@ REAL StandardTraining::trainNetwork()
 
   updateGradients();
   updateWeights();
-  return (gbError / static_cast<REAL>(batchSize));
+  return (gbError / static_cast<REAL>(nEvents));
 }
 
   

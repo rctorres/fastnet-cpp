@@ -18,7 +18,9 @@ if iscell(in_data),
     if ~isa(in_data{i}, 'double'),
       error(sprintf('Cell number %d does not containg a double precision matrix! Data must be of type "double"!', i));
     end
-    out{i} = sim_c(net, in_data{i});
+    if ~isempty(in_data{i}),
+        out{i} = sim_c(net, in_data{i});
+    end
   end
 else
   if ~isa(in_data, 'double'),

@@ -44,16 +44,15 @@ classdef LeaveOneOut
       trn = cell(1,self.nClasses);
       tst = cell(1,self.nClasses);
       
-      %Selecting the single event to compose the tst set
+      %We first select the single event to compose the tst set
       tst{auxClass(self.evIdx)} = auxData(:,self.evIdx); 
-    
-      %Creating the trn set with the rest
+
+      %Then we remove it from the set before creating the trn set.
+      auxData(:,self.evIdx) = [];
+      auxClass(self.evIdx) = [];
+      
+      %Creating the trn set with the rest, assigning them to each class.
       for c=1:self.nClasses,
-          %First removing the event assigned to be tst.
-          auxData(:,self.evIdx) = [];
-          auxClass(self.evIdx) = [];
-          
-          %Assigning the data to each class.
           trn{c} = auxData(:, auxClass == c);
       end
       

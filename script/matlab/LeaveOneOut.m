@@ -1,4 +1,4 @@
-classdef LeaveOneOut
+classdef LeaveOneOut < handle
 %This class implements the leave-one-out algorithm for cross validation.
 %It will have as many deals as number of events. At each deal, an event
 %will be selected as tst data, while all the others will be used for

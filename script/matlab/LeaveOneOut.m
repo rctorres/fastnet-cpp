@@ -59,6 +59,9 @@ classdef LeaveOneOut
       
       %Forcing trn = val;
       val = trn;
+      
+      %Moving to the next event.
+      self.evIdx = self.evIdx + 1;
     end
   end  
 end

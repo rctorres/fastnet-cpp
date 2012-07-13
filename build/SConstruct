@@ -15,7 +15,7 @@ import sc_matlab
 COMPILER = os.environ.get('FASTNET_COMPILER', 'g++');
 MATLAB_RELEASE = os.environ.get('MATLAB_RELEASE')
 
-LINUX_OPT_FLAGS = ['-O3', '-m64', '-march=core2'];
+LINUX_OPT_FLAGS = ['-O3', '-m64'];
 OPENMP_FLAG = ['-fopenmp']
 if COMPILER == 'icpc':
   LINUX_OPT_FLAGS = ['-m64', '-ipo', '-O3', '-static', '-xHost'];
@@ -45,11 +45,11 @@ if platform.system() == 'Darwin':
   globalCPPFlags += ['-DNO_OMP']
 elif platform.system() == 'Linux':
   if debug == 0: libCPPFlags += LINUX_OPT_FLAGS
-  matlabPath = '/usr/local/matlab'
+  matlabPath = '/usr/local/MATLAB/%s' % MATLAB_RELEASE
   matlabArch = 'glnxa64'
   dist, version, branch = platform.dist()
   if (debug == 0) and ((dist == 'debian') or (COMPILER == 'icpc') ): libCPPFlags += OPENMP_FLAG
-  else: globalCPPFlags += ['-DNO_OMP']
+  globalCPPFlags += ['-DNO_OMP']
 
 incPath = ['../', '%s/extern/include' % matlabPath]
 libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]

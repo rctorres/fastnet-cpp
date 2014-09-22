@@ -279,7 +279,7 @@ void PatternRecognition::showInfo(const unsigned nEpochs) const
 {
   REPORT("TRAINING DATA INFORMATION (Pattern Recognition Optimized Network)");
   REPORT("Number of Epochs          : " << nEpochs);
-  REPORT("Using SP Stopping Criteria      : " << (useSP) ? "true" : "false");
+  REPORT("Using SP Stopping Criteria      : " << ((useSP) ? "true" : "false"));
 };
 
 void PatternRecognition::isBestNetwork(const REAL currMSEError, const REAL currSPError, ValResult &isBestMSE, ValResult &isBestSP)

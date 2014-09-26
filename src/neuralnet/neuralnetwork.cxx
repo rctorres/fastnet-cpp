@@ -174,6 +174,7 @@ namespace FastNet
 
   NeuralNetwork::~NeuralNetwork()
   {
+    DEBUG2("Releasing all memory allocated by NeuralNetwork.");
     const unsigned size = nNodes.size() - 1;
 
     // Deallocating the bias and weight matrices.

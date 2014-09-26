@@ -119,7 +119,7 @@ public:
   };
 
 
-  ~Training()
+  virtual ~Training()
   {
     for (unsigned i=1; i<nThreads; i++) delete netVec[i];
     delete netVec;

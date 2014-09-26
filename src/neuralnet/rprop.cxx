@@ -114,6 +114,7 @@ namespace FastNet
 
   RProp::~RProp()
   {
+    DEBUG2("Releasing all memory allocated by RProp.");
     // Deallocating the delta bias matrix.
     releaseMatrix(prev_db);
     releaseMatrix(delta_b);

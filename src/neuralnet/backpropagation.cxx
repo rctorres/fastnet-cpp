@@ -126,6 +126,7 @@ namespace FastNet
 
   Backpropagation::~Backpropagation()
   {
+    DEBUG2("Releasing all memory allocated by Backpropagation.");
     releaseMatrix(db);
     releaseMatrix(dw);
     releaseMatrix(sigma);

@@ -18,7 +18,7 @@ protected:
 public:
   StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);
 
-  ~StandardTraining();
+  virtual ~StandardTraining();
   
   virtual void tstNetwork(REAL &mseTst, REAL &spTst){mseTst = spTst = 0.;};
 

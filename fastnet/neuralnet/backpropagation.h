@@ -236,7 +236,7 @@ namespace FastNet
        @see FastNet::MatNetData#flushBestTrainWeights for information on how the save 
        the weights and biases for posterior use in matlab.
       */
-      void saveBestTrain()
+      virtual void saveBestTrain()
       {
         for (unsigned i=0; i<(nNodes.size()-1); i++)
         {

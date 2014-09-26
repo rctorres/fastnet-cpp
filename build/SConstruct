@@ -42,6 +42,7 @@ if platform.system() == 'Darwin':
   matlabPath = '/Applications/%s' % MATLAB_RELEASE
   matlabArch = 'maci64'
   globalCPPFlags += ['-DNO_OMP']
+  libCPPFlags += ['-std=c++11']
 elif platform.system() == 'Linux':
   if debug == 0: libCPPFlags += LINUX_OPT_FLAGS
   matlabPath = '/usr/local/MATLAB/%s' % MATLAB_RELEASE

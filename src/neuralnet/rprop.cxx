@@ -83,6 +83,7 @@ namespace FastNet
 
   void RProp::allocateSpace(const vector<unsigned> &nNodes)
   {
+    DEBUG2("Allocating all the space that the RProp class will need.");
     const unsigned size = nNodes.size() - 1;
     
     try

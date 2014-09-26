@@ -1,3 +1,4 @@
+warning off all
 clear all;
 close all;
 

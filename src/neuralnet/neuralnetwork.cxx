@@ -146,6 +146,7 @@ namespace FastNet
 
   void NeuralNetwork::allocateSpace(const vector<unsigned> &nNodes)
   {
+    DEBUG2("Allocating all the space that the NeuralNetwork class will need.");
     try
     {
       layerOutputs = new REAL* [nNodes.size()];

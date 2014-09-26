@@ -38,7 +38,7 @@ namespace FastNet
         of another network.
         @param[in] net The network that we will copy the parameters from.
       */
-      FeedForward(const FeedForward &net) : NeuralNetwork(net){};
+      FeedForward(const FeedForward &net);
 
       /// Constructor taking the parameters for a matlab net structure.
       /**
@@ -46,7 +46,7 @@ namespace FastNet
       network structure.
       @param[in] netStr The Matlab network structure as returned by newff.
       */
-      FeedForward(const mxArray *netStr) : NeuralNetwork(netStr){};
+      FeedForward(const mxArray *netStr);
 
       /// Returns a clone of the object.
       /**
@@ -54,13 +54,13 @@ namespace FastNet
       so it must be released with delete at the end of its use.
       @return A dynamically allocated clone of the calling object.
       */
-      virtual NeuralNetwork *clone(){return new FeedForward(*this);}      
+      virtual NeuralNetwork *clone();
 
       /// Class destructor.
       /**
        Releases all the dynamically allocated memory used by the class.
       */
-      virtual ~FeedForward() {};
+      virtual ~FeedForward();
   };
 }
 

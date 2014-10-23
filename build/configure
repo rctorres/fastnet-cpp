@@ -67,6 +67,13 @@ def get_matlab_path():
   return ret
 
 
+def check_compiler():
+  try:
+    subprocess.check_output(['which', 'g++'])
+  except subprocess.CalledProcessError as e:
+    raise EnvironmentError('g++ could not be found!')
+
+
 def set_installation_dir(baseDir, libDir, matDir):
   ret = {}
   ret['baseDir'] = baseDir
@@ -84,6 +91,7 @@ def show_all(conf):
 def main():
   opt = get_opts()
   
+  check_compiler()
   out = {}
   out['matlab'] = get_matlab_path()
   out['intallation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir)

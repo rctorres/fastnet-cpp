@@ -17,3 +17,5 @@ build/*.so
 build/*.dylib
 install/*
 !.gitignore
+*.json
+

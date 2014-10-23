@@ -1,0 +1,103 @@
+#! /usr/bin/env python
+
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+
+import re
+import sys
+import os
+import optparse
+import traceback
+import subprocess
+import json
+
+
+def get_opts():
+  """
+  Generates the command line options environment.
+  """
+
+  help = """usage: %prog <options>
+            
+            This script must be called prior to call scons for compiling fastnet. It will generate all configuration 
+            attributes which will be necessary and save them in a JSON file.
+            
+            This script will try as much as possible to get all environment it needs so Scons can run smoothly
+            If desired by setting command line attributes, default values can be overriden."""
+
+  baseInstDir = '/usr/local'
+  libInstDir = 'lib'
+  matlabInstDir = 'matlab'
+  
+  parser = optparse.OptionParser(usage = help)
+  parser.add_option("-b", "--base-inst-dir", dest="baseInstDir", type="string", default = baseInstDir, help="The base installation dir. Defaults to {}".format(baseInstDir))
+  parser.add_option("-l", "--lib-inst-dir", dest="libInstDir", type="string", default = libInstDir, help="The dynamic libraries installation dir to be created WITHIN the base dir. Defaults to {}".format(libInstDir))
+  parser.add_option("-m", "--matlab-inst-dir", dest="matlabInstDir", type="string", default = matlabInstDir, help="The matlab installation dir to be created WITHIN the base dir. Defaults to {}".format(matlabInstDir))
+  opts, args = parser.parse_args(sys.argv[1:])
+  
+  return opts
+
+
+def get_matlab_path():
+  ret = {}
+  
+  #We use which to find where matlab main program is.
+  matlabExec = subprocess.check_output(['which', 'matlab']).encode('ascii')
+  #Getting matlab installation dir
+  matlabInstDir = os.path.dirname(os.path.dirname(os.path.realpath(matlabExec)))
+  
+  #MATLAB base installation dir
+  ret['instDir'] = matlabInstDir
+  
+  #Taking the REAL path of MATLAB main program. We know that mex and mexext are also there.
+  ret['binDir'] = os.path.join(matlabInstDir, 'bin')
+
+  #Taking mex
+  ret['mex'] = os.path.join(ret['binDir'], 'mex')
+
+  #Getting from MATLAB which architecture we are considering.
+  ret['arch'] = subprocess.check_output(os.path.join(ret['binDir'], 'mexext')).encode('ascii').strip()
+
+  #Definig matlab include and lib dirs.
+  ret['incDir'] = os.path.join(matlabInstDir, 'extern', 'include')
+  ret['libDir'] = os.path.join(ret['binDir'], ret['arch'])
+  
+  return ret
+
+
+def set_installation_dir(baseDir, libDir, matDir):
+  ret = {}
+  ret['baseDir'] = baseDir
+  ret['libDir'] = os.path.join(baseDir, libDir)
+  ret['matDir'] = os.path.join(baseDir, matDir)
+  return ret
+
+
+def show_all(conf):
+  for topConf, topValues in conf.iteritems():
+    for subConf, subValues in topValues.iteritems():
+      print ('{} / {}..........{}'.format(topConf, subConf, subValues))
+
+
+def main():
+  opt = get_opts()
+  
+  out = {}
+  out['matlab'] = get_matlab_path()
+  out['intallation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir)
+  show_all(out)
+  
+  #Saving the JSON config file
+  with open('config_values.json', 'w') as f:
+    f.write(json.dumps(out, sort_keys=True, indent=4, separators=(',', ': ')))
+
+
+
+
+if __name__ == "__main__":
+  try: main()
+  except Exception as e:
+    print ('    ' + str(e))
+    traceback.print_exc()

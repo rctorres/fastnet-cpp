@@ -12,14 +12,10 @@ import sc_libs
 import sc_matlab
 
 #Supported otptions are 'icpc' or 'g++';
-COMPILER = os.environ.get('FASTNET_COMPILER', 'g++');
 MATLAB_RELEASE = os.environ.get('MATLAB_RELEASE')
 
 LINUX_OPT_FLAGS = ['-O3', '-m64'];
 OPENMP_FLAG = ['-fopenmp']
-if COMPILER == 'icpc':
-  LINUX_OPT_FLAGS = ['-m64', '-ipo', '-O3', '-static', '-xHost'];
-  OPENMP_FLAG = ['-openmp']
 
 
 #To retrieve all source code files.
@@ -48,14 +44,14 @@ elif platform.system() == 'Linux':
   matlabPath = '/usr/local/MATLAB/%s' % MATLAB_RELEASE
   matlabArch = 'glnxa64'
   dist, version, branch = platform.dist()
-  if (debug == 0) and ((dist == 'debian') or (COMPILER == 'icpc') ): libCPPFlags += OPENMP_FLAG
+  if (debug == 0) and ((dist == 'debian') ): libCPPFlags += OPENMP_FLAG
   globalCPPFlags += ['-DNO_OMP']
 
 incPath = ['../', '%s/extern/include' % matlabPath]
 libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
 
 #Setting the list of directories where to look for header files.
-env = Environment(CXX = COMPILER, CPPPATH = incPath, ENV = os.environ)
+env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ)
 
 #The installation dir is defined in the following environment variable. Otherwise, it will
 #be installed in fastnel/install.

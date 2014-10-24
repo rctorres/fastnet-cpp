@@ -66,6 +66,7 @@ env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ)
 env.Append(BUILDERS = {'Matlab' : matBuilder})
 env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
 
+
 ### Creating the dynamic libraries.
 libInstList = [];
 for lib, opt in sc_libs.libs.iteritems():
@@ -77,18 +78,16 @@ for lib, opt in sc_libs.libs.iteritems():
   libInstList.append(libName)
 
 
-### Creating Matlab bindings
-matBinList = []
+### Creating Matlab bindings. Starting it with the scripts which do not need compilation
+matInstList = Glob('../script/matlab/*.m')
 for mat, opt in sc_matlab.matlab.iteritems():
   matBinding = env.Matlab(target = mat,
                           source = '../src/matlab/%s.cxx' % mat, 
                           CCFLAGS = globalCPPFlags + mexCPPFlags, 
                           LIBS = opt['LIBS'], 
                           LIBPATH = libPath)
-  matBinList.append(matBinding);
+  matInstList.append(matBinding);
 
-### Getting the matlab scripts (the ones not needing compilation).
-matScriptList = Glob('../script/matlab/*.m')
 
 ###Specifying the installations directories.
 libInstDir = config['installation']['libDir']
@@ -96,7 +95,7 @@ matInstDir = config['installation']['matDir']
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
-env.Install(matInstDir, matBinList + matScriptList)
+env.Install(matInstDir, matInstList)
 
 #Creating the installation aliases.
 instMat = env.Alias('install-matlab', [libInstDir, matInstDir])

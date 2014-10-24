@@ -81,9 +81,9 @@ def check_compiler():
 
 def set_installation_dir(baseDir, libDir, matDir):
   ret = {}
-  ret['baseDir'] = baseDir
-  ret['libDir'] = os.path.join(baseDir, libDir)
-  ret['matDir'] = os.path.join(baseDir, matDir)
+  ret['baseDir'] = os.path.abspath(baseDir)
+  ret['libDir'] = os.path.abspath(os.path.join(baseDir, libDir))
+  ret['matDir'] = os.path.abspath(os.path.join(baseDir, matDir))
   return ret
 
 

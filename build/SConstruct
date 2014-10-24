@@ -18,11 +18,6 @@ import sc_libs
 import sc_matlab
 
 
-#To retrieve all source code files.
-def getSourceFiles(sourcesDir):
-	srcFilter = re.compile('\.cxx\Z|\.cpp\Z|\.c\Z')
-	return ['%s%s%s' % (sourcesDir, os.path.sep, f) for f in os.listdir(sourcesDir) if srcFilter.search(f) is not None]
-
 #The matlab builder (calling mex)
 def matlabBuild(target, source, env, for_signature):
 	incPaths = ' '.join(['-I%s' % i for i in env['CPPPATH']])
@@ -75,7 +70,7 @@ env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
 libInstList = [];
 for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib,
-                              source = getSourceFiles('../src/%s' % lib),
+                              source = Glob('../src/%s/*.c*' % lib),
                               CCFLAGS = globalCPPFlags + libCPPFlags,
                               LIBS = opt['LIBS'] + ['mx', 'mex', 'mat', 'm'],
                               LIBPATH = libPath)
@@ -92,9 +87,8 @@ for mat, opt in sc_matlab.matlab.iteritems():
                           LIBPATH = libPath)
   matBinList.append(matBinding);
 
-### Getting the matlab scripts (non compiled ones).
-matScriptDir = '../script/matlab';
-matScriptList = ['%s/%s' % (matScriptDir, f) for f in fnmatch.filter(os.listdir(matScriptDir), '*.m')]
+### Getting the matlab scripts (the ones not needing compilation).
+matScriptList = Glob('../script/matlab/*.m')
 
 ###Specifying the installations directories.
 libInstDir = config['installation']['libDir']

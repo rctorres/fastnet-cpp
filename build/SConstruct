@@ -3,19 +3,19 @@
 
 #Author: Rodrigo Coura Torres (Rodrigo.Torres@cern.ch)
 
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+
 import os
 import platform
 import re
 import fnmatch
+import json
 
 import sc_libs
 import sc_matlab
-
-#Supported otptions are 'icpc' or 'g++';
-MATLAB_RELEASE = os.environ.get('MATLAB_RELEASE')
-
-LINUX_OPT_FLAGS = ['-O3', '-m64'];
-OPENMP_FLAG = ['-fopenmp']
 
 
 #To retrieve all source code files.
@@ -23,72 +23,82 @@ def getSourceFiles(sourcesDir):
 	srcFilter = re.compile('\.cxx\Z|\.cpp\Z|\.c\Z')
 	return ['%s%s%s' % (sourcesDir, os.path.sep, f) for f in os.listdir(sourcesDir) if srcFilter.search(f) is not None]
 
+#The matlab builder (calling mex)
+def matlabBuild(target, source, env, for_signature):
+	incPaths = ' '.join(['-I%s' % i for i in env['CPPPATH']])
+	libPaths = ' '.join(['-L%s' % i for i in env['LIBPATH']])
+	libList = ' '.join(['-l%s' % i for i in env['LIBS']])
+	compFlags = ' '.join(env['CCFLAGS'])
+	return '%s -cxx %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
+
+
+#loading the configuration file produced after calling "configure" script
+config = None
+try:
+  with open('config_values.json', 'r') as f:
+    config = json.loads(f.read())
+except BaseException as e:
+  print ('Error loading configuration file. Did you run "configure" script first?')
+  sys.exit(1)
+
+
 #Compiling flags.
-globalCPPFlags = []
+globalCPPFlags = ['-DNO_OMP']
 libCPPFlags = []
 mexCPPFlags = []
 
 #Getting whether to compile in debug mode.
 debug = int(ARGUMENTS.get('debug', 0))
-if debug > 0: 
-  globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
+if debug > 0: globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
 
 #Am I using a MAC computer? Then I apply some optimizations for it
 if platform.system() == 'Darwin':
-  matlabPath = '/Applications/%s' % MATLAB_RELEASE
-  matlabArch = 'maci64'
-  globalCPPFlags += ['-DNO_OMP']
   libCPPFlags += ['-std=c++11']
 elif platform.system() == 'Linux':
-  if debug == 0: libCPPFlags += LINUX_OPT_FLAGS
-  matlabPath = '/usr/local/MATLAB/%s' % MATLAB_RELEASE
-  matlabArch = 'glnxa64'
-  dist, version, branch = platform.dist()
-  if (debug == 0) and ((dist == 'debian') ): libCPPFlags += OPENMP_FLAG
-  globalCPPFlags += ['-DNO_OMP']
+  if debug == 0:
+    libCPPFlags += ['-O3', '-m64']
+    dist, version, branch = platform.dist()
+    if (dist == 'debian'): libCPPFlags += ['-fopenmp']
 
-incPath = ['../', '%s/extern/include' % matlabPath]
-libPath = ['./', '%s/bin/%s' % (matlabPath, matlabArch)]
+incPath = ['../', config['matlab']['incDir']]
+libPath = ['./', config['matlab']['libDir']]
 
-#Setting the list of directories where to look for header files.
+#Creating the Matlab custom made builder.
+matBuilder = Builder(generator = matlabBuild, suffix = config['matlab']['arch'])
+
+#Creating our building environment.
 env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ)
-
-#The installation dir is defined in the following environment variable. Otherwise, it will
-#be installed in fastnel/install.
-install_dir = os.environ.get('FASTNET_INST_DIR', os.path.abspath('../install'));
-
-#Creating the Matlab environment builder.
-matBuilder = Builder(generator = sc_matlab.matlabBuild, suffix = sc_matlab.getMatlabSuffix())
 env.Append(BUILDERS = {'Matlab' : matBuilder})
+env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
 
 ### Creating the dynamic libraries.
 libInstList = [];
-libMap = {}
 for lib, opt in sc_libs.libs.iteritems():
-  libName = env.SharedLibrary(target = lib, source = getSourceFiles('../src/%s' % lib),
+  libName = env.SharedLibrary(target = lib,
+                              source = getSourceFiles('../src/%s' % lib),
                               CCFLAGS = globalCPPFlags + libCPPFlags,
                               LIBS = opt['LIBS'] + ['mx', 'mex', 'mat', 'm'],
                               LIBPATH = libPath)
   libInstList.append(libName)
-  libMap[lib] = libName
 
 
 ### Creating Matlab bindings
 matBinList = []
 for mat, opt in sc_matlab.matlab.iteritems():
-  matBinding = env.Matlab(target = mat, source = '../src/matlab/%s.cxx' % mat, 
+  matBinding = env.Matlab(target = mat,
+                          source = '../src/matlab/%s.cxx' % mat, 
                           CCFLAGS = globalCPPFlags + mexCPPFlags, 
                           LIBS = opt['LIBS'], 
                           LIBPATH = libPath)
   matBinList.append(matBinding);
 
-### Getting the matlab scripts.
+### Getting the matlab scripts (non compiled ones).
 matScriptDir = '../script/matlab';
 matScriptList = ['%s/%s' % (matScriptDir, f) for f in fnmatch.filter(os.listdir(matScriptDir), '*.m')]
 
 ###Specifying the installations directories.
-libInstDir = install_dir + '/lib'
-matInstDir = install_dir + '/script'
+libInstDir = config['installation']['libDir']
+matInstDir = config['installation']['matDir']
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)

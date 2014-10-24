@@ -12,6 +12,7 @@ import optparse
 import traceback
 import subprocess
 import json
+import platform
 
 
 def get_opts():
@@ -29,7 +30,7 @@ def get_opts():
 
   baseInstDir = '/usr/local'
   libInstDir = 'lib'
-  matlabInstDir = 'matlab'
+  matlabInstDir = 'script'
   
   parser = optparse.OptionParser(usage = help)
   parser.add_option("-b", "--base-inst-dir", dest="baseInstDir", type="string", default = baseInstDir, help="The base installation dir. Defaults to {}".format(baseInstDir))
@@ -62,8 +63,12 @@ def get_matlab_path():
 
   #Definig matlab include and lib dirs.
   ret['incDir'] = os.path.join(matlabInstDir, 'extern', 'include')
-  ret['libDir'] = os.path.join(ret['binDir'], ret['arch'])
   
+  #Who knows the reason, but lib dir states a different architecture code in MATLAB for MAC OS
+  arch = ret['arch']
+  if platform.system() == 'Darwin': arch = arch[3:]
+  ret['libDir'] = os.path.join(ret['binDir'], arch)
+
   return ret
 
 
@@ -94,7 +99,7 @@ def main():
   check_compiler()
   out = {}
   out['matlab'] = get_matlab_path()
-  out['intallation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir)
+  out['installation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir)
   show_all(out)
   
   #Saving the JSON config file

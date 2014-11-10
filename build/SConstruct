@@ -13,6 +13,7 @@ import platform
 import re
 import fnmatch
 import json
+import stat
 
 import sc_libs
 import sc_matlab
@@ -33,7 +34,9 @@ export MATLABPATH={fastNetMatDir}:$MATLABPATH
             matlabBinDir = conf['matlab']['binDir'])
   
   scriptName = 'matlab'
-  with open(scriptName, 'w') as f: f.write(content)
+  with open(scriptName, 'w') as f:
+    f.write(content)
+    os.fchmod(f, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
   return scriptName
   
 

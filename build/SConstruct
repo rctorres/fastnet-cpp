@@ -111,14 +111,20 @@ for mat, opt in sc_matlab.matlab.iteritems():
   matInstList.append(matBinding);
 
 
+#Processing bin files.
+binInstList = [create_setup_script(config)]
+
+
 ###Specifying the installations directories.
 libInstDir = config['installation']['libDir']
 matInstDir = config['installation']['matDir']
+binInstDir = config['installation']['binDir']
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
 env.Install(matInstDir, matInstList)
+env.Install(binInstDir, binInstList)
 
 #Creating the installation aliases.
-instMat = env.Alias('install-matlab', [libInstDir, matInstDir])
+instMat = env.Alias('install-matlab', [libInstDir, matInstDir, binInstDir])
 env.Alias('install', [instMat])

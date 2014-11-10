@@ -31,10 +31,12 @@ def get_opts():
   baseInstDir = '/usr/local'
   libInstDir = 'lib'
   matlabInstDir = 'script'
+  execInstDir = 'bin'
   
   parser = optparse.OptionParser(usage = help)
   parser.add_option("-b", "--base-inst-dir", dest="baseInstDir", type="string", default = baseInstDir, help="The base installation dir. Defaults to {}".format(baseInstDir))
   parser.add_option("-l", "--lib-inst-dir", dest="libInstDir", type="string", default = libInstDir, help="The dynamic libraries installation dir to be created WITHIN the base dir. Defaults to {}".format(libInstDir))
+  parser.add_option("-e", "--exec-inst-dir", dest="execInstDir", type="string", default = execInstDir, help="The executable scripts/programms installation dir to be created WITHIN the base dir. Defaults to {}".format(execInstDir))
   parser.add_option("-m", "--matlab-inst-dir", dest="matlabInstDir", type="string", default = matlabInstDir, help="The matlab installation dir to be created WITHIN the base dir. Defaults to {}".format(matlabInstDir))
   opts, args = parser.parse_args(sys.argv[1:])
   
@@ -79,11 +81,12 @@ def check_compiler():
     raise EnvironmentError('g++ could not be found!')
 
 
-def set_installation_dir(baseDir, libDir, matDir):
+def set_installation_dir(baseDir, libDir, matDir, execInstDir):
   ret = {}
   ret['baseDir'] = os.path.abspath(baseDir)
   ret['libDir'] = os.path.abspath(os.path.join(baseDir, libDir))
   ret['matDir'] = os.path.abspath(os.path.join(baseDir, matDir))
+  ret['binDir'] = os.path.abspath(os.path.join(baseDir, execInstDir))
   return ret
 
 
@@ -99,7 +102,7 @@ def main():
   check_compiler()
   out = {}
   out['matlab'] = get_matlab_path()
-  out['installation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir)
+  out['installation'] = set_installation_dir(opt.baseInstDir, opt.libInstDir, opt.matlabInstDir, opt.execInstDir)
   show_all(out)
   
   #Saving the JSON config file

@@ -1,0 +1,28 @@
+FastNet Neural Network toolbox for MATLAB
+
+Author: Rodrigo Coura Torres
+E-Mail: torres.rc@gmail.com
+
+
+Package dependencies:
+
+  1) Scons (for compilation / installation)
+  2) gcc/ g++
+  3) Python 2.7 or above
+  4) MATLAB 2011 or above (certified until 2013a)
+
+Installation instructions:
+  1) Get latest release from github (https://github.com/rctorres/fastnet)
+  2) Go to build directory
+  3) Call the configure script by issuing (add -h if you want to look at the configuration options):
+      ./configure
+  4) Compile / install everything by calling:
+      scons install
+  5) After compiling / installing everything, scons will create a wrapper script (also called matlab)
+     that, instead of directly calling matlab, it will first setup the environment so matlab can
+     find fastnet scripts. This wrapper is installed in EXECINSTDIR (call .configure -h to check where it is)
+     to make things easier, you can add this directory to your PATH so by calling matlab, you will directly
+     setup fastnet and then call matlab. The script is smart enough to pass on to matlab any command line 
+     parameter you pass to it.
+
+

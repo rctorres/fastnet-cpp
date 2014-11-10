@@ -18,6 +18,25 @@ import sc_libs
 import sc_matlab
 
 
+def create_setup_script(conf):
+  content = """#!/bin/bash
+#This script will set the environment properly so fastnet can run. It will
+also call matlab afterwards passing on whatever command line parameter you may pass to this script.
+
+export DYLD_LIBRARY_PATH={fastNetLibDir}:{matlabLibDir}:$DYLD_LIBRARY_PATH
+export MATLABPATH={fastNetMatDir}:$MATLABPATH
+
+{matlabBinDir}/matlab $*
+""".format(fastNetLibDir = conf['installation']['libDir']
+            fastNetMatDir = conf['installation']['matDir']
+            matlabLibDir = conf['matlab']['libDir']
+            matlabBinDir = conf['matlab']['binDir'])
+  
+  scriptName = 'matlab'
+  with open(scriptName, 'w') as f: f.write(content)
+  return scriptName
+  
+
 #The matlab builder (calling mex)
 def matlabBuild(target, source, env, for_signature):
 	incPaths = ' '.join(['-I%s' % i for i in env['CPPPATH']])

@@ -70,7 +70,7 @@ namespace FastNet
       setFrozen(i, false);
       
       //Getting from Matlab any possible frozen nodes.
-      const mxArray *userData = mxGetProperty(mxGetCell(layers, i), 0, "userdata");
+      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
       const mxArray *matFNodes = mxGetField(userData, 0, "frozenNodes");
       const double *fNodes = mxGetPr(matFNodes);
       for (unsigned j=0; j<mxGetN(matFNodes); j++)

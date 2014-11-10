@@ -35,7 +35,7 @@ export MATLABPATH={fastNetMatDir}:$MATLABPATH
   
   scriptName = 'matlab'
   with open(scriptName, 'w') as f: f.write(content)
-  os.chmod(scriptName, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+  os.lchmod(scriptName, 0755)
   return scriptName
   
 

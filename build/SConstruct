@@ -37,7 +37,7 @@ echo "Calling matlab passing on any command line parameter specified by the call
             matlabLibDir = conf['matlab']['libDir'],
             matlabBinDir = conf['matlab']['binDir'])
   
-  scriptName = 'matlab-fn'
+  scriptName = 'matlab'
   with open(scriptName, 'w') as f: f.write(content)
   os.lchmod(scriptName, 0755)
   return scriptName

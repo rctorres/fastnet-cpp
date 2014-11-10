@@ -28,15 +28,14 @@ export DYLD_LIBRARY_PATH={fastNetLibDir}:{matlabLibDir}:$DYLD_LIBRARY_PATH
 export MATLABPATH={fastNetMatDir}:$MATLABPATH
 
 {matlabBinDir}/matlab $*
-""".format(fastNetLibDir = conf['installation']['libDir']
-            fastNetMatDir = conf['installation']['matDir']
-            matlabLibDir = conf['matlab']['libDir']
+""".format(fastNetLibDir = conf['installation']['libDir'],
+            fastNetMatDir = conf['installation']['matDir'],
+            matlabLibDir = conf['matlab']['libDir'],
             matlabBinDir = conf['matlab']['binDir'])
   
   scriptName = 'matlab'
-  with open(scriptName, 'w') as f:
-    f.write(content)
-    os.fchmod(f, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+  with open(scriptName, 'w') as f: f.write(content)
+  os.chmod(scriptName, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
   return scriptName
   
 

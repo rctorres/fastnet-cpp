@@ -13,6 +13,7 @@ import traceback
 import subprocess
 import json
 import platform
+import distutils.spawn
 
 
 def get_opts():
@@ -47,7 +48,10 @@ def get_matlab_path():
   ret = {}
   
   #We use which to find where matlab main program is.
-  matlabExec = subprocess.check_output(['which', 'matlab']).encode('ascii')
+  matlabExec = distutils.spawn.find_executable('matlab')
+  if matlabExec is None:
+    raise EnvironmentError('Matlab could not be found! Make sure it is installed, added to the PATH and available at the command line.')
+
   #Getting matlab installation dir
   matlabInstDir = os.path.dirname(os.path.dirname(os.path.realpath(matlabExec)))
   
@@ -75,9 +79,8 @@ def get_matlab_path():
 
 
 def check_compiler():
-  try:
-    subprocess.check_output(['which', 'g++'])
-  except subprocess.CalledProcessError as e:
+  gccPath = distutils.spawn.find_executable('g++')
+  if gccPath is None:
     raise EnvironmentError('g++ could not be found!')
 
 

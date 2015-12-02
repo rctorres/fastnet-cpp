@@ -21,13 +21,16 @@ import sc_matlab
 
 
 def create_setup_script(conf):
+
+  ldName = 'DYLD_LIBRARY_PATH' if platform.system() == 'Darwin' else 'LD_LIBRARY_PATH'
+
   content = """#!/bin/bash
 #This script will set the environment properly so fastnet can run. It will
 #also call matlab afterwards passing on whatever command line parameter you may pass to this script.
 
 echo "Setting up environment for running matlab with FASTNET."
 
-export DYLD_LIBRARY_PATH={fastNetLibDir}:{matlabLibDir}:$DYLD_LIBRARY_PATH
+export {ldName}={fastNetLibDir}:{matlabLibDir}:$DYLD_LIBRARY_PATH
 export MATLABPATH={fastNetMatDir}:$MATLABPATH
 
 echo "Calling matlab passing on any command line parameter specified by the calling user."
@@ -36,7 +39,8 @@ echo "Calling matlab passing on any command line parameter specified by the call
 """.format(fastNetLibDir = conf['installation']['libDir'],
             fastNetMatDir = conf['installation']['matDir'],
             matlabLibDir = conf['matlab']['libDir'],
-            matlabBinDir = conf['matlab']['binDir'])
+            matlabBinDir = conf['matlab']['binDir'],
+            ldName = ldName)
   
   scriptName = 'matlab-fn'
   with open(scriptName, 'w') as f: f.write(content)

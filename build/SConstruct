@@ -54,7 +54,7 @@ def matlabBuild(target, source, env, for_signature):
 	libPaths = ' '.join(['-L%s' % i for i in env['LIBPATH']])
 	libList = ' '.join(['-l%s' % i for i in env['LIBS']])
 	compFlags = ' '.join(env['CCFLAGS'])
-	return '%s -cxx %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
+	return '%s -cxx -v %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
 
 
 #loading the configuration file produced after calling "configure" script
@@ -85,8 +85,8 @@ elif platform.system() == 'Linux':
     dist, version, branch = platform.dist()
     if (dist == 'debian'): libCPPFlags += ['-fopenmp']
 
-incPath = ['../', config['matlab']['incDir']]
-libPath = ['./', config['matlab']['libDir']]
+incPath = ['../', '/usr/include', config['matlab']['incDir']]
+libPath = ['./', '/usr/lib', config['matlab']['libDir']]
 
 #Creating the Matlab custom made builder.
 matBuilder = Builder(generator = matlabBuild, suffix = config['matlab']['arch'])

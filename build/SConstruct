@@ -54,7 +54,7 @@ def matlabBuild(target, source, env, for_signature):
 	libPaths = ' '.join(['-L%s' % i for i in env['LIBPATH']])
 	libList = ' '.join(['-l%s' % i for i in env['LIBS']])
 	compFlags = ' '.join(env['CCFLAGS'])
-	return '%s -cxx -v %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
+	return '%s -cxx %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
 
 
 #loading the configuration file produced after calling "configure" script
@@ -76,17 +76,19 @@ mexCPPFlags = []
 debug = int(ARGUMENTS.get('debug', 0))
 if debug > 0: globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
 
+incPath = ['../', config['matlab']['incDir']]
+libPath = ['./', config['matlab']['libDir']]
+
 #Am I using a MAC computer? Then I apply some optimizations for it
 if platform.system() == 'Darwin':
   libCPPFlags += ['-std=c++11']
 elif platform.system() == 'Linux':
+  incPath.append('/usr/include')
+  libPath.append('/usr/lib')
   if debug == 0:
     libCPPFlags += ['-O3', '-m64']
     dist, version, branch = platform.dist()
     if (dist == 'debian'): libCPPFlags += ['-fopenmp']
-
-incPath = ['../', '/usr/include', config['matlab']['incDir']]
-libPath = ['./', '/usr/lib', config['matlab']['libDir']]
 
 #Creating the Matlab custom made builder.
 matBuilder = Builder(generator = matlabBuild, suffix = config['matlab']['arch'])

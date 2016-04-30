@@ -29,7 +29,7 @@ def get_opts():
             This script will try as much as possible to get all environment it needs so Scons can run smoothly
             If desired by setting command line attributes, default values can be overriden."""
 
-  baseInstDir = '/usr/local'
+  baseInstDir = os.environ.get('FASTNET_INST_DIR', '/usr/local')
   libInstDir = 'lib'
   matlabInstDir = 'script'
   execInstDir = 'bin'

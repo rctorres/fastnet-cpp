@@ -52,7 +52,7 @@ elseif (nargin == 4),
   [outNet, trnInfo] = train_c(net, trainParam, in_trn, [], out_trn, [], in_val);
 elseif (nargin == 5),
   validateData(net, in_trn, out_trn, in_val, out_val);
-  [outNet, trnInfo] = train_c(net, trainParam, in_trn, out_trn, in_val, out_val);
+  [outNet, trnInfo] = train_c(net, trainParam, in_trn, out_trn, in_val, out_val, []);
 else
   error('Incorrect number of arguments! See help for information!');
 end

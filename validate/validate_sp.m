@@ -16,7 +16,7 @@ inTst = {c1(:,3:3:end) c2(:,3:3:end)};
 inNet = newff2(inTrn, [1 -1], 2, {'tansig', 'tansig'});
 inNet.trainParam.epochs = 3000;
 inNet.trainParam.max_fail = 20;
-inNet.trainParam.show = 0;
+inNet.trainParam.show = 1000000;
 inNet.trainParam.batchSize = 1000;
 inNet.trainParam.useSP = true;
 

@@ -47,8 +47,8 @@ namespace FastNet
 
 
   RProp::RProp(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias, 
-                      const REAL deltaMin = 1E-6, const REAL deltaMax = 50.0, const REAL initEta = 0.1,
-                      const REAL incEta = 1.10, const REAL decEta = 0.5) : Backpropagation(nNodes, trfFunc, usingBias)
+                      const REAL deltaMin, const REAL deltaMax, const REAL initEta,
+                      const REAL incEta, const REAL decEta) : Backpropagation(nNodes, trfFunc, usingBias)
   {
     DEBUG1("Initializing the RProp class from scratch.");
     this->deltaMax = deltaMax;

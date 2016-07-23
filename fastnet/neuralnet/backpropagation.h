@@ -279,8 +279,12 @@ namespace FastNet
       @param[in] decFactor the algorithm decreasing factor.
       */
       Backpropagation(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, 
-                                                      const std::vector<bool> &usingBias), const REAL learningRate,
-                                                      const REAL decFactor);
+                                                      const std::vector<bool> &usingBias,  const REAL learningRate = 0.05,
+                                                      const REAL decFactor = 1);
+
+      ///Copy constructor
+      Backpropagation(const Backpropagation &net);
+
 
       /// Returns a clone of the object.
       /**

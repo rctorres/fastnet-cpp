@@ -46,8 +46,8 @@ namespace FastNet
   
 
   Backpropagation::Backpropagation(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, 
-                                                      const std::vector<bool> &usingBias),  const REAL learningRate = 0.05,
-                                                      const REAL decFactor = 1)  : NeuralNetwork(nNodes, trfFunc, usingBias)
+                                                      const std::vector<bool> &usingBias,  const REAL learningRate ,
+                                                      const REAL decFactor)  : NeuralNetwork(nNodes, trfFunc, usingBias)
     {
         DEBUG1("Initializing the Backpropagation class from scratch.");
 
@@ -58,7 +58,6 @@ namespace FastNet
         catch (bad_alloc xa) {throw;}
 
         //Verifying if there are frozen nodes and seting them.
-        const mxArray *layers = mxGetField(netStr, 0, "layers");
         for (unsigned i=0; i<(nNodes.size()-1); i++)
         {
             // For the frozen nodes, we first initialize them all as unfrozen.

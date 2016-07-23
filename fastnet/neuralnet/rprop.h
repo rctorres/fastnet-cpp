@@ -190,14 +190,20 @@ namespace FastNet
       */
       RProp(const RProp &net);
 
-      /// Constructor taking the parameters for a matlab net structure.
+      /// Constructor taking the parameters from scratch.
       /**
-      This constructor should be called when the network parameters are stored in a matlab
-      network structure.
-      @param[in] netStr The Matlab network structure as returned by newff.
-      @param[in] trnParam The Matlab network train parameter (net.trainParam) structure.
+      @param[in] nNodes Specifies the size of each layer (including the input layer).
+      @param[in] trfFunc Specifies the transfer function of each hidden layer and the output layer.
+      @param[in] usingBias Specifies the usage of bias for each hidden layer and the output layer. 
+      @param[in] deltaMin minimum delta
+      @param[in] deltaMax maximum delta.
+      @param[in] initEta eta start value.
+      @param[in] incEta eta increasing factor.
+      @param[in] decEta eta decreasing factor.
       */
-      RProp(const mxArray *netStr, const mxArray *trnParam);  
+      RProp(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias, 
+                      const REAL deltaMin = 1E-6, const REAL deltaMax = 50.0, const REAL initEta = 0.1,
+                      const REAL incEta = 1.10, const REAL decEta = 0.5);  
 
       /// Returns a clone of the object.
       /**

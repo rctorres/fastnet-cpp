@@ -10,8 +10,6 @@
 #include <vector>
 #include <cstring>
 
-#include <mex.h>
-
 #include "fastnet/sys/defines.h"
 #include "fastnet/neuralnet/neuralnetwork.h"
 
@@ -214,17 +212,6 @@ namespace FastNet
       virtual REAL applySupervisedInput(const REAL *input, const REAL *target, const REAL* &output);
 
 
-      /// Flush weights from memory to a Matlab variable.
-      /**
-       Since this class, in order to optimize speed, saves the
-       weights and bias values into memory, at the end, if the user wants
-       to save the final values, this method must be called. It will
-       save the weights and biases values stored in the memory buffer in a matlab variable.
-       So, this method can only be used after the writeWeights has been called at least once.
-       @param[out] outNet The matlab network structure to where the weights and biases will be saved to.
-      */
-      void flushBestTrainWeights(mxArray *outNet) const;
-
       /// Writes the weights in a memory buffer.
       /**
        To improve speed during training, where the weights values change a lot,
@@ -281,22 +268,19 @@ namespace FastNet
       */
       virtual void updateWeights(const unsigned numEvents);
 
-      ///Copy constructor
-      /**This constructor should be used to create a new network which is an exactly copy 
-        of another network.
-        @param[in] net The network that we will copy the parameters from.
-      */
-      Backpropagation(const Backpropagation &net);
-
-
       /// Constructor taking the parameters for a matlab net structure.
       /**
       This constructor should be called when the network parameters are stored in a matlab
       network structure.
-      @param[in] netStr The Matlab network structure as returned by newff.
-      @param[in] trnParam The Matlab network train parameter (net.trainParam) structure.
+      @param[in] nNodes Specifies the size of each layer (including the input layer).
+      @param[in] trfFunc Specifies the transfer function of each hidden layer and the output layer.
+      @param[in] usingBias Specifies the usage of bias for each hidden layer and the output layer. 
+      @param[in] learningRate the algorithm learning rate
+      @param[in] decFactor the algorithm decreasing factor.
       */
-      Backpropagation(const mxArray *netStr, const mxArray *trnParam);
+      Backpropagation(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, 
+                                                      const std::vector<bool> &usingBias), const REAL learningRate,
+                                                      const REAL decFactor);
 
       /// Returns a clone of the object.
       /**

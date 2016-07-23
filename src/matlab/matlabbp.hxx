@@ -16,89 +16,114 @@
 @version  1.0
 @date    23/01/2009
 
-This class should be used for network production, when no training is necessary,
-just feedforward the incoming events, fot output collection.
+Used for setting up a BAckpropagation network based on a Matlab NN object.
 */
-class MatlabBP : public Backpropagation 
+class MatlabBP : public MatlabNN 
 {
-    public:
-        MatlabNN(const mxArray *netStr)
+  Backpropagation::Backpropagation(const mxArray *netStr, const mxArray *trnParam) : NeuralNetwork(netStr)
+  {
+    DEBUG1("Initializing the Backpropagation class from a Matlab Network structure.");
+
+    //We first test whether the values exists, otherwise, we use default ones.
+    if (mxGetField(trnParam, 0, "lr")) this->learningRate = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "lr"))));
+    else this->learningRate = 0.05;
+    if (mxGetField(trnParam, 0, "decFactor")) this->decFactor = static_cast<REAL>(abs(mxGetScalar(mxGetField(trnParam, 0, "decFactor"))));
+    else this->decFactor = 1;
+
+    try {allocateSpace(nNodes);}
+    catch (bad_alloc xa) {throw;}
+
+    //The savedW and savedB matrices are initialized with the read weights and biases values.
+    saveBestTrain();
+
+    //Verifying if there are frozen nodes and seting them.
+    const mxArray *layers = mxGetField(netStr, 0, "layers");
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
+    {
+      // For the frozen nodes, we first initialize them all as unfrozen.
+      setFrozen(i, false);
+      
+      //Getting from Matlab any possible frozen nodes.
+      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
+      const mxArray *matFNodes = mxGetField(userData, 0, "frozenNodes");
+      const double *fNodes = mxGetPr(matFNodes);
+      for (unsigned j=0; j<mxGetN(matFNodes); j++)
+      {
+        const unsigned node = static_cast<unsigned>(fNodes[j]) - 1;
+        if (node < nNodes[(i+1)]) setFrozen(i, node, true);
+        else throw "Node to be frozen is invalid!";
+      }
+
+      //Initializing dw and db.
+      for (unsigned j=0; j<nNodes[i+1]; j++) 
+      {
+        this->db[i][j] = 0.;
+        this->sigma[i][j] = 0.;
+        for (unsigned k=0; k<nNodes[i]; k++) this->dw[i][j][k] = 0.;
+      }
+    }    
+  }
+
+      /// Flush weights from memory to a Matlab variable.
+      /**
+       Since this class, in order to optimize speed, saves the
+       weights and bias values into memory, at the end, if the user wants
+       to save the final values, this method must be called. It will
+       save the weights and biases values stored in the memory buffer in a matlab variable.
+       So, this method can only be used after the writeWeights has been called at least once.
+       @param[out] outNet The matlab network structure to where the weights and biases will be saved to.
+      */
+  void Backpropagation::flushBestTrainWeights(mxArray *outNet) const
+  {
+    // It must be of double type, since the matlab net tructure holds its info with
+    //double precision.      
+    MxArrayHandler<double> iw, ib;
+    mxArray *lw;
+    mxArray *lb;
+    
+    //Getting the bias cells vector.
+    lb = mxGetField(outNet, 0, "b");
+    
+    //Processing first the input layer.
+    iw = mxGetCell(mxGetField(outNet, 0, "IW"), 0);
+    ib = mxGetCell(lb, 0);
+    
+    DEBUG2("### Weights and Bias of the Best Train #######");
+    for (unsigned i=0; i<nNodes[1]; i++)
+    {
+      ib(i) = static_cast<double>(savedB[0][i]);
+      DEBUG2("b[0][" << i << "] = " << static_cast<double>(savedB[0][i]));
+      for (unsigned j=0; j<nNodes[0]; j++)
+      {
+        iw(i,j) = static_cast<double>(savedW[0][i][j]);
+        DEBUG2("w[" << 0 << "][" << i << "][" << j << "] = " << static_cast<double>(savedW[0][i][j]));
+      }
+    }
+    
+    //Processing the other layers.
+    //Getting the weights cell matrix.
+    lw = mxGetField(outNet, 0, "LW");
+    
+    for (unsigned i=1; i<(nNodes.size()-1); i++)
+    {
+      iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
+      ib = mxGetCell(lb, i);
+          
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
+      {
+        ib(j) = static_cast<double>(savedB[i][j]);
+        DEBUG2("b[" << i << "][" << j << "] = " << static_cast<double>(savedB[i][j]));
+        for (unsigned k=0; k<nNodes[i]; k++)
         {
-            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
-            std::vector<unsigned> nNodes;
-            std::vector<string> trfFunction;
-            std:vector<bool> bias;
-                
-            //Getting the number of nodes in the input layer.
-            nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
-    
-            //Getting the number of nodes and transfer function in each layer:
-            const mxArray *layers = mxGetField(netStr, 0, "layers");
-            for (size_t i=0; i<mxGetM(layers); i++)
-            {
-                const mxArray *layer = mxGetCell(layers, i);
-                //Getting layer size
-                nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
-                //Getting transfer function
-                trfFunction.push_back(mxArrayToString(mxGetField(layer, 0, "transferFcn")));
-                    
-                //Getting the using bias information.
-                const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-                this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
-            }
-                
-            NeuralNetwork::NeuralNetwork(nNodes, trfFunction, bias);
-
-            //Taking the weights and values info.
-            readWeights(netStr);
+          iw(j,k) = static_cast<double>(savedW[i][j][k]);
+          DEBUG2("w[" << i << "][" << j << "][" << k << "] = " << static_cast<double>(savedW[i][j][k]));
         }
-
-        void NeuralNetwork::readWeights(const mxArray *mNet)
-        {
-            // It must be of double tye, since the matlab net tructure holds its info with
-            //double precision.
-            MxArrayHandler<double> iw, ib;
-            mxArray *lw;
-            mxArray *lb;
-
-            //Getting the bias cells vector.
-            lb = mxGetField(mNet, 0, "b");
-
-            //Processing first the input layer.
-            iw = mxGetCell(mxGetField(mNet, 0, "IW"), 0);
-            ib = mxGetCell(lb, 0);
-
-            for (unsigned i=0; i<nNodes[1]; i++)
-            {
-                for (unsigned j=0; j<nNodes[0]; j++)
-                {
-                    weights[0][i][j] = static_cast<REAL>(iw(i,j));
-                    DEBUG3("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
-                }
-                bias[0][i] = (usingBias[0]) ? static_cast<REAL>(ib(i)) : 0.;
-                DEBUG3("Bias[0][" << i << "] = " << bias[0][i]);
-            }
+      }
+    }
     
-            //Processing the other layers.
-            //Getting the weights cell matrix.
-            lw = mxGetField(mNet, 0, "LW");
-    
-            for (unsigned i=1; i<(nNodes.size()-1); i++)
-            {
-                iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
-                ib = mxGetCell(lb, i);
+    DEBUG2("### End of the Weights and Bias of the Best Train #######");
+  }
 
-                for (unsigned j=0; j<nNodes[(i+1)]; j++)
-                {
-                    for (unsigned k=0; k<nNodes[i]; k++)
-                    {
-                        weights[i][j][k] = static_cast<REAL>(iw(j,k));
-                        DEBUG3("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
-                    }
-                    bias[i][j] = (usingBias[i]) ? static_cast<REAL>(ib(j)) : 0.;
-                    DEBUG3("Bias[" << i << "][" << j << "] = " << bias[i][j]);
-                }
-            }
-        }
+
 };
 #endif

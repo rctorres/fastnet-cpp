@@ -46,19 +46,16 @@ namespace FastNet
   }
 
 
-  RProp::RProp(const mxArray *netStr, const mxArray *trnParam) : Backpropagation(netStr, trnParam)
+  RProp::RProp(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias, 
+                      const REAL deltaMin = 1E-6, const REAL deltaMax = 50.0, const REAL initEta = 0.1,
+                      const REAL incEta = 1.10, const REAL decEta = 0.5) : Backpropagation(nNodes, trfFunc, usingBias)
   {
-    DEBUG1("Initializing the RProp class from a Matlab Network structure.");
-    if (mxGetField(trnParam, 0, "deltamax")) this->deltaMax = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "deltamax")));
-    else this->deltaMax = 50.0;
-    if (mxGetField(trnParam, 0, "min_grad")) this->deltaMin = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "min_grad")));
-    else this->deltaMin = 1E-6;
-    if (mxGetField(trnParam, 0, "delt_inc")) this->incEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_inc")));
-    else this->incEta = 1.10;
-    if (mxGetField(trnParam, 0, "delt_dec")) this->decEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delt_dec")));
-    else this->decEta = 0.5;
-    if (mxGetField(trnParam, 0, "delta0")) this->initEta = static_cast<REAL>(mxGetScalar(mxGetField(trnParam, 0, "delta0")));
-    else this->initEta = 0.1;
+    DEBUG1("Initializing the RProp class from scratch.");
+    this->deltaMax = deltaMax;
+    this->deltaMin = deltaMin;
+    this->incEta = incEta;
+    this->decEta = decEta;
+    this->initEta = initEta;
 
     try {allocateSpace(nNodes);}
     catch (bad_alloc xa) {throw;}

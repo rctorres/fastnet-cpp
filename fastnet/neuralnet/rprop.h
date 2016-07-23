@@ -8,8 +8,6 @@
 
 #include <vector>
 
-#include <mex.h>
-
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/sys/defines.h"
 

@@ -13,8 +13,7 @@
 #include <omp.h>
 #endif
 
-#include "fastnet/sys/Reporter.h"
-#include "fastnet/neuralnet/feedforward.h"
+#include "matlabnn.hxx"
 #include "fastnet/sys/defines.h"
 
 using namespace std;
@@ -42,7 +41,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
 
     // Creating the neural network to use.
-    FeedForward net(args[NET_STR_IDX]);
+    MatlabNN net(args[NET_STR_IDX]);
 
     //Checking if the input and output data sizes match the network's input layer.
     if (mxGetM(args[IN_DATA_IDX]) != net[0])

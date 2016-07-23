@@ -11,7 +11,6 @@
 #include <sstream>
 
 #include "fastnet/neuralnet/neuralnetwork.h"
-#include "fastnet/sys/mxhandler.hxx"
 
 using namespace std;
 
@@ -45,103 +44,49 @@ namespace FastNet
   }
 
 
-  NeuralNetwork::NeuralNetwork(const mxArray *netStr)
+  NeuralNetwork::NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
   {
-    DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
+        DEBUG1("Initializing the NeuralNetwork class from scratch.");
 
-    //Getting the number of nodes in the input layer.
-    this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
-    DEBUG2("Number of nodes in layer 0: " << nNodes[0]);
-    
-    //Getting the number of nodes and transfer function in each layer:
-    const mxArray *layers = mxGetField(netStr, 0, "layers");
-    for (size_t i=0; i<mxGetM(layers); i++)
-    {
-      const mxArray *layer = mxGetCell(layers, i);
-      this->nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
-      DEBUG2("Number of nodes in layer " << (i+1) << ": " << nNodes[(i+1)]);
-      const string transFunction = mxArrayToString(mxGetField(layer, 0, "transferFcn"));
-      if (transFunction == TGH_ID)
-      {
-        this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
-        DEBUG2("Transfer function in layer " << (i+1) << ": tanh");
-      }
-      else if (transFunction == LIN_ID)
-      {
-        this->trfFunc.push_back(&NeuralNetwork::linear);
-        DEBUG2("Transfer function in layer " << (i+1) << ": purelin");
-      }
-      else throw "Transfer function not specified!";
-    }
-    
-    //Allocating the memory for the other values.
-    try {allocateSpace(nNodes);}
-    catch (bad_alloc xa) {throw;}
-    
-     // This will be a pointer to the input event.
-    layerOutputs[0] = NULL;
-    
-    //Getting the using bias information.
-    for (unsigned i=0; i<mxGetM(layers); i++)
-    {
-      const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-      this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
-      DEBUG2("Layer " << (i+1) << " is using bias? " << this->usingBias[i]);
-    }
-
-    //Taking the weights and values info. This line must come after knowing wich layers won't
-    //have biases.
-    readWeights(netStr);
-  }
-
-
-  void NeuralNetwork::readWeights(const mxArray *mNet)
-  {
-    // It must be of double tye, since the matlab net tructure holds its info with
-    //double precision.
-    MxArrayHandler<double> iw, ib;
-    mxArray *lw;
-    mxArray *lb;
-
-    //Getting the bias cells vector.
-    lb = mxGetField(mNet, 0, "b");
-
-    //Processing first the input layer.
-    iw = mxGetCell(mxGetField(mNet, 0, "IW"), 0);
-    ib = mxGetCell(lb, 0);
-
-    for (unsigned i=0; i<nNodes[1]; i++)
-    {
-      for (unsigned j=0; j<nNodes[0]; j++)
-      {
-        weights[0][i][j] = static_cast<REAL>(iw(i,j));
-        DEBUG3("Weight[0][" << i << "][" << j << "] = " << weights[0][i][j]);
-      }
-      bias[0][i] = (usingBias[0]) ? static_cast<REAL>(ib(i)) : 0.;
-      DEBUG3("Bias[0][" << i << "] = " << bias[0][i]);
-    }
-    
-    //Processing the other layers.
-    //Getting the weights cell matrix.
-    lw = mxGetField(mNet, 0, "LW");
-    
-    for (unsigned i=1; i<(nNodes.size()-1); i++)
-    {
-      iw = mxGetCell(lw, iw.getPos(i,(i-1), mxGetM(lw)));
-      ib = mxGetCell(lb, i);
-    
-      for (unsigned j=0; j<nNodes[(i+1)]; j++)
-      {
-        for (unsigned k=0; k<nNodes[i]; k++)
+        //Getting the number of nodes and transfer function in each layer:
+        int layer = 0;
+        for (std::vector<unsigned>::const_iterator itr = nNodes.begin(); itr != nNodes.end(); ++itr)
         {
-          weights[i][j][k] = static_cast<REAL>(iw(j,k));
-          DEBUG3("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+            this->nNodes.push_back(*itr);
+            DEBUG2("Number of nodes in layer " << layer << ": " << this->nNodes[layer]);
+      
+            if (layer > 0)
+            {
+                //Getting whether using bias or not.
+                this->usingBias.push_back(usingBias[layer-1]);
+                DEBUG2("Layer " << (layer) << " is using bias? " << this->usingBias[layer-1]);
+      
+                //Getting the transfer function
+                const string transFunction = trfFunc[layer-1];
+                if (transFunction == TGH_ID)
+                {
+                    this->trfFunc.push_back(&NeuralNetwork::hyperbolicTangent);
+                    DEBUG2("Transfer function in layer " << (layer) << ": tanh");
+                }
+                else if (transFunction == LIN_ID)
+                {
+                    this->trfFunc.push_back(&NeuralNetwork::linear);
+                    DEBUG2("Transfer function in layer " << (layer) << ": purelin");
+                }
+                else throw "Transfer function not specified!";
+            }
+            
+            layer++;
         }
-        bias[i][j] = (usingBias[i]) ? static_cast<REAL>(ib(j)) : 0.;
-        DEBUG3("Bias[" << i << "][" << j << "] = " << bias[i][j]);
-      }
-    }
+    
+        //Allocating the memory for the other values.
+        try {allocateSpace(nNodes);}
+        catch (bad_alloc xa) {throw;}
+    
+        // This will be a pointer to the input event.
+        layerOutputs[0] = NULL;    
   }
+
 
 
   void NeuralNetwork::allocateSpace(const vector<unsigned> &nNodes)

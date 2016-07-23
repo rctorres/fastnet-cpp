@@ -11,8 +11,6 @@
 #include <vector>
 #include <iostream>
 
-#include <mex.h>
-
 #include "fastnet/sys/defines.h"
 #include "fastnet/sys/Reporter.h"
 
@@ -174,13 +172,6 @@ namespace FastNet
       */
       virtual void allocateSpace(const vector<unsigned> &nNodes);
       
-      /// Reads the initial weights and biases from the matlab structure.
-      /**
-      This method reads the weights and biases values from the matlab environment passed.
-      @param[in] mNet The Matlab network structure from where to read the weights and biases.
-      */
-      void readWeights(const mxArray *mNet);
-
     public:
       //Virtual methods.      
       
@@ -214,13 +205,14 @@ namespace FastNet
       */
       NeuralNetwork(const NeuralNetwork &net);
 
-      /// Constructor taking the parameters for a matlab net structure.
+      /// Constructor taking the parameters from scratch.
       /**
-      This constructor should be called when the network parameters are stored in a matlab
-      network structure.
-      @param[in] netStr The Matlab network structure as returned by newff.
-      */
-      NeuralNetwork(const mxArray *netStr);
+      This constructor should be called when initializing from scratch the neural network.
+      @param[in] nNodes Specifies the size of each layer (including the input layer).
+      @param[in] trfFunc Specifies the transfer function of each hidden layer and the output layer.
+      @param[in] usingBias Specifies the usage of bias for each hidden layer and the output layer. 
+      */      
+      NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias);
             
       /// Class destructor.
       /**

@@ -14,6 +14,7 @@
 
 #include "fastnet/sys/defines.h"
 #include "fastnet/neuralnet/neuralnetwork.h"
+#include "mxhandler.hxx"
 
 /** 
 @brief    Binds fastnet to a Matlab Net class.
@@ -24,18 +25,19 @@
 This class should be used for network production, when no training is necessary,
 just feedforward the incoming events, fot output collection.
 */
-class MatlabNN : public NeuralNetwork 
+class MatlabNN : public FastNet::NeuralNetwork 
 {
     public:
-        MatlabNN(const mxArray *netStr)
+        static void get_mx_parameters(const mxArray *netStr, std::vector<unsigned> &mat_numNodes, std::vector<string> &mat_trfFunc, std::vector<bool> &mat_usingBias)
         {
-            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
-            std::vector<unsigned> nNodes;
-            std::vector<string> trfFunction;
-            std:vector<bool> bias;
-                
+            DEBUG1("Clearing output vectors..");
+            mat_numNodes.clear();
+            mat_trfFunc.clear();
+            mat_usingBias.clear();
+            
+            DEBUG1("Getting the constructor parameters from the Matlab structure.");
             //Getting the number of nodes in the input layer.
-            nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
+            mat_numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(netStr, 0, "inputs"), 0), 0, "size"))));
     
             //Getting the number of nodes and transfer function in each layer:
             const mxArray *layers = mxGetField(netStr, 0, "layers");
@@ -43,22 +45,25 @@ class MatlabNN : public NeuralNetwork
             {
                 const mxArray *layer = mxGetCell(layers, i);
                 //Getting layer size
-                nNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
+                mat_numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
                 //Getting transfer function
-                trfFunction.push_back(mxArrayToString(mxGetField(layer, 0, "transferFcn")));
+                mat_trfFunc.push_back(mxArrayToString(mxGetField(layer, 0, "transferFcn")));
                     
                 //Getting the using bias information.
                 const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-                this->usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
-            }
-                
-            NeuralNetwork::NeuralNetwork(nNodes, trfFunction, bias);
-
+                mat_usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
+            }         
+        }
+    
+        MatlabNN(const mxArray *netStr, const std::vector<unsigned> &mat_numNodes,
+                       const std::vector<string> &mat_trfFunc, const std::vector<bool> &mat_usingBias) : FastNet::NeuralNetwork(mat_numNodes, mat_trfFunc, mat_usingBias)
+        {
+            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
             //Taking the weights and values info.
             readWeights(netStr);
         }
 
-        void NeuralNetwork::readWeights(const mxArray *mNet)
+        void readWeights(const mxArray *mNet)
         {
             // It must be of double tye, since the matlab net tructure holds its info with
             //double precision.
@@ -105,5 +110,8 @@ class MatlabNN : public NeuralNetwork
                 }
             }
         }
+        
+        MatlabNN(const MatlabNN &other) : NeuralNetwork(other){}
+        virtual NeuralNetwork *clone() {return new MatlabNN(*this);}        
 };
 #endif

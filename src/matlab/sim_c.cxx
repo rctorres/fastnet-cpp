@@ -41,7 +41,11 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
 
     // Creating the neural network to use.
-    MatlabNN net(args[NET_STR_IDX]);
+    std::vector<unsigned> numNodes;
+    std::vector<string> trfFunc;
+    std::vector<bool> usingBias;
+    MatlabNN::get_mx_parameters(args[NET_STR_IDX], numNodes, trfFunc, usingBias);
+    MatlabNN net(args[NET_STR_IDX], numNodes, trfFunc, usingBias);
 
     //Checking if the input and output data sizes match the network's input layer.
     if (mxGetM(args[IN_DATA_IDX]) != net[0])

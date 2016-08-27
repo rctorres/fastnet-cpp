@@ -171,12 +171,6 @@ namespace FastNet
       nNodes vector.
       */
       virtual void allocateSpace(const vector<unsigned> &nNodes);
-
-      /// This is a default constructor so the derived classes can call the initNetwork method later.
-      NeuralNetwork() {};
-
-      /// Initializes the whole neural network structure.
-      virtual void initNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias);
       
       
     public:
@@ -219,10 +213,7 @@ namespace FastNet
       @param[in] trfFunc Specifies the transfer function of each hidden layer and the output layer.
       @param[in] usingBias Specifies the usage of bias for each hidden layer and the output layer. 
       */      
-      NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
-      {
-        initNetwork(nNodes, trfFunc, usingBias);
-      };
+      NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias);
             
       /// Class destructor.
       /**
@@ -308,6 +299,9 @@ namespace FastNet
        @return True if bias is being used, false otherwise.
       */
       bool isUsingBias(const unsigned layer) const {return usingBias[layer];};
+      
+      
+      virtual void readWeights(const REAL ***w, const REAL **b);
   };
 }
 

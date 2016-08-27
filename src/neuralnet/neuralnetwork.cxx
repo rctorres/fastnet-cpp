@@ -44,7 +44,7 @@ namespace FastNet
   }
 
   
-  void NeuralNetwork::initNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
+  NeuralNetwork::NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
   {
         DEBUG1("Initializing the NeuralNetwork class from scratch.");
 
@@ -240,6 +240,24 @@ namespace FastNet
       for (unsigned i=0; i<nNodes[(layer+1)]; i++)
       {
         bias[layer][i] = 0;
+      }
+    }
+  }
+  
+  void NeuralNetwork::readWeights(const REAL ***w, const REAL **b)
+  {
+    DEBUG1("Reading passed wight and bias.");
+    for (unsigned i=0; i<(nNodes.size()-1); i++)
+    {
+      for (unsigned j=0; j<nNodes[(i+1)]; j++)
+      {
+        for (unsigned k=0; k<nNodes[i]; k++)
+        {
+          weights[i][j][k] = w[i][j][k];
+          DEBUG3("Weight[" << i << "][" << j << "][" << k << "] = " << weights[i][j][k]);
+        }
+        bias[i][j] = (usingBias[i]) ? b[i][j] : 0.;
+        DEBUG3("Bias[" << i << "][" << j << "] = " << bias[i][j]);
       }
     }
   }

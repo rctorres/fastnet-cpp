@@ -41,16 +41,17 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
 
     // Creating the neural network to use.
-    MatlabNN net(args[NET_STR_IDX]);
+    MatlabNN mat_net(args[NET_STR_IDX]);
+    NeuralNetwork *net = mat_net.getNetwork();
 
     //Checking if the input and output data sizes match the network's input layer.
-    if (mxGetM(args[IN_DATA_IDX]) != net[0])
+    if (mxGetM(args[IN_DATA_IDX]) != (*net)[0])
       throw "Input training or testing data do not match the network input layer size!";
 
     //Creating the input and output access matrices.
     const unsigned numEvents = mxGetN(args[IN_DATA_IDX]);
     const unsigned inputSize = mxGetM(args[IN_DATA_IDX]);
-    const unsigned outputSize = net[net.getNumLayers()-1];
+    const unsigned outputSize = (*net)[net->getNumLayers()-1];
     const unsigned numBytes2Copy = outputSize * sizeof(REAL);
     REAL *inputEvents = static_cast<REAL*>(mxGetData(args[IN_DATA_IDX]));
     mxArray *outData = mxCreateNumericMatrix(outputSize, numEvents, REAL_TYPE, mxREAL);
@@ -63,7 +64,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       #pragma omp for schedule(dynamic,chunk) nowait
       for (i=0; i<numEvents; i++)
       {
-        memcpy(&outputEvents[i*outputSize], net.propagateInput(&inputEvents[i*inputSize]), numBytes2Copy);
+        memcpy(&outputEvents[i*outputSize], net->propagateInput(&inputEvents[i*inputSize]), numBytes2Copy);
       }
     }
 

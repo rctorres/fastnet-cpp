@@ -25,10 +25,14 @@
 This class should be used for network production, when no training is necessary,
 just feedforward the incoming events, fot output collection.
 */
-class MatlabNN : public FastNet::NeuralNetwork 
+
+using namespace FastNet;
+using namespace std;
+
+class MatlabNN : public NeuralNetwork
 {
     public:
-        static void get_mx_parameters(const mxArray *netStr, std::vector<unsigned> &mat_numNodes, std::vector<string> &mat_trfFunc, std::vector<bool> &mat_usingBias)
+        static void get_mx_parameters(const mxArray *netStr, vector<unsigned> &mat_numNodes, vector<string> &mat_trfFunc, vector<bool> &mat_usingBias)
         {
             DEBUG1("Clearing output vectors..");
             mat_numNodes.clear();
@@ -55,8 +59,8 @@ class MatlabNN : public FastNet::NeuralNetwork
             }         
         }
     
-        MatlabNN(const mxArray *netStr, const std::vector<unsigned> &mat_numNodes,
-                       const std::vector<string> &mat_trfFunc, const std::vector<bool> &mat_usingBias) : FastNet::NeuralNetwork(mat_numNodes, mat_trfFunc, mat_usingBias)
+        MatlabNN(const mxArray *netStr, const vector<unsigned> &mat_numNodes,
+                       const vector<string> &mat_trfFunc, const vector<bool> &mat_usingBias) : NeuralNetwork(mat_numNodes, mat_trfFunc, mat_usingBias)
         {
             DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
             //Taking the weights and values info.
@@ -112,6 +116,6 @@ class MatlabNN : public FastNet::NeuralNetwork
         }
         
         MatlabNN(const MatlabNN &other) : NeuralNetwork(other){}
-        virtual NeuralNetwork *clone() {return new MatlabNN(*this);}        
+        virtual NeuralNetwork *clone() {return new MatlabNN(*this);}
 };
 #endif

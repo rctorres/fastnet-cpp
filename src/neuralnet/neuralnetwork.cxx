@@ -166,7 +166,7 @@ namespace FastNet
   }
 
 
-  inline const REAL* NeuralNetwork::propagateInput(const REAL *input)
+  const REAL* NeuralNetwork::propagateInput(const REAL *input)
   {
     const unsigned size = (nNodes.size() - 1);
 

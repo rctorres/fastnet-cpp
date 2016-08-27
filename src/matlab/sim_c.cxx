@@ -8,13 +8,13 @@
 */
 
 #include <mex.h>
+#include <vector>
 
 #ifndef NO_OMP
 #include <omp.h>
 #endif
 
 #include "matlabnn.hxx"
-#include "fastnet/sys/defines.h"
 
 using namespace std;
 using namespace FastNet;
@@ -41,9 +41,9 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     if (nargin != NUM_ARGS) throw "Incorrect number of arguments! See help for information!";
 
     // Creating the neural network to use.
-    std::vector<unsigned> numNodes;
-    std::vector<string> trfFunc;
-    std::vector<bool> usingBias;
+    vector<unsigned> numNodes;
+    vector<string> trfFunc;
+    vector<bool> usingBias;
     MatlabNN::get_mx_parameters(args[NET_STR_IDX], numNodes, trfFunc, usingBias);
     MatlabNN net(args[NET_STR_IDX], numNodes, trfFunc, usingBias);
 

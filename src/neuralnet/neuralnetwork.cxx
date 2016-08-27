@@ -43,8 +43,8 @@ namespace FastNet
     } 
   }
 
-
-  NeuralNetwork::NeuralNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
+  
+  void NeuralNetwork::initNetwork(const std::vector<unsigned> &nNodes, const std::vector<string> &trfFunc, const std::vector<bool> &usingBias)
   {
         DEBUG1("Initializing the NeuralNetwork class from scratch.");
 

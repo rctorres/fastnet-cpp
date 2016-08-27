@@ -32,12 +32,12 @@ using namespace std;
 class MatlabNN : public NeuralNetwork
 {
     public:
-        static void get_mx_parameters(const mxArray *netStr, vector<unsigned> &mat_numNodes, vector<string> &mat_trfFunc, vector<bool> &mat_usingBias)
+        MatlabNN(const mxArray *netStr) : NeuralNetwork()
         {
-            DEBUG1("Clearing output vectors..");
-            mat_numNodes.clear();
-            mat_trfFunc.clear();
-            mat_usingBias.clear();
+            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
+            vector<unsigned> mat_numNodes;
+            vector<string> mat_trfFunc;
+            vector<bool> mat_usingBias;
             
             DEBUG1("Getting the constructor parameters from the Matlab structure.");
             //Getting the number of nodes in the input layer.
@@ -57,12 +57,10 @@ class MatlabNN : public NeuralNetwork
                 const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
                 mat_usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
             }         
-        }
-    
-        MatlabNN(const mxArray *netStr, const vector<unsigned> &mat_numNodes,
-                       const vector<string> &mat_trfFunc, const vector<bool> &mat_usingBias) : NeuralNetwork(mat_numNodes, mat_trfFunc, mat_usingBias)
-        {
-            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
+            
+            DEBUG1("Passing the parameters read from the Matlab structure to the NeuralNetwork class");
+            initNetwork(mat_numNodes, mat_trfFunc, mat_usingBias);            
+            
             //Taking the weights and values info.
             readWeights(netStr);
         }

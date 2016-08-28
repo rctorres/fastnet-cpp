@@ -19,7 +19,7 @@ using namespace std;
 @version  1.0
 @date    23/01/2009
 
-Used for setting up a BAckpropagation network based on a Matlab NN object.
+Used for setting up a Backpropagation network based on a Matlab NN object.
 */
 class MatlabBP : public MatlabNN 
 {

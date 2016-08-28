@@ -21,6 +21,8 @@
 #include "fastnet/neuralnet/rprop.h"
 #include "fastnet/training/Standard.h"
 #include "fastnet/training/PatternRec.h"
+#include "matlabbp.hxx"
+#include "matlabrp.hxx"
 
 using namespace std;
 using namespace FastNet;
@@ -66,6 +68,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
   Backpropagation *net = NULL;
   Training *train = NULL;
+  MatlabBP *matHandler = NULL;
   
   try
   {
@@ -88,15 +91,18 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const string trnType = mxArrayToString(mxGetField(netStr, 0, "trainFcn"));
     if (trnType == TRAINRP_ID)
     {
-      net = new RProp(netStr, trnParam);
+      matHandler = new MatlabRP(netStr, trnParam);
       if (show) REPORT("Starting Resilient Backpropagation training...");
     }
     else if (trnType == TRAINGD_ID)
     {
-      net = new Backpropagation(netStr, trnParam);
+      matHandler = new MatlabBP(netStr, trnParam);
       if (show) REPORT("Starting Gradient Descendent training...");
     }
     else throw "Invalid training algorithm option!";
+
+    //Getting the network class for the training.
+    net = matHandler->getNetwork();
 
     //Getting whether we will use SP stoping criteria.
     const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));
@@ -188,12 +194,13 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     ret[OUT_NET_IDX] = mxDuplicateArray(netStr);
   
     //Saving the training results.
-    net->flushBestTrainWeights(ret[OUT_NET_IDX]);
+    matHandler->flushBestTrainWeights(ret[OUT_NET_IDX], net);
     
     //Returning the training evolution info.
     ret[OUT_TRN_EVO] = train->flushTrainInfo();
     
     //Deleting the allocated memory.
+    delete matHandler;
     delete net;
     delete train;
     if (show) REPORT("Training process finished!");
@@ -201,12 +208,14 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
   catch(bad_alloc xa)
   {
     FATAL("Error on allocating memory!");
+    if (matHandler) delete net;
     if (net) delete net;
     if (train) delete train;
   }
   catch (const char *msg)
   {
     FATAL(msg);
+    if (matHandler) delete net;
     if (net) delete net;
     if (train) delete train;
   }

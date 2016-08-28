@@ -57,7 +57,6 @@ namespace FastNet
         try {allocateSpace(nNodes);}
         catch (bad_alloc xa) {throw;}
 
-        //Verifying if there are frozen nodes and seting them.
         for (unsigned i=0; i<(nNodes.size()-1); i++)
         {
             // For the frozen nodes, we first initialize them all as unfrozen.

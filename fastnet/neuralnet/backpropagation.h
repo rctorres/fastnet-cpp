@@ -318,6 +318,16 @@ namespace FastNet
         @param[in] net The network from where to copy the data from.
       */
       virtual void operator=(const Backpropagation &net);
+
+      virtual void readWeights(const REAL ***w, const REAL **b)
+      {
+            NeuralNetwork::readWeights(w, b);
+            //The savedW and savedB matrices are initialized with the read weights and biases values.
+            saveBestTrain();
+      }
+
+      virtual const REAL***getSavedWeights() const {return (const REAL***) savedW;};
+      virtual const REAL**getSavedBias() const {return (const REAL**)  savedB;};
   };
 }
 

@@ -31,14 +31,13 @@ using namespace std;
 
 class MatlabNN
 {
-    private:
+    protected:
         vector<unsigned> numNodes;
         vector<string> trfFunc;
         vector<bool> usingBias;
         REAL ***weights;
         REAL **bias;
 
-    protected:
         void allocate_space()
         {
             try

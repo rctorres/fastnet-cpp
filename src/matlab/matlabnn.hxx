@@ -43,22 +43,21 @@ class MatlabNN
         {
             try
               {
-                const unsigned size = numNodes.size()-1;
+                  const unsigned size = numNodes.size()-1;
+                  bias = new REAL* [size];
+                  weights = new REAL** [size];
 
-                bias = new REAL* [size];
-                weights = new REAL** [size];
-
-                for (unsigned i=0; i<size; i++)
-                {
-                    bias[i] = new REAL [numNodes[i+1]];
-                    weights[i] = new REAL* [numNodes[i+1]];
-                    for (unsigned j=0; j<numNodes[i+1]; j++) weights[i][j] = new REAL [numNodes[i]];
-                }
-            }
-            catch (bad_alloc xa)
-            {
-              throw;
-            }
+                  for (unsigned i=0; i<size; i++)
+                  {
+                      bias[i] = new REAL [numNodes[i+1]];
+                      weights[i] = new REAL* [numNodes[i+1]];
+                      for (unsigned j=0; j<numNodes[i+1]; j++) weights[i][j] = new REAL [numNodes[i]];
+                  }
+              }
+              catch (bad_alloc xa)
+              {
+                  throw;
+              }
         }
 
         virtual void readWeights(const mxArray *mNet)
@@ -110,30 +109,30 @@ class MatlabNN
         }
 
     public:
-      MatlabNN(const mxArray *net)
-      {
-        DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
-        weights = NULL;
-        bias = NULL;
-
-        DEBUG1("Getting the constructor parameters from the Matlab structure.");
-        //Getting the number of nodes in the input layer.
-        numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(net, 0, "inputs"), 0), 0, "size"))));
-
-        //Getting the number of nodes and transfer function in each layer:
-        const mxArray *layers = mxGetField(net, 0, "layers");
-        for (size_t i=0; i<mxGetM(layers); i++)
+        MatlabNN(const mxArray *net)
         {
-            const mxArray *layer = mxGetCell(layers, i);
-            //Getting layer size
-            numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
-            //Getting transfer function
-            trfFunc.push_back(mxArrayToString(mxGetField(layer, 0, "transferFcn")));
+            DEBUG1("Initializing the NeuralNetwork class from a Matlab Network structure.");
+            weights = NULL;
+            bias = NULL;
 
-            //Getting the using bias information.
-            const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
-            usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
-        }         
+            DEBUG1("Getting the constructor parameters from the Matlab structure.");
+            //Getting the number of nodes in the input layer.
+            numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(mxGetCell(mxGetField(net, 0, "inputs"), 0), 0, "size"))));
+
+            //Getting the number of nodes and transfer function in each layer:
+            const mxArray *layers = mxGetField(net, 0, "layers");
+            for (size_t i=0; i<mxGetM(layers); i++)
+            {
+                const mxArray *layer = mxGetCell(layers, i);
+                //Getting layer size
+                numNodes.push_back(static_cast<unsigned>(mxGetScalar(mxGetField(layer, 0, "size"))));
+                //Getting transfer function
+                trfFunc.push_back(mxArrayToString(mxGetField(layer, 0, "transferFcn")));
+
+                //Getting the using bias information.
+                const mxArray *userData = mxGetField(mxGetCell(layers, i), 0, "userdata");
+                usingBias.push_back(static_cast<bool>(mxGetScalar(mxGetField(userData, 0, "usingBias"))));
+            } 
 
             //Taking the weights and values info.
             allocate_space();
@@ -149,34 +148,34 @@ class MatlabNN
 
         virtual ~MatlabNN()
         {
-          if (weights)
-          {
-            DEBUG1("Releasing allocated memory for weights.");
-            for (int i=0; i<(numNodes.size()-1); i++)
+            if (weights)
             {
-              if (weights[i])
-              {
-                for (int j=0; j<numNodes[i+1]; j++)
+                DEBUG1("Releasing allocated memory for weights.");
+                for (int i=0; i<(numNodes.size()-1); i++)
                 {
-                  if (weights[i][j]) delete [] weights[i][j];
+                    if (weights[i])
+                    {
+                        for (int j=0; j<numNodes[i+1]; j++)
+                        {
+                            if (weights[i][j]) delete [] weights[i][j];
+                        }
+                        delete [] weights[i];
+                    }
                 }
-                delete [] weights[i];
-              }
+                delete [] weights;
+                weights = NULL;
             }
-            delete [] weights;
-            weights = NULL;
-          }
           
-          if (bias)
-          {
-            DEBUG1("Releasing allocated memory for biases.");
-            for (int i=0; i<(numNodes.size()-1); i++)
+            if (bias)
             {
-              if (bias[i]) delete [] bias[i];
+                DEBUG1("Releasing allocated memory for biases.");
+                for (int i=0; i<(numNodes.size()-1); i++)
+                {
+                    if (bias[i]) delete [] bias[i];
+                }
+                delete [] bias;
+                bias = NULL;
             }
-            delete [] bias;
-            bias = NULL;
-          }
         }
 };
 #endif

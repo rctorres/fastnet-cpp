@@ -56,7 +56,7 @@ public:
     return vec.size();
   }
   
-  inline unsigned get()
+  inline unsigned getNextEventIndex()
   {
     if (pos == vec.end())
     {

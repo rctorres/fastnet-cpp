@@ -83,7 +83,7 @@ REAL StandardTraining::trainNetwork()
     for (i=0; i<nEvents; i++)
     {
         #pragma omp critical
-        pos = dm->get();
+        pos = dm->getNextEventIndex();
         
         error += nv[thId]->applySupervisedInput(&input[pos*inputSize], &target[pos*outputSize], output);
         nv[thId]->calculateNewWeights(output, &target[pos*outputSize]);

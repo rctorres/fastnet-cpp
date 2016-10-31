@@ -23,6 +23,7 @@
 #include "fastnet/training/PatternRec.h"
 #include "matlabbp.hxx"
 #include "matlabrp.hxx"
+#include "mxdatamanager.hxx"
 
 using namespace std;
 using namespace FastNet;
@@ -108,14 +109,20 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));
     const mxArray *tstData = isEmpty(args[IN_TST_IDX]) ? NULL : args[IN_TST_IDX];
 
+    //Creating the datasets
+    MxDataManager inTrn(args[IN_TRN_IDX]);
+    MxDataManager outTrn(args[OUT_TRN_IDX]);
+    MxDataManager inVal(args[IN_VAL_IDX]);
+    MxDataManager outVal(args[OUT_VAL_IDX]);
+
     //Creating the object for the desired training type.
     if (stdTrainingType)
     {
-      train = new StandardTraining(net, args[IN_TRN_IDX], args[OUT_TRN_IDX], args[IN_VAL_IDX], args[OUT_VAL_IDX], batchSize);
+      train = new StandardTraining(net, inTrn, outTrn, inVal, outVal, batchSize);
     }
     else // It is a pattern recognition network.
     {
-      train = new PatternRecognition(net, args[IN_TRN_IDX], args[IN_VAL_IDX], tstData, useSP, batchSize, signalWeight, noiseWeight);
+      train = new PatternRecognition(net, inTrn, inVal, tstData, useSP, batchSize, signalWeight, noiseWeight);
     }
 
 #ifdef DEBUG

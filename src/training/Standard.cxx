@@ -72,7 +72,7 @@ REAL StandardTraining::trainNetwork()
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
   DataManager *dm = dmTrn;
-  const int nEvents = (batchSize) ? batchSize : dm->size();
+  const int nEvents = (batchSize) ? batchSize : dm->numEvents();
 
   #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
   {

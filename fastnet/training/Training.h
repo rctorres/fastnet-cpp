@@ -51,7 +51,7 @@ public:
     pos = vec.begin();
   }
   
-  inline unsigned size() const
+  inline unsigned numEvents() const
   {
     return vec.size();
   }

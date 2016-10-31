@@ -244,7 +244,7 @@ REAL PatternRecognition::trainNetwork()
     unsigned pos = 0;
     DataManager *dm = dmTrn[pat];
 
-    const int nEvents = (batchSize) ? batchSize : dm->size();
+    const int nEvents = (batchSize) ? batchSize : dm->numEvents();
     totEvents += nEvents;
     DEBUG2("Applying training set for pattern " << pat << " by randomly selecting " << nEvents << " events (out of " << dm->size() << ").");
     

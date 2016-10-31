@@ -1,29 +1,14 @@
 #include "fastnet/training/Standard.h"
 
-StandardTraining::StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize) : Training(net, bSize)
+StandardTraining::StandardTraining(FastNet::Backpropagation *net, DataManager *inTrn, DataManager *outTrn, DataManager *inVal, mxArray *outVal, const unsigned bSize) : Training(net, bSize)
 {
   DEBUG2("Creating StandardTraining object.");
   
-  if ( mxGetM(inTrn) != mxGetM(inVal) ) throw "Input training and validating events dimension does not match!";
-  if ( mxGetM(outTrn) != mxGetM(outVal) ) throw "Output training and validating events dimension does not match!";
-  if ( mxGetN(inTrn) != mxGetN(outTrn) ) throw "Number of input and target training events does not match!";
-  if ( mxGetN(inVal) != mxGetN(outVal) ) throw "Number of input and target validating events does not match!";
-
-  inTrnData = static_cast<REAL*>(mxGetData(inTrn));
-  outTrnData = static_cast<REAL*>(mxGetData(outTrn));
-  inValData = static_cast<REAL*>(mxGetData(inVal));
-  outValData = static_cast<REAL*>(mxGetData(outVal));
-  inputSize = static_cast<unsigned>(mxGetM(inTrn));
-  outputSize = static_cast<unsigned>(mxGetM(outTrn));
-  
-  dmTrn = new DataManager(static_cast<unsigned>(mxGetN(inTrn)));
-  numValEvents = static_cast<unsigned>(mxGetN(inVal));
+  inTrnData = inTrn;
+  outTrnData = outTrn;
+  inValData = inVal;
+  outValData = outVal;
 };
-
-StandardTraining::~StandardTraining()
-{
-  delete dmTrn;
-}
 
 void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
 {
@@ -31,9 +16,9 @@ void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
   REAL error = 0.;
   const REAL *output;
 
-  const REAL *input = inValData;
-  const REAL *target = outValData;
-  const int numEvents = static_cast<int>(numValEvents);
+  const DataManager *input = inValData;
+  const DataManager *target = outValData;
+  const int numEvents = static_cast<int>(inValData->numEvents());
   
   int chunk = chunkSize;
   int i, thId;
@@ -47,7 +32,7 @@ void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
     #pragma omp for schedule(dynamic,chunk) nowait
     for (i=0; i<numEvents; i++)
     {
-      error += nv[thId]->applySupervisedInput(&input[i*inputSize], &target[i*outputSize], output);
+      error += nv[thId]->applySupervisedInput((*input)[i], (*target)[i], output);
     }
 
     #pragma omp critical
@@ -65,16 +50,15 @@ REAL StandardTraining::trainNetwork()
   REAL error = 0.;
   const REAL *output;
 
-  const REAL *input = inTrnData;
-  const REAL *target = outTrnData;
+  DataManager *input = inTrnData;
+  const DataManager *target = outTrnData;
 
   int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
-  DataManager *dm = dmTrn;
   const int nEvents = (batchSize) ? batchSize : dm->numEvents();
 
-  #pragma omp parallel shared(input,target,chunk,nv,gbError,dm) private(i,thId,output,error,pos)
+  #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error,pos)
   {
     thId = omp_get_thread_num(); 
     error = 0.;
@@ -83,10 +67,10 @@ REAL StandardTraining::trainNetwork()
     for (i=0; i<nEvents; i++)
     {
         #pragma omp critical
-        pos = dm->getNextEventIndex();
+        pos = input->getNextEventIndex();
         
-        error += nv[thId]->applySupervisedInput(&input[pos*inputSize], &target[pos*outputSize], output);
-        nv[thId]->calculateNewWeights(output, &target[pos*outputSize]);
+        error += nv[thId]->applySupervisedInput((*input)[pos], (*target)[pos], output);
+        nv[thId]->calculateNewWeights(output, (*target)[pos]);
     }
 
     #pragma omp critical

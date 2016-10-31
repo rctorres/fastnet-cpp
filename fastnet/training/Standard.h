@@ -2,23 +2,21 @@
 #define STANDARD_H
 
 #include "fastnet/training/Training.h"
+#include "fastnet/training/DataManager.h"
+
 
 class StandardTraining : public Training
 {
 protected:
-  const REAL *inTrnData;
-  const REAL *outTrnData;
-  const REAL *inValData;
-  const REAL *outValData;
-  unsigned inputSize;
-  unsigned outputSize;
-  unsigned numValEvents;
-  DataManager *dmTrn;
+  DataManager *inTrnData;
+  DataManager *outTrnData;
+  DataManager *inValData;
+  DataManager *outValData;
 
 public:
-  StandardTraining(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *outTrn, const mxArray *inVal, const mxArray *outVal, const unsigned bSize);
+  StandardTraining(FastNet::Backpropagation *net, DataManager *inTrn, DataManager *outTrn, DataManager *inVal, DataManager *outVal, const unsigned bSize);
 
-  virtual ~StandardTraining();
+  virtual ~StandardTraining(){};
   
   virtual void tstNetwork(REAL &mseTst, REAL &spTst){mseTst = spTst = 0.;};
 

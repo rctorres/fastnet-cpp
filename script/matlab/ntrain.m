@@ -91,6 +91,8 @@ function validateData(net, in_trn, out_trn, in_val, out_val)
     validateField(out_trn, outputDim, 'out_trn');
     validateField(in_val, inputDim, 'in_val');
     validateField(out_val, outputDim, 'out_val');
+    if size(in_trn, 2) ~= size(out_trn, 2), error('Number of events in training input and output matrices do not match.'); end
+    if size(in_val, 2) ~= size(out_val, 2), error('Number of events in validation input and output matrices do not match.'); end
   end
 
 function validateField(field, inputDim, id)

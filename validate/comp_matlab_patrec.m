@@ -59,7 +59,7 @@ for i=1:length(cases),
     out = {sim(onet, tst{1}) sim(onet, tst{2})};
   else
     tic
-    [onet, evo] = ntrain(net, trn, val, tst);
+    [onet, evo] = ntrain(net, trn, val);
     etime = toc;
     %Generating the network output after training.
     out = nsim(onet, tst);
@@ -90,10 +90,10 @@ for i=1:length(cases),
   %Third analysis: training evolution.
   figure(evoFig);
   if isMat,
-    plot(evo.epoch, evo.perf, 'b', evo.epoch, evo.vperf, 'r' ,evo.epoch, evo.tperf, 'k')
+    plot(evo.epoch, evo.perf, 'b', evo.epoch, evo.vperf, 'r')
     hold on;
   else
-    plot(evo.epoch, evo.mse_trn, 'c', evo.epoch, evo.mse_val, 'm' ,evo.epoch, evo.mse_tst, 'g')
+    plot(evo.epoch, evo.mse_trn, 'c', evo.epoch, evo.mse_val, 'm')
     hold on;  
   end
 end
@@ -116,4 +116,4 @@ set(gca, 'XScale', 'Log');
 title('Training Evolution');
 xlabel('Epochs');
 ylabel('MSE');
-legend('trn (mat)', 'val (mat)', 'tst (mat)', 'trn (fn)', 'val (fn)', 'tst (fn)');
+legend('trn (mat)', 'val (mat)', 'trn (fn)', 'val (fn)');

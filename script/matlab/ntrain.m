@@ -56,12 +56,6 @@ else
   error('Incorrect number of arguments! See help for information!');
 end
 
-%Removing unused fields.
-if ~usedTstData,
-  trnInfo = rmfield(trnInfo, 'mse_tst');
-  trnInfo = rmfield(trnInfo, 'sp_tst');
-end
-
 if ~net.trainParam.useSP,
   trnInfo = rmfield(trnInfo, 'sp_val');
   trnInfo = rmfield(trnInfo, 'is_best_sp');

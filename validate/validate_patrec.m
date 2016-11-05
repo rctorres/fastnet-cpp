@@ -18,7 +18,7 @@ net.trainParam.batchSize = 1000;
 net.trainParam.useSP = true;
 
 tic
-[net, evo] = ntrain(net, inTrn, inVal, inTst);
+[net, evo] = ntrain(net, inTrn, inVal);
 toc
 
 %Generating the testing outputs.
@@ -38,8 +38,8 @@ ylabel('Detection (%)');
 grid on;
 
 figure;
-plot(evo.epoch, evo.mse_trn, 'b-', evo.epoch, evo.mse_val, 'r-', evo.epoch, evo.mse_tst, 'k-', evo.epoch, evo.sp_val, 'm-', evo.epoch, evo.sp_tst, 'g-');
-legend('MSE (trn)', 'MSE (val)', 'MSE (tst)', 'SP (val)', 'SP (tst)', 'Location', 'East');
+plot(evo.epoch, evo.mse_trn, 'b-', evo.epoch, evo.mse_val, 'r-', evo.epoch, evo.sp_val, 'm-');
+legend('MSE (trn)', 'MSE (val)', 'SP (val)', 'Location', 'East');
 title('Training Evolution');
 xlabel('Epoch');
 ylabel('Performance Value');

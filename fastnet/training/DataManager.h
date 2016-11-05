@@ -13,7 +13,7 @@ protected:
   
   void init(const unsigned numEvents)
   {
-    DEBUG1("Initializing ramdom selector for " << numEvents << "events.")
+    DEBUG1("Initializing ramdom selector for " << numEvents << " events.")
     for (unsigned i=0; i<numEvents; i++) idx.push_back(i);
     random_shuffle(idx.begin(), idx.end());
     nextEvent = idx.begin();

@@ -59,73 +59,64 @@ bool isEmpty(const mxArray *mat)
 }
 
 
-  /// Flush trining evolution info to Matlab vectors.
-  /**
-  Since this class, in order to optimize speed, saves the
-  training information (epochs and errors) values into memory, at the end, if the user wants
-  to save the final values, this method must be called. It will
-  save these values stored in the linked list in Matlab vectors.
-  @param[out] epoch A vector containing the epochs values.
-  @param[out] trnError A vector containing the training error obtained in each epoch.
-  @param[out] valError A vector containing the validation error obtained in each epoch.
-  */
-  mxArray *flushTrainInfo(const TrainData &trnEvolution)
-  {
-    const unsigned size = trnEvolution.size();  
-    mxArray *epoch = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
-    mxArray *mse_trn = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    mxArray *mse_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    mxArray *sp_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
-    mxArray *is_best_mse = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
-    mxArray *is_best_sp = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
-    mxArray *num_fails_mse = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
-    mxArray *num_fails_sp = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
-    mxArray *stop_mse = mxCreateLogicalMatrix(1, size);
-    mxArray *stop_sp = mxCreateLogicalMatrix(1, size);
+/// Flush trining evolution info to Matlab vectors.
+mxArray *flushTrainInfo(const TrainData &trnEvolution)
+{
+  const unsigned size = trnEvolution.size();  
+  mxArray *epoch = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+  mxArray *mse_trn = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+  mxArray *mse_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+  mxArray *sp_val = mxCreateNumericMatrix(1, size, REAL_TYPE, mxREAL);
+  mxArray *is_best_mse = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
+  mxArray *is_best_sp = mxCreateNumericMatrix(1, size, mxINT32_CLASS, mxREAL);;
+  mxArray *num_fails_mse = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+  mxArray *num_fails_sp = mxCreateNumericMatrix(1, size, mxUINT32_CLASS, mxREAL);
+  mxArray *stop_mse = mxCreateLogicalMatrix(1, size);
+  mxArray *stop_sp = mxCreateLogicalMatrix(1, size);
 
-    unsigned* epoch_ptr = static_cast<unsigned*>(mxGetData(epoch));
-    REAL* mse_trn_ptr = static_cast<REAL*>(mxGetData(mse_trn));
-    REAL* mse_val_ptr = static_cast<REAL*>(mxGetData(mse_val));
-    REAL* sp_val_ptr = static_cast<REAL*>(mxGetData(sp_val));
-    int* is_best_mse_ptr = static_cast<int*>(mxGetData(is_best_mse));
-    int* is_best_sp_ptr = static_cast<int*>(mxGetData(is_best_sp));
-    unsigned* num_fails_mse_ptr = static_cast<unsigned*>(mxGetData(num_fails_mse));
-    unsigned* num_fails_sp_ptr = static_cast<unsigned*>(mxGetData(num_fails_sp));
-    bool* stop_mse_ptr = static_cast<bool*>(mxGetData(stop_mse));
-    bool* stop_sp_ptr = static_cast<bool*>(mxGetData(stop_sp));
+  unsigned* epoch_ptr = static_cast<unsigned*>(mxGetData(epoch));
+  REAL* mse_trn_ptr = static_cast<REAL*>(mxGetData(mse_trn));
+  REAL* mse_val_ptr = static_cast<REAL*>(mxGetData(mse_val));
+  REAL* sp_val_ptr = static_cast<REAL*>(mxGetData(sp_val));
+  int* is_best_mse_ptr = static_cast<int*>(mxGetData(is_best_mse));
+  int* is_best_sp_ptr = static_cast<int*>(mxGetData(is_best_sp));
+  unsigned* num_fails_mse_ptr = static_cast<unsigned*>(mxGetData(num_fails_mse));
+  unsigned* num_fails_sp_ptr = static_cast<unsigned*>(mxGetData(num_fails_sp));
+  bool* stop_mse_ptr = static_cast<bool*>(mxGetData(stop_mse));
+  bool* stop_sp_ptr = static_cast<bool*>(mxGetData(stop_sp));
   
-    for (auto i=0; i<size; i++)
-    {
-      *epoch_ptr++ = trnEvolution.epoch[i];
-      *mse_trn_ptr++ = trnEvolution.mse_trn[i];
-      *mse_val_ptr++ = trnEvolution.mse_val[i];
-      *sp_val_ptr++ = trnEvolution.sp_val[i];
-      *is_best_mse_ptr++ = static_cast<int>(trnEvolution.is_best_mse[i]);
-      *is_best_sp_ptr++ = static_cast<int>(trnEvolution.is_best_sp[i]);
-      *num_fails_mse_ptr++ = trnEvolution.num_fails_mse[i];
-      *num_fails_sp_ptr++ = trnEvolution.num_fails_sp[i];
-      *stop_mse_ptr++ = trnEvolution.stop_mse[i];
-      *stop_sp_ptr++ = trnEvolution.stop_sp[i];
-    }
+  for (auto i=0; i<size; i++)
+  {
+    *epoch_ptr++ = trnEvolution.epoch[i];
+    *mse_trn_ptr++ = trnEvolution.mse_trn[i];
+    *mse_val_ptr++ = trnEvolution.mse_val[i];
+    *sp_val_ptr++ = trnEvolution.sp_val[i];
+    *is_best_mse_ptr++ = static_cast<int>(trnEvolution.is_best_mse[i]);
+    *is_best_sp_ptr++ = static_cast<int>(trnEvolution.is_best_sp[i]);
+    *num_fails_mse_ptr++ = trnEvolution.num_fails_mse[i];
+    *num_fails_sp_ptr++ = trnEvolution.num_fails_sp[i];
+    *stop_mse_ptr++ = trnEvolution.stop_mse[i];
+    *stop_sp_ptr++ = trnEvolution.stop_sp[i];
+  }
     
-    // Creating the Matlab structure to be returned.
-    const unsigned NNAMES = 10;
-    const char *NAMES[] = {"epoch", "mse_trn", "mse_val", "sp_val", 
-                            "is_best_mse", "is_best_sp", "num_fails_mse", "num_fails_sp", 
-                            "stop_mse", "stop_sp"};
-    mxArray *ret = mxCreateStructMatrix(1,1,NNAMES,NAMES);
-    mxSetField(ret, 0, "epoch", epoch);
-    mxSetField(ret, 0, "mse_trn", mse_trn);
-    mxSetField(ret, 0, "mse_val", mse_val);
-    mxSetField(ret, 0, "sp_val", sp_val);
-    mxSetField(ret, 0, "is_best_mse", is_best_mse);
-    mxSetField(ret, 0, "is_best_sp", is_best_sp);
-    mxSetField(ret, 0, "num_fails_mse", num_fails_mse);
-    mxSetField(ret, 0, "num_fails_sp", num_fails_sp);
-    mxSetField(ret, 0, "stop_mse", stop_mse);
-    mxSetField(ret, 0, "stop_sp", stop_sp);
-    return ret;
-  };
+  // Creating the Matlab structure to be returned.
+  const unsigned NNAMES = 10;
+  const char *NAMES[] = {"epoch", "mse_trn", "mse_val", "sp_val", 
+                          "is_best_mse", "is_best_sp", "num_fails_mse", "num_fails_sp", 
+                          "stop_mse", "stop_sp"};
+  mxArray *ret = mxCreateStructMatrix(1,1,NNAMES,NAMES);
+  mxSetField(ret, 0, "epoch", epoch);
+  mxSetField(ret, 0, "mse_trn", mse_trn);
+  mxSetField(ret, 0, "mse_val", mse_val);
+  mxSetField(ret, 0, "sp_val", sp_val);
+  mxSetField(ret, 0, "is_best_mse", is_best_mse);
+  mxSetField(ret, 0, "is_best_sp", is_best_sp);
+  mxSetField(ret, 0, "num_fails_mse", num_fails_mse);
+  mxSetField(ret, 0, "num_fails_sp", num_fails_sp);
+  mxSetField(ret, 0, "stop_mse", stop_mse);
+  mxSetField(ret, 0, "stop_sp", stop_sp);
+  return ret;
+};
 
 
 /// Matlab 's main function.

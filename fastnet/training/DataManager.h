@@ -1,24 +1,33 @@
 #ifndef DATAMANAGER_H_H
 #define DATAMANAGER_H_H
 
+#include <vector>
+
 class DataManager
 {
 protected:
-  unsigned pos;
   unsigned evSize;
-  vector<REAL *> vec;
+  std::vector<REAL *> data;
+  std::vector<unsigned> idx;
+  std::vector<unsigned>::const_iterator nextEvent;
   
-  
+  void init(const unsigned numEvents)
+  {
+    DEBUG1("Initializing ramdom selector for " << numEvents << "events.")
+    for (unsigned i=0; i<numEvents; i++) idx.push_back(i);
+    random_shuffle(idx.begin(), idx.end());
+    nextEvent = idx.begin();
+  }
+
 public:
   DataManager()
   {
-    pos = 0;
     evSize = 0;
   }
   
   unsigned numEvents() const
   {
-    return vec.size();
+    return data.size();
   }
   
   unsigned eventSize() const
@@ -28,17 +37,17 @@ public:
   
   unsigned getNextEventIndex()
   {
-    if (pos == vec.size())
+    if (nextEvent == idx.end())
     {
-      random_shuffle(vec.begin(), vec.end());
-      pos = 0;
+      random_shuffle(idx.begin(), idx.end());
+      nextEvent = idx.begin();
     }
-    return pos++;
+    return *nextEvent++;
   }
   
-  const REAL* operator[](unsigned idx) const
+  const REAL* operator[](const unsigned idx) const
   {
-    return vec[idx];
+    return data[idx];
   };  
 };
 

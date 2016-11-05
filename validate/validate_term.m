@@ -20,9 +20,9 @@ outTst = single([ones(1, size(inTst{1},2)) -ones(1, size(inTst{2},2))]);
 %Creating the neural network.
 net = newff2(inTrn, outTrn, 2, {'tansig', 'tansig'});
 net.trainParam.epochs = 3000;
-net.trainParam.max_fail = 20;
+net.trainParam.max_fail = 3000;
 net.trainParam.show = 1;
-net.trainParam.batchSize = 10;
+net.trainParam.batchSize = 50;
 
 %Training the networks to be compared.
 tic

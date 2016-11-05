@@ -19,6 +19,7 @@ void StandardTraining::valNetwork(REAL &mseVal, REAL &spVal)
   const DataManager *input = inValData;
   const DataManager *target = outValData;
   const int numEvents = static_cast<int>(inValData->numEvents());
+  DEBUG2("Running this validating epoch with " << numEvents << " events.");
   
   int chunk = chunkSize;
   int i, thId;
@@ -57,6 +58,7 @@ REAL StandardTraining::trainNetwork()
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
   const int nEvents = (batchSize) ? batchSize : input->numEvents();
+  DEBUG2("Running this training epoch with " << nEvents << " events as batch size.");
 
   #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error,pos)
   {

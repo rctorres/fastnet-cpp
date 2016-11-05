@@ -1,6 +1,6 @@
 #include "fastnet/training/Standard.h"
 
-StandardTraining::StandardTraining(FastNet::Backpropagation *net, DataManager *inTrn, DataManager *outTrn, DataManager *inVal, mxArray *outVal, const unsigned bSize) : Training(net, bSize)
+StandardTraining::StandardTraining(FastNet::Backpropagation *net, DataManager *inTrn, DataManager *outTrn, DataManager *inVal, DataManager *outVal, const unsigned bSize) : Training(net, bSize)
 {
   DEBUG2("Creating StandardTraining object.");
   
@@ -56,7 +56,7 @@ REAL StandardTraining::trainNetwork()
   int chunk = chunkSize;
   int i, thId;
   FastNet::Backpropagation **nv = netVec;
-  const int nEvents = (batchSize) ? batchSize : dm->numEvents();
+  const int nEvents = (batchSize) ? batchSize : input->numEvents();
 
   #pragma omp parallel shared(input,target,chunk,nv,gbError) private(i,thId,output,error,pos)
   {

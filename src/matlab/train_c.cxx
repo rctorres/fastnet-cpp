@@ -46,12 +46,6 @@ const unsigned IN_VAL_IDX = 4;
 /// Index, in the arguments list, of the output validating events.
 const unsigned OUT_VAL_IDX = 5;
 
-/// Index, in the arguments list, of the input testing events.
-const unsigned IN_TST_IDX = 6;
-
-/// Index, in the arguments list, of the output testing events.
-const unsigned OUT_TST_IDX = 7;
-
 /// Index, in the return vector, of the network structure after training.
 const unsigned OUT_NET_IDX = 0;
 
@@ -67,9 +61,14 @@ bool isEmpty(const mxArray *mat)
 /// Matlab 's main function.
 void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 {
-  Backpropagation *net = NULL;
-  Training *train = NULL;
-  MatlabBP *matHandler = NULL;
+  Backpropagation *net = nullptr;
+  Training *train = nullptr;
+  MatlabBP *matHandler = nullptr;
+  MxDataManager *inTrn = nullptr;
+  MxDataManager *outTrn = nullptr;
+  MxDataManager *inVal = nullptr;
+  MxDataManager *outVal = nullptr;
+  std::vector<DataManager*> patInTrn, patInVal;
   
   try
   {
@@ -107,22 +106,24 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
     //Getting whether we will use SP stoping criteria.
     const bool useSP = static_cast<bool>(mxGetScalar(mxGetField(trnParam, 0, "useSP")));
-    const mxArray *tstData = isEmpty(args[IN_TST_IDX]) ? NULL : args[IN_TST_IDX];
-
-    //Creating the datasets
-    MxDataManager inTrn(args[IN_TRN_IDX]);
-    MxDataManager outTrn(args[OUT_TRN_IDX]);
-    MxDataManager inVal(args[IN_VAL_IDX]);
-    MxDataManager outVal(args[OUT_VAL_IDX]);
-
+    
     //Creating the object for the desired training type.
     if (stdTrainingType)
     {
+      inTrn = new MxDataManager(args[IN_TRN_IDX]);
+      outTrn = new MxDataManager(args[OUT_TRN_IDX]);
+      inVal = new MxDataManager(args[IN_VAL_IDX]);
+      outVal = new MxDataManager(args[OUT_VAL_IDX]);
       train = new StandardTraining(net, inTrn, outTrn, inVal, outVal, batchSize);
     }
     else // It is a pattern recognition network.
     {
-      train = new PatternRecognition(net, inTrn, inVal, tstData, useSP, batchSize, signalWeight, noiseWeight);
+      for (auto i=0; i<mxGetN(args[IN_TRN_IDX]); i++)
+      {
+        patInTrn.push_back(new MxDataManager(mxGetCell(args[IN_TRN_IDX], i)));
+        patInVal.push_back(new MxDataManager(mxGetCell(args[IN_VAL_IDX], i)));
+      }
+      train = new PatternRecognition(net, &patInTrn, &patInVal, useSP, batchSize, signalWeight, noiseWeight);
     }
 
 #ifdef DEBUG
@@ -137,8 +138,8 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     unsigned num_fails_mse = 0;
     unsigned num_fails_sp = 0;
     unsigned dispCounter = 0;
-    REAL mse_val, sp_val, mse_tst, sp_tst;
-    mse_val = sp_val = mse_tst = sp_tst = 0.;
+    REAL mse_val, sp_val;
+    mse_val = sp_val = 0.;
     ValResult is_best_mse, is_best_sp;
     bool stop_mse, stop_sp;
 
@@ -147,7 +148,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     const unsigned fail_limit_sp = (useSP) ? fail_limit : 0;
     ValResult &is_best = (useSP) ? is_best_sp :  is_best_mse;
     REAL &val_data = (useSP) ? sp_val : mse_val;
-    REAL &tst_data = (useSP) ? sp_tst : mse_tst;
 
     for (unsigned epoch=0; epoch<nEpochs; epoch++)
     {
@@ -156,9 +156,6 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
 
       //Validating the new network.
       train->valNetwork(mse_val, sp_val);
-
-      //Testing the new network if a testing dataset was passed.
-      if (tstData) train->tstNetwork(mse_tst, sp_tst);
 
       // Saving the best weight result.
       train->isBestNetwork(mse_val, sp_val, is_best_mse, is_best_sp);
@@ -176,8 +173,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       {
         if (!dispCounter)
         {
-          if (tstData) train->showTrainingStatus(epoch, mse_trn, val_data, tst_data);
-          else train->showTrainingStatus(epoch, mse_trn, val_data);
+          train->showTrainingStatus(epoch, mse_trn, val_data);
         }
         dispCounter = (dispCounter + 1) % show;
       }
@@ -187,7 +183,7 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
       stop_sp = num_fails_sp >= fail_limit_sp;
 
       //Saving the training evolution info.
-      train->saveTrainInfo(epoch, mse_trn, mse_val, sp_val, mse_tst, sp_tst, is_best_mse, 
+      train->saveTrainInfo(epoch, mse_trn, mse_val, sp_val, is_best_mse, 
                             is_best_sp, num_fails_mse, num_fails_sp, stop_mse, stop_sp);
 
       if ( (stop_mse) && (stop_sp) )
@@ -204,26 +200,47 @@ void mexFunction(int nargout, mxArray *ret[], int nargin, const mxArray *args[])
     matHandler->flushBestTrainWeights(ret[OUT_NET_IDX], net);
     
     //Returning the training evolution info.
+    DEBUG1("Flushing training info.");
     ret[OUT_TRN_EVO] = train->flushTrainInfo();
     
     //Deleting the allocated memory.
+    DEBUG1("Releasing all allocated memory.");
     delete matHandler;
     delete net;
     delete train;
+    if (inTrn != nullptr) delete inTrn;
+    if (outTrn != nullptr) delete outTrn;
+    if (inVal != nullptr) delete inVal;
+    if (outVal != nullptr) delete outVal;
+    for (const auto &x : patInTrn) delete x;
+    for (const auto &x : patInVal) delete x;
     if (show) REPORT("Training process finished!");
   }
   catch(bad_alloc xa)
   {
     FATAL("Error on allocating memory!");
-    if (matHandler) delete net;
-    if (net) delete net;
-    if (train) delete train;
+    if (matHandler != nullptr) delete net;
+    if (net != nullptr) delete net;
+    if (train != nullptr) delete train;
+    if (inTrn != nullptr) delete inTrn;
+    if (outTrn != nullptr) delete outTrn;
+    if (inVal != nullptr) delete inVal;
+    if (outVal != nullptr) delete outVal;
+    for (const auto &x : patInTrn) delete x;
+    for (const auto &x : patInVal) delete x;
   }
   catch (const char *msg)
   {
     FATAL(msg);
-    if (matHandler) delete net;
-    if (net) delete net;
-    if (train) delete train;
+    if (matHandler != nullptr) delete net;
+    if (net != nullptr) delete net;
+    if (train != nullptr) delete train;
+    if (inTrn != nullptr) delete inTrn;
+    if (outTrn != nullptr) delete outTrn;
+    if (inVal != nullptr) delete inVal;
+    if (outVal != nullptr) delete outVal;
+    for (const auto &x : patInTrn) delete x;
+    for (const auto &x : patInVal) delete x;
   }
+  
 }

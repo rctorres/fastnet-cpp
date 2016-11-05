@@ -4,41 +4,29 @@
 #include <vector>
 
 #include "fastnet/training/Training.h"
+#include "fastnet/training/DataManager.h"
+
 
 class PatternRecognition : public Training
 {
 protected:
-  const REAL **inTrnList;
-  const REAL **inValList;
-  const REAL **inTstList;
-  const REAL **targList;
-  REAL **epochValOutputs;
-  REAL **epochTstOutputs;
-  unsigned numPatterns;
-  unsigned inputSize;
-  unsigned outputSize;
+  std::vector<DataManager*> *inTrnList;
+  std::vector<DataManager*> *inValList;
+  std::vector<const REAL*> targList;
+  std::vector<REAL*> epochValOutputs;
   bool useSP;
-  bool hasTstData;
   REAL bestGoalSP;
   REAL signalWeight;
   REAL noiseWeight;
-  std::vector<DataManager*> dmTrn;
-  unsigned *numValEvents;
-  unsigned *numTstEvents;
 
 
-  void allocateDataset(const mxArray *dataSet, const bool forTrain, 
-                        const REAL **&inList, REAL **&out, unsigned *&nEv);
-
-  void deallocateDataset(const bool forTrain, const REAL **&inList, REAL **&out, unsigned *&nEv);
-  
-  void getNetworkErrors(const REAL **inList, const unsigned *nEvents, REAL **epochOutputs, REAL &mseRet, REAL &spRet);
+  void getNetworkErrors(const std::vector<DataManager*> *inList, std::vector<REAL*> &epochOutputs, REAL &mseRet, REAL &spRet);
 
 
 public:
 
-  PatternRecognition(FastNet::Backpropagation *net, const mxArray *inTrn, const mxArray *inVal, 
-                      const mxArray *inTst,  const bool usingSP, const unsigned bSize,
+  PatternRecognition(FastNet::Backpropagation *net, std::vector<DataManager*> *inTrn, std::vector<DataManager*> *inVal, 
+                      const bool usingSP, const unsigned bSize,
                       const REAL signalWeigh = 1.0, const REAL noiseWeight = 1.0);
 
   virtual ~PatternRecognition();
@@ -50,13 +38,7 @@ public:
   product obtained.
   @return The maximum SP value obtained.
   */
-  virtual REAL sp(const unsigned *nEvents, REAL **epochOutputs);
-
-  virtual void tstNetwork(REAL &mseTst, REAL &spTst)
-  {
-    DEBUG2("Starting testing process for an epoch.");
-    getNetworkErrors(inTstList, numTstEvents, epochTstOutputs, mseTst, spTst);
-  }
+  virtual REAL sp(const std::vector<DataManager*> *inList, const std::vector<REAL*> &epochOutputs);
 
 
   /// Applies the validating set of each pattern for the network's validation.
@@ -72,7 +54,7 @@ public:
   virtual void valNetwork(REAL &mseVal, REAL &spVal)
   {
     DEBUG2("Starting validation process for an epoch.");
-    getNetworkErrors(inValList, numValEvents, epochValOutputs, mseVal, spVal);
+    getNetworkErrors(inValList, epochValOutputs, mseVal, spVal);
   }
 
 
@@ -94,9 +76,7 @@ public:
 
   virtual void isBestNetwork(const REAL currMSEError, const REAL currSPError, ValResult &isBestMSE, ValResult &isBestSP);
 
-  virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError);
-  
-  virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError, const REAL tstError);
+  virtual void showTrainingStatus(const unsigned epoch, const REAL trnError, const REAL valError);  
 };
 
 #endif

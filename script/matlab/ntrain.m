@@ -1,4 +1,4 @@
-function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val, in_tst)
+function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val)
 %function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val)
 %Trains a neural network using the network structure created by "newff2".
 %Parameters are:
@@ -11,13 +11,12 @@ function [outNet, trnInfo] = ntrain(net, in_trn, out_trn, in_val, out_val, in_ts
 %The data presented to the network must be organized so that each column is an event (either input or output),
 %and the number of rows specifies the number of events to be presented to the neural network. 
 %
-%function [outNet, trnInfo] = ntrain(net, in_trn, in_val, in_tst)
+%function [outNet, trnInfo] = ntrain(net, in_trn, in_val)
 %In this case, the training process will be optimized for pattern recognition problem.
 %Parameters are:
 %	net             -> The neural network structure created by "newff2".
 %	in_trn          -> A cell array containing the input training data of each pattern.
 %	in_val          -> A cell array containing the input validating data of each pattern.
-% in_tst          -> (OPTIONAL) The input testing data (Pattern Recognition ONLY).
 %
 %The desired outputs (target) are internally generated, so, there is no need to provide the training
 %and validating targets which can save a lot of memory. The input training and validating vectors are cell arrays with the

@@ -68,7 +68,7 @@ except BaseException as e:
 
 
 #Compiling flags.
-globalCPPFlags = ['-DNO_OMP']
+globalCPPFlags = ['-DNO_OMP', '-DBOOST_ALL_DYN_LINK', '-DMATLAB']
 libCPPFlags = []
 mexCPPFlags = []
 
@@ -76,8 +76,8 @@ mexCPPFlags = []
 debug = int(ARGUMENTS.get('debug', 0))
 if debug > 0: globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
 
-incPath = ['../', config['matlab']['incDir']]
-libPath = ['./', config['matlab']['libDir']]
+incPath = ['../', os.path.join(os.environ['BOOST_HOME'], 'include'), os.path.join(os.environ['CONDA_PREFIX']), config['matlab']['incDir'] ]
+libPath = ['./', os.path.join(os.environ['BOOST_HOME'], 'lib')]
 
 #Am I using a MAC computer? Then I apply some optimizations for it
 if platform.system() == 'Darwin':
@@ -105,8 +105,8 @@ for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib,
                               source = Glob('../src/%s/*.c*' % lib),
                               CCFLAGS = globalCPPFlags + libCPPFlags,
-                              LIBS = opt['LIBS'] + ['mx', 'mex', 'mat', 'm'],
-                              LIBPATH = libPath)
+                              LIBS = opt['LIBS'] + ['mex'],
+                              LIBPATH = libPath + [config['matlab']['libDir']])
   libInstList.append(libName)
 
 

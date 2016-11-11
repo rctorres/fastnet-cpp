@@ -11,8 +11,6 @@
 #include <omp.h>
 #endif
 
-#include <mex.h>
-
 #include "fastnet/neuralnet/backpropagation.h"
 #include "fastnet/sys/Reporter.h"
 #include "fastnet/sys/defines.h"

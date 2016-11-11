@@ -10,6 +10,15 @@
 
 using namespace std;
 
+///Sets the corresponding matlab type we will be using.
+/**
+This constant shoud be set to represent the same data type as REAL typedef. Ex: if REAL is
+set to double, this constant should be changed to mxDOUBLE_CLASS.  If you change this value, 
+you *MUST* change the value of REAL typedef as well.
+*/
+const mxClassID REAL_TYPE = mxDOUBLE_CLASS;
+
+
 /** 
 @brief		Class to handle matlab arrays.
 @author		Rodrigo Coura Torres (torres@lps.ufrj.br)

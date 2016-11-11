@@ -8,7 +8,6 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#include <mex.h>
 #include <string>
 
 /// Specifies the version of the FastNet package.
@@ -58,14 +57,6 @@ floating point variables created. If you change this value, you *MUST* change th
 of REAL_TYPE as well.
 */
 typedef double REAL;
-
-///Sets the corresponding matlab type we will be using.
-/**
-This constant shoud be set to represent the same data type as REAL typedef. Ex: if REAL is
-set to double, this constant should be changed to mxDOUBLE_CLASS.  If you change this value, 
-you *MUST* change the value of REAL typedef as well.
-*/
-const mxClassID REAL_TYPE = mxDOUBLE_CLASS;
 
 
 /// Macro to call pointers to member functions.

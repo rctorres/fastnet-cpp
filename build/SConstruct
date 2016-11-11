@@ -20,36 +20,8 @@ import sc_libs
 import sc_matlab
 
 
-def create_setup_script(conf):
-
-  ldName = 'DYLD_LIBRARY_PATH' if platform.system() == 'Darwin' else 'LD_LIBRARY_PATH'
-
-  content = """#!/bin/bash
-#This script will set the environment properly so fastnet can run. It will
-#also call matlab afterwards passing on whatever command line parameter you may pass to this script.
-
-echo "Setting up environment for running matlab with FASTNET."
-
-export {ldName}={fastNetLibDir}:{matlabLibDir}:$DYLD_LIBRARY_PATH
-export MATLABPATH={fastNetMatDir}:$MATLABPATH
-
-echo "Calling matlab passing on any command line parameter specified by the calling user."
-
-{matlabBinDir}/matlab $*
-""".format(fastNetLibDir = conf['installation']['libDir'],
-            fastNetMatDir = conf['installation']['matDir'],
-            matlabLibDir = conf['matlab']['libDir'],
-            matlabBinDir = conf['matlab']['binDir'],
-            ldName = ldName)
-  
-  scriptName = 'matlab-fn'
-  with open(scriptName, 'w') as f: f.write(content)
-  os.lchmod(scriptName, 0755)
-  return scriptName
-  
-
-#The matlab builder (calling mex)
-def matlabBuild(target, source, env, for_signature):
+#The matlab builder (calling mex) - ####### I NEED TO TURN THIS INTO A CYTHON COMPILET #######
+def cythonBuild(target, source, env, for_signature):
 	incPaths = ' '.join(['-I%s' % i for i in env['CPPPATH']])
 	libPaths = ' '.join(['-L%s' % i for i in env['LIBPATH']])
 	libList = ' '.join(['-l%s' % i for i in env['LIBS']])
@@ -68,7 +40,7 @@ except BaseException as e:
 
 
 #Compiling flags.
-globalCPPFlags = ['-DNO_OMP', '-DBOOST_ALL_DYN_LINK', '-DMATLAB']
+globalCPPFlags = ['-DNO_OMP', '-DBOOST_ALL_DYN_LINK']
 libCPPFlags = []
 mexCPPFlags = []
 
@@ -76,7 +48,8 @@ mexCPPFlags = []
 debug = int(ARGUMENTS.get('debug', 0))
 if debug > 0: globalCPPFlags += ['-DDEBUG=%d' % debug, '-g']
 
-incPath = ['../', os.path.join(os.environ['BOOST_HOME'], 'include'), os.path.join(os.environ['CONDA_PREFIX'])]
+######## SHPULD BOOST REFERENCES GO TO CONFIGURE???? ############
+incPath = ['../', os.path.join(os.environ['BOOST_HOME'], 'include')]
 libPath = ['./', os.path.join(os.environ['BOOST_HOME'], 'lib')]
 
 #Am I using a MAC computer? Then I apply some optimizations for it
@@ -90,16 +63,15 @@ elif platform.system() == 'Linux':
     dist, version, branch = platform.dist()
     if (dist == 'debian'): libCPPFlags += ['-fopenmp']
 
-#Creating the Matlab custom made builder.
-matBuilder = Builder(generator = matlabBuild, suffix = config['matlab']['arch'])
-
 #Creating our building environment.
-env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ)
-env.Append(BUILDERS = {'Matlab' : matBuilder})
+env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ) #This is for default C++ code
+env.Append(BUILDERS = {'Cython' : Builder(generator = cythonBuild)}) #This is for dealing with cython compilations
+
+######IF I NEED TO PASS ANY SPECIFIC VALUE TO THE CYTHON COMPILER, I CAN APPEND THESE VARIABLES TO THE ENVIRONMENT LIKE I'M DOING IN THE COMMAND BELLOW#####
 env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
 
 
-### Creating the dynamic libraries.
+### Creating the fastnet dynamic libraries.
 libInstList = [];
 for lib, opt in sc_libs.libs.iteritems():
   libName = env.SharedLibrary(target = lib,
@@ -110,31 +82,32 @@ for lib, opt in sc_libs.libs.iteritems():
   libInstList.append(libName)
 
 
-### Creating Matlab bindings. Starting it with the scripts which do not need compilation
-matInstList = Glob('../script/matlab/*.m')
+### Creating Python bindings. Starting it with the scripts which do not need compilation
+matInstList = Glob('../script/python/*.py')
+
+#Going over scripts bind to C++ code (using Cython for that)
 for mat, opt in sc_matlab.matlab.iteritems():
-  matBinding = env.Matlab(target = mat,
+  matBinding = env.Cython(target = mat,
                           source = '../src/matlab/%s.cxx' % mat, 
                           CCFLAGS = globalCPPFlags + mexCPPFlags, 
                           LIBS = opt['LIBS'], 
                           LIBPATH = libPath)
   matInstList.append(matBinding);
 
-
-#Processing bin files.
-binInstList = [create_setup_script(config)]
+#Processing bin files. Any executable that beed to be installed should go in this list.
+binInstList = []
 
 
 ###Specifying the installations directories.
 libInstDir = config['installation']['libDir']
-matInstDir = config['installation']['matDir']
+scriptInstDir = config['installation']['scriptDir']
 binInstDir = config['installation']['binDir']
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
-env.Install(matInstDir, matInstList)
+env.Install(scriptInstDir, matInstList)
 env.Install(binInstDir, binInstList)
 
 #Creating the installation aliases.
-instMat = env.Alias('install-matlab', [libInstDir, matInstDir, binInstDir])
-env.Alias('install', [instMat])
+instAll = env.Alias('install', [libInstDir, scriptInstDir, binInstDir])
+env.Alias('install', [instAll])

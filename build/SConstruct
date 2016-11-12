@@ -68,7 +68,7 @@ env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ) #This is for
 env.Append(BUILDERS = {'Cython' : Builder(generator = cythonBuild)}) #This is for dealing with cython compilations
 
 ######IF I NEED TO PASS ANY SPECIFIC VALUE TO THE CYTHON COMPILER, I CAN APPEND THESE VARIABLES TO THE ENVIRONMENT LIKE I'M DOING IN THE COMMAND BELLOW#####
-env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
+#env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
 
 
 ### Creating the fastnet dynamic libraries.
@@ -83,16 +83,16 @@ for lib, opt in sc_libs.libs.iteritems():
 
 
 ### Creating Python bindings. Starting it with the scripts which do not need compilation
-matInstList = Glob('../script/python/*.py')
+scriptInstList = Glob('../script/python/*.py')
 
 #Going over scripts bind to C++ code (using Cython for that)
-for mat, opt in sc_matlab.matlab.iteritems():
-  matBinding = env.Cython(target = mat,
-                          source = '../src/matlab/%s.cxx' % mat, 
-                          CCFLAGS = globalCPPFlags + mexCPPFlags, 
-                          LIBS = opt['LIBS'], 
-                          LIBPATH = libPath)
-  matInstList.append(matBinding);
+#for mat, opt in sc_matlab.matlab.iteritems():
+#  matBinding = env.Cython(target = mat,
+#                          source = '../src/matlab/%s.cxx' % mat, 
+#                          CCFLAGS = globalCPPFlags + mexCPPFlags, 
+#                          LIBS = opt['LIBS'], 
+#                          LIBPATH = libPath)
+#  scriptInstList.append(matBinding);
 
 #Processing bin files. Any executable that beed to be installed should go in this list.
 binInstList = []
@@ -105,7 +105,7 @@ binInstDir = config['installation']['binDir']
 
 #Associating the files list to their installation directories.
 env.Install(libInstDir, libInstList)
-env.Install(scriptInstDir, matInstList)
+env.Install(scriptInstDir, scriptInstList)
 env.Install(binInstDir, binInstList)
 
 #Creating the installation aliases.

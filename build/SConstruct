@@ -17,7 +17,6 @@ import stat
 import sys
 
 import sc_libs
-import sc_matlab
 
 
 #The matlab builder (calling mex) - ####### I NEED TO TURN THIS INTO A CYTHON COMPILET #######
@@ -40,7 +39,7 @@ except BaseException as e:
 
 
 #Compiling flags.
-globalCPPFlags = ['-DNO_OMP', '-DBOOST_ALL_DYN_LINK']
+globalCPPFlags = ['-DNO_OMP', '-DBOOST_ALL_DYN_LINK', '-std=c++11', '-stdlib=libc++']
 libCPPFlags = []
 mexCPPFlags = []
 
@@ -54,7 +53,7 @@ libPath = ['./', os.path.join(os.environ['BOOST_HOME'], 'lib')]
 
 #Am I using a MAC computer? Then I apply some optimizations for it
 if platform.system() == 'Darwin':
-  libCPPFlags += ['-std=c++11']
+  libCPPFlags += []
 elif platform.system() == 'Linux':
   incPath.append('/usr/include')
   libPath.append('/usr/lib')
@@ -109,5 +108,5 @@ env.Install(scriptInstDir, scriptInstList)
 env.Install(binInstDir, binInstList)
 
 #Creating the installation aliases.
-instAll = env.Alias('install', [libInstDir, scriptInstDir, binInstDir])
+instAll = env.Alias('install-all', [libInstDir, scriptInstDir, binInstDir])
 env.Alias('install', [instAll])

@@ -186,6 +186,7 @@ namespace FastNet
         }
 
         layerOutputs[i+1][j] = CALL_TRF_FUNC(trfFunc[i])(layerOutputs[i+1][j], false);
+        DEBUG3("Output layer[" << i+1 << "][" << j << "] = " << layerOutputs[i+1][j])
       }
     }
     

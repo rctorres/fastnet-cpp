@@ -144,6 +144,9 @@ bash = """
 #! /bin/bash
 source activate telarix
 python {cythonFile} build_ext --inplace --verbose
+if [ ! -d "{scriptDir}" ]; then
+  mkdir -p {scriptDir}
+fi
 cp *.so {scriptDir}
 source activate legacy
 """.format(cythonFile = setupFileName, scriptDir = scriptInstDir)

@@ -15,17 +15,30 @@ import fnmatch
 import json
 import stat
 import sys
+import subprocess
 
 import sc_libs
 
 
-#The matlab builder (calling mex) - ####### I NEED TO TURN THIS INTO A CYTHON COMPILET #######
 def cythonBuild(target, source, env, for_signature):
-	incPaths = ' '.join(['-I%s' % i for i in env['CPPPATH']])
-	libPaths = ' '.join(['-L%s' % i for i in env['LIBPATH']])
-	libList = ' '.join(['-l%s' % i for i in env['LIBS']])
-	compFlags = ' '.join(env['CCFLAGS'])
-	return '%s -cxx %s %s %s %s -o %s %s' % (env['MEX'], compFlags, incPaths, libPaths, libList, target[0], source[0]);
+  setup = """
+from distutils.core import setup
+from Cython.Build import cythonize
+from distutils.extension import Extension
+
+setup(ext_modules = cythonize(Extension("fastnet",
+           ["../cython/fastnet.pyx"],                 # our Cython source
+           language="c++",             # generate C++ code
+           extra_compile_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
+           extra_link_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
+           library_dirs=["/Users/rtorres/Tools/lib/fastnet/lib"],
+           include_dirs=["../fastnet"],
+           libraries=["neuralnet", "training"])
+      ))
+"""
+  setupFileName = 'cython_setup.py'
+  with open(setupFileName, 'w') as f: f.write(setup)
+  return 'source activate telarix; python {} build_ext --inplace; source activate legacy'.format(setupFileName)
 
 
 #loading the configuration file produced after calling "configure" script
@@ -64,7 +77,8 @@ elif platform.system() == 'Linux':
 
 #Creating our building environment.
 env = Environment(CXX = 'g++', CPPPATH = incPath, ENV = os.environ) #This is for default C++ code
-env.Append(BUILDERS = {'Cython' : Builder(generator = cythonBuild)}) #This is for dealing with cython compilations
+
+#env.Append(BUILDERS = {'Cython' : Builder(generator = cythonBuild)}) #This is for dealing with cython compilations
 
 ######IF I NEED TO PASS ANY SPECIFIC VALUE TO THE CYTHON COMPILER, I CAN APPEND THESE VARIABLES TO THE ENVIRONMENT LIKE I'M DOING IN THE COMMAND BELLOW#####
 #env.Append(MEX = config['matlab']['mex']) #Passing the path to the mex compiler.
@@ -85,13 +99,7 @@ for lib, opt in sc_libs.libs.iteritems():
 scriptInstList = Glob('../script/python/*.py')
 
 #Going over scripts bind to C++ code (using Cython for that)
-#for mat, opt in sc_matlab.matlab.iteritems():
-#  matBinding = env.Cython(target = mat,
-#                          source = '../src/matlab/%s.cxx' % mat, 
-#                          CCFLAGS = globalCPPFlags + mexCPPFlags, 
-#                          LIBS = opt['LIBS'], 
-#                          LIBPATH = libPath)
-#  scriptInstList.append(matBinding);
+#scriptInstList.append(env.Cython(target = 'fastnet', source = '../cython/fastnet.pyx'))
 
 #Processing bin files. Any executable that beed to be installed should go in this list.
 binInstList = []
@@ -110,3 +118,39 @@ env.Install(binInstDir, binInstList)
 #Creating the installation aliases.
 instAll = env.Alias('install-all', [libInstDir, scriptInstDir, binInstDir])
 env.Alias('install', [instAll])
+
+
+#Creating the cython compilation files.
+setup = """
+from distutils.core import setup
+from Cython.Build import cythonize
+from distutils.extension import Extension
+
+setup(ext_modules = cythonize(Extension("fastnet",
+           ["../cython/fastnet.pyx"],                 # our Cython source
+           language="c++",             # generate C++ code
+           extra_compile_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
+           extra_link_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
+           library_dirs=["{libInstDir}"],
+           include_dirs=["../"],
+           libraries=["neuralnet", "training"])
+      ))
+""".format(libInstDir = libInstDir)
+setupFileName = 'cython_setup.py'
+with open(setupFileName, 'w') as f: f.write(setup)
+
+#creating cython bash installation file
+bash = """
+#! /bin/bash
+source activate telarix
+python {cythonFile} build_ext --inplace --verbose
+cp *.so {scriptDir}
+source activate legacy
+""".format(cythonFile = setupFileName, scriptDir = scriptInstDir)
+bashFileName = 'cython-install.sh'
+with open(bashFileName, 'w') as f: f.write(bash)
+os.lchmod(bashFileName, stat.S_IRWXU)
+#subprocess.call('./' + bashFileName, shell=True)
+
+print ("Don't forget to run {} to compile and install cython extensions!".format(bashFileName))
+

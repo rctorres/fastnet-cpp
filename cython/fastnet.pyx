@@ -11,7 +11,6 @@ cdef extern from "fastnet/neuralnet/neuralnetwork.h" namespace "FastNet":
     cdef cppclass NeuralNetwork:
         NeuralNetwork(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias) except +
         const double* propagateInput(const double *input)
-        void operator=(const NeuralNetwork &net)
         double getWeight(unsigned layer, unsigned node, unsigned prevNode) const
         double getBias(unsigned layer, unsigned node) const
         unsigned getNumLayers() const
@@ -29,14 +28,35 @@ cdef class PyNeuralNetwork:
         #I have to convert from str to bytes since Cython considers C++ strings to be bytes in Python
         self.c_net = new NeuralNetwork(nnodes, [t.encode() for t in trfFunc], useBias)
     
-    def __getitem__(self, l):
-      return self.c_net[0][l]
-    
     def propagateInput(self, np.ndarray[np.double_t, ndim=1] input):
       input = np.ascontiguousarray(input)
       c_ret = self.c_net.propagateInput(&input[0])
       numNodes = self.c_net[0][self.c_net.getNumLayers() - 1] #[0] is needed since it is a pointer.
       return np.array([c_ret[i] for i in range(numNodes)])
 
+    def getWeight(self, layer, node, prevNode):
+      return self.c_net.getWeight(layer, node, prevNode)
+    
+    def getBias(self, layer, node):
+      return self.c_net.getBias(layer, node)
+
     def getNumLayers(self):
       return self.c_net.getNumLayers()
+
+    def __getitem__(self, l):
+      return self.c_net[0][l]
+
+    def setUsingBias(self, layer, val):
+      self.c_net.setUsingBias(layer, val)
+
+    def setUsingBias(self, val):
+      self.c_net.setUsingBias(val)
+      
+    def isUsingBias(self, layer):
+      return self.c_net.isUsingBias(layer)
+
+    def readWeights(self, np.ndarray[np.double_t, ndim=3] w, np.ndarray[np.double_t, ndim=2] b):
+      w = np.ascontiguousarray(w)
+      b = np.ascontiguousarray(b)
+      self.c_net.readWeights(<const double***> &w[0,0,0], <const double**> &b[0,0])
+

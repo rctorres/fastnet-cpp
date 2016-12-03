@@ -125,6 +125,7 @@ setup = """
 from distutils.core import setup
 from Cython.Build import cythonize
 from distutils.extension import Extension
+import numpy
 
 setup(ext_modules = cythonize(Extension("fastnet",
            ["../cython/fastnet.pyx"],                 # our Cython source
@@ -132,7 +133,7 @@ setup(ext_modules = cythonize(Extension("fastnet",
            extra_compile_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
            extra_link_args=['-std=c++11', '-mmacosx-version-min= 10.9'],
            library_dirs=["{libInstDir}"],
-           include_dirs=["../"],
+           include_dirs=["../", numpy.get_include()],
            libraries=["neuralnet", "training"])
       ))
 """.format(libInstDir = libInstDir)

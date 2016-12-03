@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 
 import fastnet
+import numpy as np
 
-
-net = fastnet.PyNeuralNetwork([10, 12, 10, 20], [b'tansig', b'purelin', b'purelin'], [True, False, True])
+net = fastnet.PyNeuralNetwork([5, 2, 1], ['tansig', 'tansig'], [True, True])
 print (net.getNumLayers())
+vec = np.array([1.,2.,3.,4.,5.])
+ret = net.propagateInput(vec)
+
+print(ret)

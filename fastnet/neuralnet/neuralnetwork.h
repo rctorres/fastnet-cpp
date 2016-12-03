@@ -301,7 +301,7 @@ namespace FastNet
       bool isUsingBias(const unsigned layer) const {return usingBias[layer];};
       
       
-      virtual void readWeights(const REAL ***w, const REAL **b);
+      virtual void readWeights(const vector< vector< vector<REAL> > > &w, const vector< vector<REAL> > &b);
   };
 }
 

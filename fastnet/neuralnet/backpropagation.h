@@ -319,7 +319,7 @@ namespace FastNet
       */
       virtual void operator=(const Backpropagation &net);
 
-      virtual void readWeights(const REAL ***w, const REAL **b)
+      virtual void readWeights(const vector< vector< vector<REAL> > > &w, const vector< vector<REAL> > &b)
       {
             NeuralNetwork::readWeights(w, b);
             //The savedW and savedB matrices are initialized with the read weights and biases values.

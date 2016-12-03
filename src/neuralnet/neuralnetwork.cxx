@@ -245,9 +245,9 @@ namespace FastNet
     }
   }
   
-  void NeuralNetwork::readWeights(const REAL ***w, const REAL **b)
+  void NeuralNetwork::readWeights(const vector< vector< vector<REAL> > > &w, const vector< vector<REAL> > &b)
   {
-    DEBUG1("Reading passed wight and bias.");
+    DEBUG1("Reading passed weight and bias.");
     for (unsigned i=0; i<(nNodes.size()-1); i++)
     {
       for (unsigned j=0; j<nNodes[(i+1)]; j++)

@@ -3,9 +3,10 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp cimport bool
-from cpython cimport array
 cimport numpy as np
 import numpy as np
+from cpython cimport array
+import array
 
 cdef extern from "fastnet/neuralnet/neuralnetwork.h" namespace "FastNet":
     cdef cppclass NeuralNetwork:
@@ -18,7 +19,7 @@ cdef extern from "fastnet/neuralnet/neuralnetwork.h" namespace "FastNet":
         void setUsingBias(const unsigned layer, const bool val)
         void setUsingBias(const bool val)
         bool isUsingBias(const unsigned layer) const
-        void readWeights(const double ***w, const double **b)
+        void readWeights(const vector[ vector[ vector[double] ] ] &w, const vector[ vector[double] ] &b)
 
 
 cdef class PyNeuralNetwork:
@@ -55,8 +56,26 @@ cdef class PyNeuralNetwork:
     def isUsingBias(self, layer):
       return self.c_net.isUsingBias(layer)
 
-    def readWeights(self, np.ndarray[np.double_t, ndim=3] w, np.ndarray[np.double_t, ndim=2] b):
-      w = np.ascontiguousarray(w)
-      b = np.ascontiguousarray(b)
-      self.c_net.readWeights(<const double***> &w[0,0,0], <const double**> &b[0,0])
+    def readWeights(self, weight, bias):
+      nLayers = len(weight)
+      cdef vector[vector[vector[double]]] cw
+      cdef vector[vector[double]] cb
+      cdef vector[double] aux
+      cdef vector[vector[double]] auxW
+      
+      for w,b in zip(weight, bias):
+        #Dealing with bias
+        aux.clear()
+        for v in b: aux.push_back(v)
+        cb.push_back(aux)
+        
+        #Dealing with weights
+        auxW.clear()
+        for r in range(w.shape[0]):
+          aux.clear()
+          for v in w[r,:]: aux.push_back(v)
+          auxW.push_back(aux)
+        cw.push_back(auxW)
+
+      self.c_net.readWeights(cw, cb)
 

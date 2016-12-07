@@ -60,6 +60,12 @@ cdef class TrainInfo:
     
 
 
+#cdef class PythonDataManager(DataManager):
+#  PythonDataManager(int x) except +
+
+
+
+
 cdef class PyNeuralNetwork:
     cdef RProp *c_net     # hold a C++ instance which we're wrapping
 

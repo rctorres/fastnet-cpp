@@ -29,6 +29,27 @@ cdef extern from "fastnet/neuralnet/rprop.h" namespace "FastNet":
         void defrostAll()
 
 
+cdef extern from "fastnet/training/DataManager.h" namespace "FastNet":
+    cdef cppclass DataManager:
+        DataManager() except +
+        void init(const unsigned numEvents)
+        unsigned numEvents() const
+        unsigned eventSize() const
+        unsigned getNextEventIndex()
+        const REAL* operator[](const unsigned idx) const
+
+
+
+cdef extern from "fastnet/training/Standard.h" namespace "FastNet":
+    cdef cppclass StandardTraining:
+        StandardTraining(RProp *net, DataManager *inTrn, DataManager *outTrn, DataManager *inVal, DataManager *outVal, const unsigned bSize) except +
+        void tstNetwork(REAL &mseTst, REAL &spTst)
+        void valNetwork(REAL &mseVal, REAL &spVal)
+        REAL trainNetwork()
+        void showInfo(const unsigned nEpochs) const
+
+
+
 cdef class TrainInfo:
   epoch = []
   mse = []

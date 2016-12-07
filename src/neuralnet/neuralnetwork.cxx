@@ -168,6 +168,11 @@ namespace FastNet
 
   const REAL* NeuralNetwork::propagateInput(const REAL *input)
   {
+#if (DEBUG>=3)
+    DEBUG3("Input vector is: ")
+    for (auto i=0; i<nNodes[0]; i++) DEBUG3("    input[" << i << "] = " << input[i])
+#endif
+
     const unsigned size = (nNodes.size() - 1);
 
     //Placing the input. though we are removing the const' ness no changes are perfomed.

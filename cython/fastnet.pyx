@@ -79,3 +79,15 @@ cdef class PyNeuralNetwork:
 
       self.c_net.readWeights(cw, cb)
 
+    def sim(self, dataset):
+      nEvents, inSize = dataset.shape
+      netInSize = self.c_net[0][0]
+
+      if inSize != netInSize:
+        raise ValueError('Network input layer does not match the event size ({} != {})'.format(netInSize, inSize))
+      
+      outSize = self.c_net[0][self.c_net.getNumLayers() - 1] #[0] is needed since it is a pointer.
+      ret = np.zeros((nEvents, outSize))
+      for e, event in enumerate(dataset):
+        ret[e,:] = self.propagateInput(event)
+      return ret

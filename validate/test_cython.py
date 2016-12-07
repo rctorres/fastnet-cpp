@@ -10,7 +10,10 @@ bias = [np.array([0.11, 0.22]), np.array([0.33])]
 net.readWeights(weights, bias)
 
 print (net.getNumLayers())
-vec = np.array([1.,2.,3.,4.,5.])
+vec = np.array([1.,2.,3., 4., 5.])
 ret = net.propagateInput(vec)
+print(ret)
 
+mat = np.array([[1.,2.,3.], [6.,7.,8.], [11.,12.,13.]])
+ret = net.sim(mat)
 print(ret)

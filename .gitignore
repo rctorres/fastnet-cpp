@@ -18,5 +18,4 @@ build/*.dylib
 install/*
 !.gitignore
 *.json
-matlab
 matlab-fn

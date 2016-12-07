@@ -22,10 +22,26 @@ cdef extern from "fastnet/neuralnet/neuralnetwork.h" namespace "FastNet":
         void readWeights(const vector[ vector[ vector[double] ] ] &w, const vector[ vector[double] ] &b)
 
 
+cdef extern from "fastnet/neuralnet/backpropagation.h" namespace "FastNet":
+    cdef cppclass Backpropagation:
+        Backpropagation(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias,  const double learningRate, const double decFactor) except +
+        void setFrozen(unsigned layer, unsigned node, bool frozen)
+        void setFrozen(unsigned layer, bool frozen)
+        bool isFrozen(unsigned layer, unsigned node) const
+        bool isFrozen(unsigned layer) const
+        void defrostAll()
+
+
+
+cdef extern from "fastnet/neuralnet/rprop.h" namespace "FastNet":
+    cdef cppclass RProp:
+        RProp(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias, const double deltaMin, const double deltaMax, const double initEta, const double incEta, const double decEta) except +
+
+
 cdef class PyNeuralNetwork:
     cdef NeuralNetwork *c_net     # hold a C++ instance which we're wrapping
 
-    def __cinit__(self, nnodes, trfFunc, useBias):
+    def __cinit__(self, nnodes = None, trfFunc = None, useBias = None):
         #I have to convert from str to bytes since Cython considers C++ strings to be bytes in Python
         self.c_net = new NeuralNetwork(nnodes, [t.encode() for t in trfFunc], useBias)
     

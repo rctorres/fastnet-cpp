@@ -17,3 +17,6 @@ print(ret)
 mat = np.array([[1.,2.,3.], [6.,7.,8.], [11.,12.,13.]])
 ret = net.sim(mat)
 print(ret)
+
+trnInfo = net.train(None, None)
+

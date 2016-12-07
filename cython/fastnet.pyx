@@ -8,23 +8,20 @@ import numpy as np
 from cpython cimport array
 import array
 
-cdef extern from "fastnet/neuralnet/neuralnetwork.h" namespace "FastNet":
-    cdef cppclass NeuralNetwork:
-        NeuralNetwork(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias) except +
-        const double* propagateInput(const double *input)
-        double getWeight(unsigned layer, unsigned node, unsigned prevNode) const
-        double getBias(unsigned layer, unsigned node) const
+ctypedef double REAL
+
+cdef extern from "fastnet/neuralnet/rprop.h" namespace "FastNet":
+    cdef cppclass RProp:
+        RProp(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias, const REAL deltaMin, const REAL deltaMax, const REAL initEta, const REAL incEta, const REAL decEta) except +
+        const REAL* propagateInput(const REAL *input)
+        REAL getWeight(unsigned layer, unsigned node, unsigned prevNode) const
+        REAL getBias(unsigned layer, unsigned node) const
         unsigned getNumLayers() const
         unsigned operator[](unsigned layer) const
         void setUsingBias(const unsigned layer, const bool val)
         void setUsingBias(const bool val)
         bool isUsingBias(const unsigned layer) const
-        void readWeights(const vector[ vector[ vector[double] ] ] &w, const vector[ vector[double] ] &b)
-
-
-cdef extern from "fastnet/neuralnet/backpropagation.h" namespace "FastNet":
-    cdef cppclass Backpropagation:
-        Backpropagation(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias,  const double learningRate, const double decFactor) except +
+        void readWeights(const vector[ vector[ vector[REAL] ] ] &w, const vector[ vector[REAL] ] &b)
         void setFrozen(unsigned layer, unsigned node, bool frozen)
         void setFrozen(unsigned layer, bool frozen)
         bool isFrozen(unsigned layer, unsigned node) const
@@ -32,20 +29,24 @@ cdef extern from "fastnet/neuralnet/backpropagation.h" namespace "FastNet":
         void defrostAll()
 
 
-
-cdef extern from "fastnet/neuralnet/rprop.h" namespace "FastNet":
-    cdef cppclass RProp:
-        RProp(const vector[unsigned] &nnodes, const vector[string] &trfFunc, const vector[bool] &useBias, const double deltaMin, const double deltaMax, const double initEta, const double incEta, const double decEta) except +
+cdef class TrainInfo:
+  epoch = []
+  mse = []
+  
+  def add(self, const unsigned epochVal, const REAL mseVal):
+    self.epoch.append(epochVal)
+    self.mse.append(mseVal)
+    
 
 
 cdef class PyNeuralNetwork:
-    cdef NeuralNetwork *c_net     # hold a C++ instance which we're wrapping
+    cdef RProp *c_net     # hold a C++ instance which we're wrapping
 
     def __cinit__(self, nnodes = None, trfFunc = None, useBias = None):
         #I have to convert from str to bytes since Cython considers C++ strings to be bytes in Python
-        self.c_net = new NeuralNetwork(nnodes, [t.encode() for t in trfFunc], useBias)
+        self.c_net = new RProp(nnodes, [t.encode() for t in trfFunc], useBias, deltaMin = 1E-6, deltaMax = 50., initEta = 0.1, incEta = 1.10, decEta = 0.5)
     
-    def propagateInput(self, np.ndarray[np.double_t, ndim=1] input):
+    def propagateInput(self, np.ndarray[REAL, ndim=1] input):
       input = np.ascontiguousarray(input)
       c_ret = self.c_net.propagateInput(&input[0])
       numNodes = self.c_net[0][self.c_net.getNumLayers() - 1] #[0] is needed since it is a pointer.
@@ -74,10 +75,10 @@ cdef class PyNeuralNetwork:
 
     def readWeights(self, weight, bias):
       nLayers = len(weight)
-      cdef vector[vector[vector[double]]] cw
-      cdef vector[vector[double]] cb
-      cdef vector[double] aux
-      cdef vector[vector[double]] auxW
+      cdef vector[vector[vector[REAL]]] cw
+      cdef vector[vector[REAL]] cb
+      cdef vector[REAL] aux
+      cdef vector[vector[REAL]] auxW
       
       for w,b in zip(weight, bias):
         #Dealing with bias
@@ -106,4 +107,10 @@ cdef class PyNeuralNetwork:
       ret = np.zeros((nEvents, outSize))
       for e, event in enumerate(dataset):
         ret[e,:] = self.propagateInput(event)
+      return ret
+    
+    def train(self, trnSet, valSet):
+      ret = TrainInfo()
+      ret.add(0, 1.1)
+      ret.add(1, 2.2)
       return ret
